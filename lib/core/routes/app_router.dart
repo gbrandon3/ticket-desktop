@@ -49,7 +49,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final user = ref.read(authProvider);
       final loc = state.matchedLocation;
 
-      // 1. Si no se ha completado el setup inicial, redirigir a /setup
+      // 1. Ruta pública de consulta ciudadana / seguimiento de ticket (SIEMPRE accesible para clientes)
+      if (loc == '/consulta') {
+        return null;
+      }
+
+      // 2. Si no se ha completado el setup inicial, redirigir a /setup
       if (!isSetup) {
         if (loc != '/setup') {
           return '/setup';
@@ -60,11 +65,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Si el setup ya está listo y el usuario intenta entrar a /setup
       if (isSetup && loc == '/setup') {
         return user == null ? '/login' : ((user.rol == 'solicitante' || user.rol == 'cliente') ? '/solicitante' : '/dashboard');
-      }
-
-      // 2. Ruta pública de consulta ciudadana / seguimiento de ticket
-      if (loc == '/consulta') {
-        return null;
       }
 
       // 3. Usuario no autenticado: restringir a /login
