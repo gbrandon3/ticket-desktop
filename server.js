@@ -1035,22 +1035,31 @@ app.get('/api/metrics/dashboard', (req, res) => {
 app.get('/api/metrics/admin', (req, res) => {
   try {
     const total = db.prepare('SELECT COUNT(*) as c FROM ordenes').get().c;
-    const sinAsignar = db.prepare('SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id IS NULL').get().c;
+    const sinAsignar = db.prepare('SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id IS NULL AND estado != \'ENTREGADO_CERRADO\'').get().c;
     const preventivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'PREVENTIVO'").get().c;
     const correctivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'CORRECTIVO'").get().c;
+    const vencidos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE fecha_limite_sla IS NOT NULL AND fecha_limite_sla < datetime('now') AND estado != 'ENTREGADO_CERRADO'").get().c;
 
     const tecnicos = db.prepare("SELECT id, nombre FROM usuarios WHERE rol = 'tecnico'").all();
     const cargaTecnicos = tecnicos.map(t => {
       const activas = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id = ? AND estado != 'ENTREGADO_CERRADO'").get(t.id).c;
       const cerradas = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id = ? AND estado = 'ENTREGADO_CERRADO'").get(t.id).c;
-      return { tecnicoId: t.id, nombre: t.nombre, ordenesActivas: activas, ordenesCerradas: cerradas };
+      return {
+        id: t.id,
+        tecnicoId: t.id,
+        nombre: t.nombre,
+        activas: activas,
+        ordenesActivas: activas,
+        terminadas: cerradas,
+        ordenesCerradas: cerradas,
+      };
     });
 
     res.json({
       success: true,
       data: {
         total,
-        vencidos: 0,
+        vencidos,
         sinAsignar,
         preventivos,
         correctivos,

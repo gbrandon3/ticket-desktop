@@ -250,7 +250,25 @@ class ApiOrdenesRepository implements IOrdenesRepository {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
-          return Map<String, dynamic>.from(data['data']);
+          final map = Map<String, dynamic>.from(data['data']);
+          final rawCarga = map['cargaTecnicos'] as List? ?? [];
+          final normalizedCarga = rawCarga.map((e) {
+            final m = Map<String, dynamic>.from(e as Map);
+            final id = (m['id'] ?? m['tecnicoId'] as num?)?.toInt() ?? 0;
+            final activas = (m['activas'] ?? m['ordenesActivas'] as num?)?.toInt() ?? 0;
+            final terminadas = (m['terminadas'] ?? m['ordenesCerradas'] as num?)?.toInt() ?? 0;
+            return {
+              'id': id,
+              'tecnicoId': id,
+              'nombre': m['nombre'] ?? 'Técnico',
+              'activas': activas,
+              'ordenesActivas': activas,
+              'terminadas': terminadas,
+              'ordenesCerradas': terminadas,
+            };
+          }).toList();
+          map['cargaTecnicos'] = normalizedCarga;
+          return map;
         }
       }
     } catch (_) {}

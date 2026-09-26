@@ -218,24 +218,27 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         ? ordenesList.where((o) => o.tecnicoId == currentUser?.id || o.tecnico?.id == currentUser?.id).toList()
         : ordenesList;
 
-    final total = esTecnico ? ordenesTecnico.length : (_metrics!['total'] as int);
+    final total = esTecnico ? ordenesTecnico.length : ((_metrics!['total'] as num?)?.toInt() ?? 0);
     final vencidos = esTecnico
         ? ordenesTecnico.where((o) => o.estaVencidoSla && o.estado != 'ENTREGADO_CERRADO').length
-        : (_metrics!['vencidos'] as int);
+        : ((_metrics!['vencidos'] as num?)?.toInt() ?? 0);
     final sinAsignar = esTecnico
         ? ordenesTecnico.where((o) => o.estado == 'RECIBIDO' || o.estado == 'EN_DIAGNOSTICO').length
-        : (_metrics!['sinAsignar'] as int);
+        : ((_metrics!['sinAsignar'] as num?)?.toInt() ?? 0);
     final preventivos = esTecnico
         ? ordenesTecnico.where((o) => o.tipoServicio == 'PREVENTIVO').length
-        : (_metrics!['preventivos'] as int);
+        : ((_metrics!['preventivos'] as num?)?.toInt() ?? 0);
     final correctivos = esTecnico
         ? ordenesTecnico.where((o) => o.tipoServicio == 'CORRECTIVO').length
-        : (_metrics!['correctivos'] as int);
+        : ((_metrics!['correctivos'] as num?)?.toInt() ?? 0);
     final double porcentajeSla = total > 0
         ? (((total - vencidos) / total) * 100).clamp(0, 100)
         : 100.0;
-    final tiempoPromedio = (_metrics!['tiempoPromedioHoras'] as num).toDouble();
-    final cargaTecnicos = (_metrics!['cargaTecnicos'] as List).cast<Map<String, dynamic>>();
+    final tiempoPromedio = (_metrics!['tiempoPromedioHoras'] as num?)?.toDouble() ?? 0.0;
+    final cargaTecnicos = (_metrics!['cargaTecnicos'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
 
     final double pctPrev = total > 0 ? (preventivos / total) * 100 : 50;
 
@@ -470,8 +473,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   }
 
                   final t = cargaTecnicos[index - 1];
-                  final tId = t['id'] as int;
+                  final tId = (t['id'] ?? t['tecnicoId'] as num?)?.toInt() ?? 0;
                   final isSelected = _filtroTecnicoId == tId;
+                  final nombre = (t['nombre'] ?? 'Técnico').toString();
+                  final activas = (t['activas'] ?? t['ordenesActivas'] as num?)?.toInt() ?? 0;
+                  final terminadas = (t['terminadas'] ?? t['ordenesCerradas'] as num?)?.toInt() ?? 0;
 
                   return InkWell(
                     onTap: () => setState(() => _filtroTecnicoId = isSelected ? null : tId),
@@ -489,7 +495,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            t['nombre'],
+                            nombre,
                             style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -500,13 +506,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(4)),
-                                child: Text('${t['activas']} activas', style: TextStyle(color: Colors.amber.shade900, fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: Text('$activas activas', style: TextStyle(color: Colors.amber.shade900, fontSize: 10, fontWeight: FontWeight.bold)),
                               ),
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
-                                child: Text('${t['terminadas']} cerradas', style: TextStyle(color: Colors.green.shade900, fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: Text('$terminadas cerradas', style: TextStyle(color: Colors.green.shade900, fontSize: 10, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
