@@ -336,6 +336,51 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     _cargarUsuarios();
   }
 
+  // Eliminar Usuario
+  Future<void> _confirmarEliminarUsuario(Usuario u) async {
+    final userActual = ref.read(authProvider);
+    if (userActual?.id != null && userActual!.id == u.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No puede eliminar su propia cuenta activa de administrador.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmar Eliminación'),
+        content: Text('¿Está seguro de eliminar al usuario "${u.nombre}" (${u.email})? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar == true && u.id != null) {
+      final repo = ref.read(ordenesRepositoryProvider);
+      await repo.deleteUsuario(u.id!);
+      _cargarUsuarios();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Usuario "${u.nombre}" eliminado correctamente.'),
+            backgroundColor: SantiConstants.successGreen,
+          ),
+        );
+      }
+    }
+  }
+
   // Guardar SMTP
   Future<void> _guardarSmtp() async {
     if (!_smtpFormKey.currentState!.validate()) return;
@@ -993,7 +1038,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                           Expanded(flex: 2, child: Text('Rol', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                           Expanded(flex: 2, child: Text('Teléfono', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                           Expanded(flex: 2, child: Text('Estado', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                          Expanded(flex: 1, child: Text('Acción', textAlign: TextAlign.end, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                          Expanded(flex: 2, child: Text('Acciones', textAlign: TextAlign.end, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                         ],
                       ),
                     ),
@@ -1047,14 +1092,21 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                                 ),
                               ),
                               Expanded(
-                                flex: 1,
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Switch(
-                                    value: u.activo,
-                                    activeColor: SantiConstants.successGreen,
-                                    onChanged: (val) => _toggleUsuario(u),
-                                  ),
+                                flex: 2,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Switch(
+                                      value: u.activo,
+                                      activeColor: SantiConstants.successGreen,
+                                      onChanged: (val) => _toggleUsuario(u),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                      tooltip: 'Eliminar usuario',
+                                      onPressed: () => _confirmarEliminarUsuario(u),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

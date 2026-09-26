@@ -19,6 +19,7 @@ abstract class IOrdenesRepository {
   Future<Usuario> createUsuario(Usuario usuario);
   Future<void> updateUsuario(Usuario usuario);
   Future<void> toggleUsuarioActivo(int id, bool activo);
+  Future<void> deleteUsuario(int id);
   Future<void> seedTestUsers();
 
   // Setup Wizard

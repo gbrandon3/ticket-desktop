@@ -86,60 +86,13 @@ class OrdenesRepositoryImpl implements IOrdenesRepository {
   }
 
   @override
+  Future<void> deleteUsuario(int id) async {
+    await (db.delete(db.usuariosTable)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  @override
   Future<void> seedTestUsers() async {
-    // 1. Admin Principal
-    final existingAdmin = await (db.select(db.usuariosTable)
-          ..where((t) => t.email.equals('admin@taller.com')))
-        .getSingleOrNull();
-    if (existingAdmin == null) {
-      await db.into(db.usuariosTable).insert(
-            const UsuariosTableCompanion(
-              nombre: Value('Administrador Principal'),
-              email: Value('admin@taller.com'),
-              password: Value('admin123'),
-              documento: Value('1020304050'),
-              telefono: Value('3101234567'),
-              rol: Value('admin'),
-              activo: Value(true),
-            ),
-          );
-    }
-
-    // 2. Operador (Solicitante / Recepción)
-    final existingOperador = await (db.select(db.usuariosTable)
-          ..where((t) => t.email.equals('operador@taller.com')))
-        .getSingleOrNull();
-    if (existingOperador == null) {
-      await db.into(db.usuariosTable).insert(
-            const UsuariosTableCompanion(
-              nombre: Value('Laura Gómez (Operador Recepción)'),
-              email: Value('operador@taller.com'),
-              password: Value('operador123'),
-              documento: Value('1098765432'),
-              telefono: Value('3154567890'),
-              rol: Value('operador'),
-              activo: Value(true),
-            ),
-          );
-    }
-
-    // 3. Técnico (Especialista Taller)
-    final existingTecnico = await (db.select(db.usuariosTable)
-          ..where((t) => t.email.equals('tecnico@taller.com')))
-        .getSingleOrNull();
-    if (existingTecnico == null) {
-      await db.into(db.usuariosTable).insert(
-            const UsuariosTableCompanion(
-              nombre: Value('Carlos Mendoza (Técnico Laboratorio)'),
-              email: Value('tecnico@taller.com'),
-              password: Value('tecnico123'),
-              documento: Value('79854123'),
-              telefono: Value('3209876543'),
-              rol: Value('tecnico'),
-              activo: Value(true),
-            ),
-          );
-    }
+    // No se generan usuarios por defecto
   }
 
   // ===================== SETUP WIZARD =====================

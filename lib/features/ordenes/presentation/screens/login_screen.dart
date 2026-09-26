@@ -49,9 +49,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final repo = ref.read(ordenesRepositoryProvider);
-      // Asegurar usuarios de prueba existentes
-      await repo.seedTestUsers();
-
       final user = await repo.login(email, pass);
 
       if (!mounted) return;
