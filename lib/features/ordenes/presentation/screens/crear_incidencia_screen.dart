@@ -150,10 +150,23 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     }
   }
 
-  void _autogenerarSerialMesa() {
+  String _obtenerPrefijoSegunTipo() {
+    switch (_tipoEquipo) {
+      case 'Portátil / Laptop':
+        return 'LAP';
+      case 'All-in-One':
+        return 'AIO';
+      case 'PC de Mesa':
+      default:
+        return 'MESA';
+    }
+  }
+
+  void _autogenerarSerialSegunTipo() {
+    final prefix = _obtenerPrefijoSegunTipo();
     final randomNum = Random().nextInt(9000) + 1000;
     setState(() {
-      _serialCtrl.text = 'MESA-$randomNum';
+      _serialCtrl.text = '$prefix-$randomNum';
     });
   }
 
@@ -457,7 +470,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
         _modeloCtrl.text = 'Torre ATX';
       }
       if (_serialCtrl.text.trim().isEmpty) {
-        _autogenerarSerialMesa();
+        _autogenerarSerialSegunTipo();
       }
       setState(() => _currentStep = 3);
       return;
@@ -475,7 +488,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     }
     if (_serialCtrl.text.trim().isEmpty) {
       if (_sinSerialVisible) {
-        _autogenerarSerialMesa();
+        _autogenerarSerialSegunTipo();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1790,6 +1803,11 @@ ${config.nombreEmpresa}
                   setState(() {
                     _tipoEquipo = 'Portátil / Laptop';
                     _sinSerialVisible = false;
+                    if (_serialCtrl.text.startsWith('MESA-') || _serialCtrl.text.startsWith('AIO-')) {
+                      _serialCtrl.clear();
+                    }
+                    if (_marcaCtrl.text == 'Clon / Ensamblado') _marcaCtrl.clear();
+                    if (_modeloCtrl.text == 'Torre ATX') _modeloCtrl.clear();
                   });
                   _buscarEquipos('');
                 },
@@ -1805,6 +1823,11 @@ ${config.nombreEmpresa}
                 onTap: () {
                   setState(() {
                     _tipoEquipo = 'PC de Mesa';
+                    if (_marcaCtrl.text.isEmpty) _marcaCtrl.text = 'Clon / Ensamblado';
+                    if (_modeloCtrl.text.isEmpty) _modeloCtrl.text = 'Torre ATX';
+                    if (_serialCtrl.text.isEmpty || _serialCtrl.text.startsWith('LAP-') || _serialCtrl.text.startsWith('AIO-')) {
+                      _autogenerarSerialSegunTipo();
+                    }
                   });
                   _buscarEquipos('');
                 },
@@ -1821,6 +1844,11 @@ ${config.nombreEmpresa}
                   setState(() {
                     _tipoEquipo = 'All-in-One';
                     _sinSerialVisible = false;
+                    if (_serialCtrl.text.startsWith('MESA-') || _serialCtrl.text.startsWith('LAP-')) {
+                      _serialCtrl.clear();
+                    }
+                    if (_marcaCtrl.text == 'Clon / Ensamblado') _marcaCtrl.clear();
+                    if (_modeloCtrl.text == 'Torre ATX') _modeloCtrl.clear();
                   });
                   _buscarEquipos('');
                 },
@@ -1886,7 +1914,12 @@ ${config.nombreEmpresa}
                       setState(() {
                         _sinSerialVisible = val ?? false;
                         if (_sinSerialVisible) {
-                          _autogenerarSerialMesa();
+                          _autogenerarSerialSegunTipo();
+                        } else {
+                          if (_tipoEquipo != 'PC de Mesa' &&
+                              (_serialCtrl.text.startsWith('LAP-') || _serialCtrl.text.startsWith('AIO-'))) {
+                            _serialCtrl.clear();
+                          }
                         }
                       });
                     },
@@ -2031,13 +2064,15 @@ ${config.nombreEmpresa}
                 child: TextFormField(
                   controller: _serialCtrl,
                   decoration: InputDecoration(
-                    labelText: _tipoEquipo == 'PC de Mesa' ? 'Placa / Tag Interno (Opcional)' : 'Número de Serie *',
-                    hintText: _tipoEquipo == 'PC de Mesa' ? 'ej. MESA-XXXX (Código interno taller)' : 'ej. PF2K890X',
+                    labelText: _tipoEquipo == 'PC de Mesa' ? 'Placa / Tag Interno (Automático)' : 'Número de Serie *',
+                    hintText: _tipoEquipo == 'PC de Mesa'
+                        ? 'ej. MESA-XXXX (Código interno taller)'
+                        : (_tipoEquipo == 'Portátil / Laptop' ? 'ej. LAP-XXXX o Serial Fabricante' : 'ej. AIO-XXXX o Serial'),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.refresh, size: 20),
-                      tooltip: 'Generar código MESA-XXXX',
-                      onPressed: _autogenerarSerialMesa,
+                      tooltip: 'Generar código ${_obtenerPrefijoSegunTipo()}-XXXX',
+                      onPressed: _autogenerarSerialSegunTipo,
                     ),
                   ),
                 ),

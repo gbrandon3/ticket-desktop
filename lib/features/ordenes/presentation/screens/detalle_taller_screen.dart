@@ -83,10 +83,64 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
   final _docRecibeController = TextEditingController();
   bool _checkConformidad = false;
 
+  // Estado de avance secuencial de pestañas
+  bool _otCompletada = false;
+  bool _bitacoraCompletada = false;
+
+  bool _puedeAccederTab(int targetIndex) {
+    final isCerrada = _orden?.estado == 'ENTREGADO_CERRADO';
+    if (isCerrada) return true;
+    if (targetIndex <= 0) return true;
+    if (targetIndex == 1) {
+      if (!_otCompletada) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias" para avanzar.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return false;
+      }
+      return true;
+    }
+    if (targetIndex == 2) {
+      if (!_otCompletada) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias".'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return false;
+      }
+      if (!_bitacoraCompletada) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debe completar y guardar primero el paso "2. Bitácora & Insumos" antes de pasar al Acta de Entrega.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        if (!_puedeAccederTab(_tabController.index)) {
+          _tabController.animateTo(_tabController.previousIndex);
+        }
+      }
+    });
     _cargarDatos();
   }
 
@@ -225,6 +279,9 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
         _nombreRecibeController.text = orden.cliente?.nombreCompleto ?? '';
         _docRecibeController.text = orden.cliente?.numeroDocumento ?? '';
       }
+
+      _otCompletada = ot != null && ((ot.diagnosticoPreliminar?.trim().isNotEmpty ?? false) || (ot.estadoCarcasa?.trim().isNotEmpty ?? false));
+      _bitacoraCompletada = act != null && (act.procedimientosRealizados?.trim().isNotEmpty ?? false);
     }
 
     setState(() => _loading = false);
@@ -247,6 +304,8 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
     );
 
     await useCase.saveFormatoOt(ot);
+    setState(() => _otCompletada = true);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -296,6 +355,8 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
     );
 
     await useCase.saveFormatoActividades(act);
+    setState(() => _bitacoraCompletada = true);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -576,10 +637,21 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
           labelColor: Colors.cyanAccent,
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.cyanAccent,
-          tabs: const [
-            Tab(icon: Icon(Icons.assignment), text: '1. Orden de Trabajo & Evidencias'),
-            Tab(icon: Icon(Icons.handyman), text: '2. Bitácora & Insumos'),
-            Tab(icon: Icon(Icons.verified_outlined), text: '3. Acta de Entrega'),
+          onTap: (index) {
+            if (!_puedeAccederTab(index)) {
+              _tabController.index = _tabController.previousIndex;
+            }
+          },
+          tabs: [
+            const Tab(icon: Icon(Icons.assignment), text: '1. Orden de Trabajo & Evidencias'),
+            Tab(
+              icon: Icon((_otCompletada || isCerrada) ? Icons.handyman : Icons.lock_outline),
+              text: '2. Bitácora & Insumos',
+            ),
+            Tab(
+              icon: Icon((_bitacoraCompletada || isCerrada) ? Icons.verified_outlined : Icons.lock_outline),
+              text: '3. Acta de Entrega',
+            ),
           ],
         ),
       ),
@@ -611,6 +683,7 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
           Expanded(
             child: TabBarView(
               controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildTab1OrdenTrabajo(isCerrada),
                 _buildTab2Bitacora(isCerrada),
@@ -731,39 +804,35 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
             onChanged: isCerrada ? null : (v) => setState(() => _encendido = v),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _carcasaController,
-                  readOnly: isCerrada,
-                  decoration: InputDecoration(
-                    labelText: 'Estado Estético de la Carcasa',
-                    hintText: 'Rayones leves, bisagras flojas, tornillos faltantes...',
-                    filled: isCerrada,
-                    fillColor: isCerrada ? Colors.grey.shade100 : null,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _pinController,
-                  readOnly: isCerrada,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña / PIN de Inicio de Sesión',
-                    hintText: 'Sin contraseña o PIN de 4 dígitos',
-                    filled: isCerrada,
-                    fillColor: isCerrada ? Colors.grey.shade100 : null,
-                  ),
-                ),
-              ),
-            ],
+          TextField(
+            controller: _carcasaController,
+            readOnly: isCerrada,
+            minLines: 3,
+            maxLines: 5,
+            decoration: InputDecoration(
+              labelText: 'Observaciones Físicas',
+              hintText: 'Detalle el estado estético, rayones, bisagras flojas, tornillos faltantes, golpes o fisuras observadas...',
+              filled: isCerrada,
+              fillColor: isCerrada ? Colors.grey.shade100 : null,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _pinController,
+            readOnly: isCerrada,
+            decoration: InputDecoration(
+              labelText: 'Contraseña / PIN de Inicio de Sesión',
+              hintText: 'Sin contraseña o PIN de 4 dígitos',
+              filled: isCerrada,
+              fillColor: isCerrada ? Colors.grey.shade100 : null,
+              border: const OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 24),
 
-          // SECCIÓN DE EVIDENCIAS FOTOGRÁFICAS (INTEGRADA EN OT)
-          _buildSeccionEvidencias(isCerrada),
+          // SECCIÓN DE EVIDENCIAS FOTOGRÁFICAS EN RECEPCIÓN (INTEGRADA EN OT)
+          _buildSeccionEvidenciasRecepcion(isCerrada),
 
           const SizedBox(height: 24),
           if (!isCerrada)
@@ -784,8 +853,9 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
     );
   }
 
-  // ===================== SECCIÓN EVIDENCIAS (DENTRO DE TAB 1) =====================
-  Widget _buildSeccionEvidencias(bool isCerrada) {
+  // ===================== SECCIÓN EVIDENCIAS RECEPCIÓN (DENTRO DE TAB 1) =====================
+  Widget _buildSeccionEvidenciasRecepcion(bool isCerrada) {
+    final fotosRecepcion = _fotos.where((f) => f.etapa == 'RECEPCION' || f.etapa == 'PROCESO').toList();
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -804,33 +874,25 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
                   Icon(Icons.photo_camera, color: SantiConstants.primaryBlue),
                   SizedBox(width: 8),
                   Text(
-                    'Evidencias Fotográficas de la Orden',
+                    'Evidencias Fotográficas de Recepción',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
                   ),
                 ],
               ),
               if (!isCerrada)
-                PopupMenuButton<String>(
-                  onSelected: (etapa) => _subirFotoEvidencia(etapa),
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'RECEPCION', child: Text('Foto en Recepción')),
-                    PopupMenuItem(value: 'PROCESO', child: Text('Foto durante el Proceso')),
-                    PopupMenuItem(value: 'ENTREGA', child: Text('Foto de Entrega / Terminado')),
-                  ],
-                  child: ElevatedButton.icon(
-                    onPressed: null, // El popup captura el toque
-                    icon: const Icon(Icons.add_a_photo, size: 18),
-                    label: const Text('Cargar Evidencia'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SantiConstants.primaryBlue,
-                      foregroundColor: Colors.white,
-                    ),
+                ElevatedButton.icon(
+                  onPressed: () => _subirFotoEvidencia('RECEPCION', defaultNota: 'Evidencia en recepción del equipo'),
+                  icon: const Icon(Icons.add_a_photo, size: 18),
+                  label: const Text('Cargar Evidencia de Recepción'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SantiConstants.primaryBlue,
+                    foregroundColor: Colors.white,
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          if (_fotos.isEmpty)
+          if (fotosRecepcion.isEmpty)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               alignment: Alignment.center,
@@ -844,98 +906,103 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
                   Icon(Icons.photo_library_outlined, size: 40, color: Colors.grey.shade400),
                   const SizedBox(height: 8),
                   Text(
-                    'No hay evidencias fotográficas registradas para esta orden.',
+                    'No hay evidencias fotográficas de recepción registradas para esta orden.',
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                   ),
                 ],
               ),
             )
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 260,
-                childAspectRatio: 0.82,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
-              ),
-              itemCount: _fotos.length,
-              itemBuilder: (context, index) {
-                final f = _fotos[index];
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Image.memory(
-                              base64Decode(f.rutaOBytesBase64),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: SantiConstants.primaryBlue,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    f.etapa,
-                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  DateFormat('dd/MM/yyyy HH:mm').format(f.fechaCaptura),
-                                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                                ),
-                                if (f.notaTecnica != null)
-                                  Text(
-                                    f.notaTecnica!,
-                                    style: const TextStyle(fontSize: 11),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (!isCerrada && f.id != null)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Material(
-                            color: Colors.black54,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () => _eliminarFoto(f.id!),
-                              child: const Padding(
-                                padding: EdgeInsets.all(6.0),
-                                child: Icon(Icons.delete_outline, color: Colors.white, size: 18),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
+            _buildGridFotos(fotosRecepcion, isCerrada),
         ],
       ),
+    );
+  }
+
+  Widget _buildGridFotos(List<FotoEvidencia> fotos, bool isCerrada) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 260,
+        childAspectRatio: 0.82,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+      ),
+      itemCount: fotos.length,
+      itemBuilder: (context, index) {
+        final f = fotos[index];
+        final esEntrega = f.etapa == 'ENTREGA';
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Image.memory(
+                      base64Decode(f.rutaOBytesBase64),
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: esEntrega ? const Color(0xFF16A34A) : SantiConstants.primaryBlue,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            f.etapa,
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('dd/MM/yyyy HH:mm').format(f.fechaCaptura),
+                          style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                        ),
+                        if (f.notaTecnica != null)
+                          Text(
+                            f.notaTecnica!,
+                            style: const TextStyle(fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (!isCerrada && f.id != null)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Material(
+                    color: Colors.black54,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => _eliminarFoto(f.id!),
+                      child: const Padding(
+                        padding: EdgeInsets.all(6.0),
+                        child: Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1656,6 +1723,11 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
             value: _checkConformidad,
             onChanged: isCerrada ? null : (v) => setState(() => _checkConformidad = v!),
           ),
+          const SizedBox(height: 20),
+
+          // EVIDENCIAS FOTOGRÁFICAS DE LA ENTREGA
+          _buildSeccionEvidenciasEntrega(isCerrada),
+
           const SizedBox(height: 24),
 
           if (!isCerrada)
@@ -1715,6 +1787,73 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  // ===================== SECCIÓN EVIDENCIAS ENTREGA (DENTRO DE TAB 3) =====================
+  Widget _buildSeccionEvidenciasEntrega(bool isCerrada) {
+    final fotosEntrega = _fotos.where((f) => f.etapa == 'ENTREGA').toList();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.camera_alt_outlined, color: Color(0xFF16A34A)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Evidencias Fotográficas de la Entrega',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF166534)),
+                  ),
+                ],
+              ),
+              if (!isCerrada)
+                ElevatedButton.icon(
+                  onPressed: () => _subirFotoEvidencia('ENTREGA', defaultNota: 'Evidencia en entrega/finalización del equipo'),
+                  icon: const Icon(Icons.add_a_photo, size: 18),
+                  label: const Text('Añadir Evidencia de Entrega'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (fotosEntrega.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.photo_library_outlined, size: 40, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No hay evidencias fotográficas registradas para la entrega. Presione "Añadir Evidencia de Entrega" para adjuntar fotos del equipo finalizado.',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
+          else
+            _buildGridFotos(fotosEntrega, isCerrada),
         ],
       ),
     );

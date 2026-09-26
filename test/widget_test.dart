@@ -44,7 +44,8 @@ class _MockLoginRepository extends Fake implements IOrdenesRepository {
 
 class _MockTallerRepository extends Fake implements IOrdenesRepository {
   final String estado;
-  _MockTallerRepository({this.estado = 'EN_TALLER'});
+  final bool completarPasos;
+  _MockTallerRepository({this.estado = 'EN_TALLER', this.completarPasos = false});
 
   @override
   Future<Orden?> getOrdenById(int id) async {
@@ -64,10 +65,27 @@ class _MockTallerRepository extends Fake implements IOrdenesRepository {
   }
 
   @override
-  Future<FormatoOt?> getFormatoOt(int ordenId) async => null;
+  Future<FormatoOt?> getFormatoOt(int ordenId) async {
+    if (completarPasos) {
+      return FormatoOt(
+        ordenId: ordenId,
+        diagnosticoPreliminar: 'Diagnóstico inicial de prueba',
+        herramientasChips: ['Multímetro'],
+      );
+    }
+    return null;
+  }
 
   @override
-  Future<FormatoActividades?> getFormatoActividades(int ordenId) async => null;
+  Future<FormatoActividades?> getFormatoActividades(int ordenId) async {
+    if (completarPasos) {
+      return FormatoActividades(
+        ordenId: ordenId,
+        procedimientosRealizados: 'Mantenimiento preventivo general',
+      );
+    }
+    return null;
+  }
 
   @override
   Future<List<Repuesto>> getRepuestos(int ordenId) async => [];
@@ -397,8 +415,8 @@ void main() {
     expect(find.text('4. Acta de Entrega'), findsNothing);
 
     // Validar que la sección de evidencias fotográficas está dentro de la orden de trabajo
-    expect(find.text('Evidencias Fotográficas de la Orden'), findsOneWidget);
-    expect(find.text('Cargar Evidencia'), findsOneWidget);
+    expect(find.text('Evidencias Fotográficas de Recepción'), findsOneWidget);
+    expect(find.text('Cargar Evidencia de Recepción'), findsOneWidget);
     expect(find.text('Guardar Formato de Orden de Trabajo'), findsOneWidget);
 
     // 2. Probar orden cerrada (ENTREGADO_CERRADO)
@@ -419,7 +437,7 @@ void main() {
     expect(find.textContaining('ORDEN FINALIZADA Y ENTREGADA'), findsOneWidget);
     // Botón de guardar OT debe estar reemplazado por botón de lectura
     expect(find.text('Guardar Formato de Orden de Trabajo'), findsNothing);
-    expect(find.text('Cargar Evidencia'), findsNothing);
+    expect(find.text('Cargar Evidencia de Recepción'), findsNothing);
   });
 
   testWidgets('DetalleTallerScreen contiene protocolo de pruebas de diagnóstico pre-entrega (CrystalDiskInfo, HWMonitor, MemTest)', (WidgetTester tester) async {
@@ -430,7 +448,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          ordenesRepositoryProvider.overrideWithValue(_MockTallerRepository()),
+          ordenesRepositoryProvider.overrideWithValue(_MockTallerRepository(completarPasos: true)),
         ],
         child: const MaterialApp(
           home: DetalleTallerScreen(ordenId: 1),
