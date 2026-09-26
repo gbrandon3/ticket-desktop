@@ -405,8 +405,22 @@ class ApiOrdenesRepository implements IOrdenesRepository {
         if (data['success'] == true && data['data'] != null) {
           final d = data['data'];
           final tipo = d['tipo'] ?? 'no_encontrado';
-          if (tipo == 'orden') {
-            return {'tipo': 'orden', 'orden': _mapOrden(d['orden'])};
+          if (tipo == 'orden' || tipo == 'ticket') {
+            final ord = _mapOrden(d['orden']);
+            List<FotoEvidencia> fotos = [];
+            if (d['fotos'] is List) {
+              fotos = (d['fotos'] as List).map((f) => FotoEvidencia(
+                id: f['id'],
+                ordenId: f['ordenId'],
+                etapa: f['etapa'],
+                rutaOBytesBase64: f['rutaOBytesBase64'],
+                notaTecnica: f['notaTecnica'],
+                fechaCaptura: DateTime.tryParse(f['fechaCaptura'] ?? '') ?? DateTime.now(),
+              )).toList();
+            } else if (ord.id != null) {
+              fotos = await getFotosEvidencia(ord.id!);
+            }
+            return {'tipo': 'ticket', 'orden': ord, 'fotos': fotos};
           } else if (tipo == 'cliente') {
             final c = _mapCliente(d['cliente']);
             final eqs = (d['equipos'] as List? ?? []).map((e) => _mapEquipo(e)).toList();

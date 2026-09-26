@@ -257,9 +257,21 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
 
                   // ==================== RESULTADO ====================
                   if (_resultado != null) ...[
-                    if (_resultado!['tipo'] == 'ticket') _buildTicketResultCard(_resultado!['orden'] as Orden, _resultado!['fotos'] as List<FotoEvidencia>),
-                    if (_resultado!['tipo'] == 'equipo') _buildEquipoResultCard(_resultado!['equipo'] as Equipo, _resultado!['historial'] as List<Orden>),
-                    if (_resultado!['tipo'] == 'cliente') _buildClienteResultCard(_resultado!['cliente'] as Cliente, _resultado!['ordenes'] as List<Orden>),
+                    if (_resultado!['tipo'] == 'ticket' || _resultado!['tipo'] == 'orden')
+                      _buildTicketResultCard(
+                        _resultado!['orden'] as Orden,
+                        (_resultado!['fotos'] as List?)?.cast<FotoEvidencia>() ?? [],
+                      ),
+                    if (_resultado!['tipo'] == 'equipo')
+                      _buildEquipoResultCard(
+                        _resultado!['equipo'] as Equipo,
+                        (_resultado!['historial'] as List?)?.cast<Orden>() ?? [],
+                      ),
+                    if (_resultado!['tipo'] == 'cliente')
+                      _buildClienteResultCard(
+                        _resultado!['cliente'] as Cliente,
+                        (_resultado!['ordenes'] as List?)?.cast<Orden>() ?? [],
+                      ),
                   ],
                 ],
               ),

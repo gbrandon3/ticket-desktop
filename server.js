@@ -1083,14 +1083,39 @@ app.get('/api/consulta-publica', (req, res) => {
       return res.json({ success: true, data: { tipo: 'no_encontrado' } });
     }
 
+    const cleanQ = q.toUpperCase().replace('#', '').trim();
+
     // 1. Buscar por Código de Orden exacto o parcial
-    const ordenRow = db.prepare('SELECT * FROM ordenes WHERE codigo_orden = ? OR codigo_orden LIKE ?').get(q, `%${q}%`);
+    const ordenRow = db.prepare(`
+      SELECT * FROM ordenes 
+      WHERE UPPER(codigo_orden) = ? 
+         OR UPPER(codigo_orden) = ? 
+         OR UPPER(codigo_orden) = ?
+         OR UPPER(codigo_orden) LIKE ?
+    `).get(cleanQ, `ORD-${cleanQ}`, `TCK-${cleanQ}`, `%${cleanQ}%`);
+
     if (ordenRow) {
-      return res.json({ success: true, data: { tipo: 'orden', orden: formatOrden(ordenRow) } });
+      const fotosRows = db.prepare('SELECT * FROM fotos_evidencia WHERE orden_id = ? ORDER BY id ASC').all(ordenRow.id);
+      const fotos = fotosRows.map(f => ({
+        id: f.id,
+        ordenId: f.orden_id,
+        etapa: f.etapa,
+        rutaOBytesBase64: f.ruta_o_bytes_base64,
+        notaTecnica: f.nota_tecnica,
+        fechaCaptura: f.fecha_captura,
+      }));
+      return res.json({
+        success: true,
+        data: {
+          tipo: 'ticket',
+          orden: formatOrden(ordenRow),
+          fotos,
+        },
+      });
     }
 
     // 2. Buscar por Documento de Cliente
-    const clienteRow = db.prepare('SELECT * FROM clientes WHERE numero_documento = ?').get(q);
+    const clienteRow = db.prepare('SELECT * FROM clientes WHERE numero_documento = ?').get(cleanQ);
     if (clienteRow) {
       const equipos = db.prepare('SELECT * FROM equipos WHERE cliente_id = ?').all(clienteRow.id).map(formatEquipo);
       const ordenes = db.prepare('SELECT * FROM ordenes WHERE cliente_id = ? ORDER BY id DESC').all(clienteRow.id).map(formatOrden);
@@ -1106,7 +1131,7 @@ app.get('/api/consulta-publica', (req, res) => {
     }
 
     // 3. Buscar por Número de Serie de Equipo
-    const equipoRow = db.prepare('SELECT * FROM equipos WHERE numero_serie = ? OR numero_serie LIKE ?').get(q, `%${q}%`);
+    const equipoRow = db.prepare('SELECT * FROM equipos WHERE UPPER(numero_serie) = ? OR UPPER(numero_serie) LIKE ?').get(cleanQ, `%${cleanQ}%`);
     if (equipoRow) {
       const clienteDelEquipo = db.prepare('SELECT * FROM clientes WHERE id = ?').get(equipoRow.cliente_id);
       const historial = db.prepare('SELECT * FROM ordenes WHERE equipo_id = ? ORDER BY id DESC').all(equipoRow.id).map(formatOrden);
@@ -1115,7 +1140,7 @@ app.get('/api/consulta-publica', (req, res) => {
         data: {
           tipo: 'equipo',
           equipo: formatEquipo(equipoRow),
-          cliente: formatCliente(clienteDelEquipo),
+          cliente: clienteDelEquipo ? formatCliente(clienteDelEquipo) : null,
           historial,
         },
       });
