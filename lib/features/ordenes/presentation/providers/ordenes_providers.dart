@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/app_database.dart';
-import '../../data/repositories/ordenes_repository_impl.dart';
+import '../../data/repositories/api_ordenes_repository.dart';
 import '../../domain/entities/dashboard_metrics.dart';
 import '../../domain/entities/empresa_config.dart';
 import '../../domain/entities/orden.dart';
@@ -17,10 +17,9 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
-// Repository
+// Repository (Conectado al servidor central SQLite)
 final ordenesRepositoryProvider = Provider<IOrdenesRepository>((ref) {
-  final db = ref.watch(databaseProvider);
-  return OrdenesRepositoryImpl(db);
+  return ApiOrdenesRepository();
 });
 
 // Use Cases

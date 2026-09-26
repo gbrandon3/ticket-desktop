@@ -57,6 +57,7 @@ app.*.map.json
 *.sqlite
 *.sqlite3
 *.json-cache
+/data/
 
 # Node / npm
 node_modules/

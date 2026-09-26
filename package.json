@@ -8,6 +8,8 @@
     "dev": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "nodemailer": "^6.9.15"
   }
 }
