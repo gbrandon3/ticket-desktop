@@ -23,15 +23,28 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   final StreamController<void> _refreshStream = StreamController<void>.broadcast();
 
   ApiOrdenesRepository({String? baseUrl})
-      : baseUrl = baseUrl ?? (kIsWeb ? '' : 'http://localhost:3000');
+      : baseUrl = baseUrl ?? resolveDefaultBaseUrl();
+
+  static String resolveDefaultBaseUrl() {
+    if (kIsWeb) {
+      final host = Uri.base.host.toLowerCase();
+      // Si estamos en localhost / 127.0.0.1 (puerto de desarrollo de Flutter ej. 58619, 52762):
+      // El backend central de SQLite SIEMPRE está en el puerto 3000:
+      if (host == 'localhost' || host == '127.0.0.1' || host.isEmpty) {
+        return 'http://localhost:3000';
+      }
+      // En despliegues web remotos (ej. https://mitaller.com):
+      if (Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+        return Uri.base.origin;
+      }
+    }
+    return 'http://localhost:3000';
+  }
 
   String _buildUrl(String path, [Map<String, dynamic>? queryParams]) {
-    String base = baseUrl;
-    if (base.isEmpty && kIsWeb && Uri.base.hasAuthority) {
-      base = Uri.base.origin;
-    }
+    String base = baseUrl.trim();
     if (base.isEmpty) {
-      base = 'http://localhost:3000';
+      base = resolveDefaultBaseUrl();
     }
     if (base.endsWith('/')) {
       base = base.substring(0, base.length - 1);
@@ -165,7 +178,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     Usuario? operador,
     Usuario? tecnico,
   }) async {
-    await http.post(
+    final res = await http.post(
       Uri.parse(_buildUrl('/api/setup')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -202,6 +215,9 @@ class ApiOrdenesRepository implements IOrdenesRepository {
           },
       }),
     );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw Exception('Error al guardar configuración (${res.statusCode}): ${res.body}');
+    }
     _notifyChange();
   }
 
