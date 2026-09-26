@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/entities/equipo.dart';
@@ -126,9 +127,7 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
                       ),
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          );
+                          context.go('/login');
                         },
                         icon: const Icon(Icons.arrow_back, size: 16),
                         label: const Text('Iniciar Sesión (Personal)'),

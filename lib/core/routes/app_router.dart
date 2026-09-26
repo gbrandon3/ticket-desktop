@@ -50,7 +50,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
 
       // 1. Ruta pública de consulta ciudadana / seguimiento de ticket (SIEMPRE accesible para clientes)
-      if (loc == '/consulta') {
+      if (loc == '/consulta' || loc.startsWith('/consulta')) {
         return null;
       }
 

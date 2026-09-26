@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/santi_constants.dart';
 import '../../domain/entities/empresa_config.dart';
 import '../providers/auth_provider.dart';
@@ -228,9 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         // Enlace a Consulta Pública
                         InkWell(
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const ConsultaPublicaScreen()),
-                            );
+                            context.go('/consulta');
                           },
                           child: Container(
                             padding: const EdgeInsets.all(12),

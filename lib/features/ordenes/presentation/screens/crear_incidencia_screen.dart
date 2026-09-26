@@ -576,7 +576,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
             } else if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
               baseUrl = Uri.base.origin;
             }
-            final trackingUrl = '$baseUrl/#/consulta?q=$codigo';
+            final trackingUrl = '$baseUrl/#/consulta';
 
             final msg = '''Estimado(a) ${cliente.nombreCompleto},
 
@@ -592,7 +592,7 @@ RESUMEN DE LA INCIDENCIA:
 • Fecha de Radicación: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}
 
 SEGUIMIENTO EN VIVO:
-Puede consultar en tiempo real el avance, diagnósticos y fotografías de evidencia de su equipo ingresando al siguiente enlace:
+Puede consultar en tiempo real el avance, diagnósticos y fotografías de evidencia de su equipo ingresando al portal de consulta con su código de ticket ($codigo):
 $trackingUrl
 
 Atentamente,
