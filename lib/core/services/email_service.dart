@@ -26,7 +26,11 @@ class EmailService {
     if (trimmedUrl.isNotEmpty) {
       endpoint = Uri.parse(trimmedUrl);
     } else if (kIsWeb) {
-      endpoint = Uri.base.resolve('/api/send-email');
+      if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
+        endpoint = Uri.parse('http://localhost:3000/api/send-email');
+      } else {
+        endpoint = Uri.base.resolve('/api/send-email');
+      }
     } else {
       endpoint = Uri.parse('http://localhost:3000/api/send-email');
     }
@@ -66,10 +70,8 @@ class EmailService {
       }
     } catch (e) {
       String detail = e.toString();
-      if (!kIsWeb && trimmedUrl.isEmpty) {
-        detail += ' (En Desktop debe indicar la URL del endpoint Vercel desplegado o correr vercel dev).';
-      } else if (kIsWeb && (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') && trimmedUrl.isEmpty) {
-        detail += ' (En Flutter Web localhost debe indicar la URL del endpoint Vercel o correr vercel dev).';
+      if (trimmedUrl.isEmpty && endpoint.toString().contains('localhost:3000')) {
+        detail = 'Servidor local no detectado en http://localhost:3000. Inicie el servidor ejecutando "node server.js" o "npm start" en la terminal.';
       }
       return EmailResult(
         success: false,

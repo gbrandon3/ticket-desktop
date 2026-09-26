@@ -58,6 +58,10 @@ app.*.map.json
 *.sqlite3
 *.json-cache
 
+# Node / npm
+node_modules/
+
+
 # No photos, images, PDFs or media files
 *.png
 *.jpg

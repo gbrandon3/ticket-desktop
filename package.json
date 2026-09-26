@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Servicio Serverless de Notificaciones SMTP para Santi Inc",
   "main": "api/send-email.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "dependencies": {
     "nodemailer": "^6.9.15"
   }
