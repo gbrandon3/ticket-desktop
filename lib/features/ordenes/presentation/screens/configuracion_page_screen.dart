@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -399,7 +400,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
       smtpPort: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
       smtpUser: _smtpUserCtrl.text.trim(),
       smtpPass: _smtpPassCtrl.text.trim(),
-      smtpApiUrl: _smtpApiUrlCtrl.text.trim(),
+      smtpApiUrl: '',
       portalHostUrl: _portalHostUrlCtrl.text.trim(),
     );
 
@@ -416,50 +417,33 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     }
   }
 
-  // Extraer Host desde el Endpoint
-  void _extraerHostDelEndpoint() {
-    final endpoint = _smtpApiUrlCtrl.text.trim();
-    if (endpoint.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingrese primero la URL del endpoint para extraer el host'), backgroundColor: Colors.orange),
-      );
-      return;
+  // Detectar URL actual del Frontend
+  void _detectarHostFrontend() {
+    String host = 'http://localhost:3000';
+    if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+      host = Uri.base.origin;
     }
-    try {
-      final uri = Uri.parse(endpoint);
-      if (uri.hasScheme && uri.hasAuthority) {
-        final hostBase = '${uri.scheme}://${uri.authority}';
-        setState(() {
-          _portalHostUrlCtrl.text = hostBase;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Host extraído: $hostBase'), backgroundColor: SantiConstants.successGreen),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('URL del endpoint no válida (debe incluir http:// o https://)'), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al analizar URL: $e'), backgroundColor: Colors.red),
-      );
-    }
+    setState(() {
+      _portalHostUrlCtrl.text = host;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Host del Frontend detectado: $host'),
+        backgroundColor: SantiConstants.successGreen,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   // Copiar o Probar Portal de Consulta
   void _copiarOProbarPortal() {
     String host = _portalHostUrlCtrl.text.trim();
-    if (host.isEmpty && _smtpApiUrlCtrl.text.trim().isNotEmpty) {
-      try {
-        final uri = Uri.parse(_smtpApiUrlCtrl.text.trim());
-        if (uri.hasScheme && uri.hasAuthority) {
-          host = '${uri.scheme}://${uri.authority}';
-        }
-      } catch (_) {}
-    }
     if (host.isEmpty) {
-      host = 'https://ticket-desktop.vercel.app';
+      if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+        host = Uri.base.origin;
+      } else {
+        host = 'http://localhost:3000';
+      }
     }
     if (host.endsWith('/')) {
       host = host.substring(0, host.length - 1);
@@ -507,7 +491,6 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     final repo = ref.read(ordenesRepositoryProvider);
 
     final res = await EmailService.sendEmail(
-      apiUrl: _smtpApiUrlCtrl.text.trim(),
       host: _smtpHostCtrl.text.trim(),
       port: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
       user: _smtpUserCtrl.text.trim(),
@@ -1275,25 +1258,14 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                       decoration: const InputDecoration(labelText: 'Nombre o Correo Remitente (Header FROM) *', hintText: 'ej. Soporte Técnico <contacto@empresa.com>'),
                       validator: (v) => v == null || v.trim().isEmpty ? 'Requerido' : null,
                     ),
-                    const SizedBox(height: 14),
-
-                    TextFormField(
-                      controller: _smtpApiUrlCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'URL Endpoint Serverless Vercel (Envío de Correos)',
-                        hintText: 'https://su-proyecto.vercel.app/api/send-email',
-                        helperText: 'Indique la URL de su función en Vercel para enviar correos desde Desktop o Web sin necesidad de servidor local.',
-                        prefixIcon: Icon(Icons.cloud_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _portalHostUrlCtrl,
                       decoration: InputDecoration(
-                        labelText: 'Host / URL Pública del Sistema (para Búsqueda y Seguimiento de Clientes)',
-                        hintText: 'https://su-proyecto.vercel.app',
-                        helperText: 'Enlace base donde los usuarios consultan en vivo su ticket (/consulta). Se incluye en el correo de radicación.',
+                        labelText: 'URL Pública del Frontend (Para Seguimiento de Clientes)',
+                        hintText: 'ej. http://localhost:58619 o https://tu-dominio.com',
+                        helperText: 'Dirección web del Frontend donde los clientes consultan su ticket en vivo (/consulta). Se incluye en el correo de radicación.',
                         prefixIcon: const Icon(Icons.language),
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.copy, size: 20),
@@ -1307,9 +1279,9 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                     Row(
                       children: [
                         OutlinedButton.icon(
-                          onPressed: _extraerHostDelEndpoint,
-                          icon: const Icon(Icons.auto_fix_high, size: 16),
-                          label: const Text('Extraer Host del Endpoint', style: TextStyle(fontSize: 12)),
+                          onPressed: _detectarHostFrontend,
+                          icon: const Icon(Icons.my_location, size: 16),
+                          label: const Text('Detectar URL Actual del Frontend', style: TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: SantiConstants.primaryBlue,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
