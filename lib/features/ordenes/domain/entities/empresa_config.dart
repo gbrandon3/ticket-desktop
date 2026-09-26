@@ -12,6 +12,8 @@ class EmpresaConfig {
   final int? smtpPort;
   final String? smtpUser;
   final String? smtpPass;
+  final String? smtpApiUrl;
+  final String? portalHostUrl;
   final String colorPrimario;
   final String colorSecundario;
   final bool isSetupCompleted;
@@ -30,6 +32,8 @@ class EmpresaConfig {
     this.smtpPort,
     this.smtpUser,
     this.smtpPass,
+    this.smtpApiUrl,
+    this.portalHostUrl,
     this.colorPrimario = '#1E3A8A',
     this.colorSecundario = '#0284C7',
     this.isSetupCompleted = false,
@@ -49,6 +53,8 @@ class EmpresaConfig {
         smtpPort = null,
         smtpUser = null,
         smtpPass = null,
+        smtpApiUrl = null,
+        portalHostUrl = null,
         colorPrimario = '#1E3A8A',
         colorSecundario = '#0284C7',
         isSetupCompleted = false;
@@ -67,6 +73,8 @@ class EmpresaConfig {
     int? smtpPort,
     String? smtpUser,
     String? smtpPass,
+    String? smtpApiUrl,
+    String? portalHostUrl,
     String? colorPrimario,
     String? colorSecundario,
     bool? isSetupCompleted,
@@ -85,6 +93,8 @@ class EmpresaConfig {
       smtpPort: smtpPort ?? this.smtpPort,
       smtpUser: smtpUser ?? this.smtpUser,
       smtpPass: smtpPass ?? this.smtpPass,
+      smtpApiUrl: smtpApiUrl ?? this.smtpApiUrl,
+      portalHostUrl: portalHostUrl ?? this.portalHostUrl,
       colorPrimario: colorPrimario ?? this.colorPrimario,
       colorSecundario: colorSecundario ?? this.colorSecundario,
       isSetupCompleted: isSetupCompleted ?? this.isSetupCompleted,

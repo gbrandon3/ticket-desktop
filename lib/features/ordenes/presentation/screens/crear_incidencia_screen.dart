@@ -555,7 +555,12 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
               config.smtpUser!.trim().isNotEmpty &&
               config.smtpPass!.trim().isNotEmpty) {
             String baseUrl = 'https://ticket-desktop.vercel.app';
-            if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+            if (config.portalHostUrl != null && config.portalHostUrl!.trim().isNotEmpty) {
+              baseUrl = config.portalHostUrl!.trim();
+              if (baseUrl.endsWith('/')) {
+                baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+              }
+            } else if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
               baseUrl = Uri.base.origin;
             }
             final trackingUrl = '$baseUrl/#/consulta?q=$codigo';
@@ -582,6 +587,7 @@ ${config.nombreEmpresa}
 Área de Soporte & Mantenimiento Técnico''';
 
             final resEmail = await EmailService.sendEmail(
+              apiUrl: config.smtpApiUrl,
               host: config.smtpHost ?? 'smtp.gmail.com',
               port: config.smtpPort ?? 465,
               user: config.smtpUser!,

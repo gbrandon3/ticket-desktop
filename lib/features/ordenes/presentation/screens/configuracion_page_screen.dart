@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/santi_constants.dart';
@@ -69,6 +70,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
   final _smtpPassCtrl = TextEditingController();
   final _smtpRemitenteCtrl = TextEditingController();
   final _smtpApiUrlCtrl = TextEditingController();
+  final _portalHostUrlCtrl = TextEditingController();
   final _emailPruebaCtrl = TextEditingController();
   bool _ocultarSmtpPass = true;
   bool _guardandoSmtp = false;
@@ -128,6 +130,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     _smtpPassCtrl.dispose();
     _smtpRemitenteCtrl.dispose();
     _smtpApiUrlCtrl.dispose();
+    _portalHostUrlCtrl.dispose();
     _emailPruebaCtrl.dispose();
     _hexColorCtrl.dispose();
     super.dispose();
@@ -163,6 +166,8 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     _smtpUserCtrl.text = config.smtpUser ?? '';
     _smtpPassCtrl.text = config.smtpPass ?? '';
     _smtpRemitenteCtrl.text = config.email;
+    _smtpApiUrlCtrl.text = config.smtpApiUrl ?? '';
+    _portalHostUrlCtrl.text = config.portalHostUrl ?? '';
 
     // Cargar usuarios
     _cargarUsuarios();
@@ -381,7 +386,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     }
   }
 
-  // Guardar SMTP
+  // Guardar SMTP y Conexión Web
   Future<void> _guardarSmtp() async {
     if (!_smtpFormKey.currentState!.validate()) return;
 
@@ -394,6 +399,8 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
       smtpPort: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
       smtpUser: _smtpUserCtrl.text.trim(),
       smtpPass: _smtpPassCtrl.text.trim(),
+      smtpApiUrl: _smtpApiUrlCtrl.text.trim(),
+      portalHostUrl: _portalHostUrlCtrl.text.trim(),
     );
 
     await repo.saveEmpresaConfig(nuevaConfig);
@@ -401,9 +408,78 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Parámetros SMTP actualizados correctamente'), backgroundColor: SantiConstants.successGreen),
+        const SnackBar(
+          content: Text('Parámetros SMTP y Host de Consulta guardados correctamente'),
+          backgroundColor: SantiConstants.successGreen,
+        ),
       );
     }
+  }
+
+  // Extraer Host desde el Endpoint
+  void _extraerHostDelEndpoint() {
+    final endpoint = _smtpApiUrlCtrl.text.trim();
+    if (endpoint.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingrese primero la URL del endpoint para extraer el host'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+    try {
+      final uri = Uri.parse(endpoint);
+      if (uri.hasScheme && uri.hasAuthority) {
+        final hostBase = '${uri.scheme}://${uri.authority}';
+        setState(() {
+          _portalHostUrlCtrl.text = hostBase;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Host extraído: $hostBase'), backgroundColor: SantiConstants.successGreen),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('URL del endpoint no válida (debe incluir http:// o https://)'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al analizar URL: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // Copiar o Probar Portal de Consulta
+  void _copiarOProbarPortal() {
+    String host = _portalHostUrlCtrl.text.trim();
+    if (host.isEmpty && _smtpApiUrlCtrl.text.trim().isNotEmpty) {
+      try {
+        final uri = Uri.parse(_smtpApiUrlCtrl.text.trim());
+        if (uri.hasScheme && uri.hasAuthority) {
+          host = '${uri.scheme}://${uri.authority}';
+        }
+      } catch (_) {}
+    }
+    if (host.isEmpty) {
+      host = 'https://ticket-desktop.vercel.app';
+    }
+    if (host.endsWith('/')) {
+      host = host.substring(0, host.length - 1);
+    }
+    final consultaUrl = '$host/#/consulta';
+
+    Clipboard.setData(ClipboardData(text: consultaUrl));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Enlace copiado al portapapeles: $consultaUrl')),
+          ],
+        ),
+        backgroundColor: SantiConstants.successGreen,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   // Probar SMTP
@@ -439,6 +515,9 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
       to: dest,
       subject: 'Diagnóstico de Conexión SMTP - Santi Inc',
       message: 'Este es un mensaje de prueba generado desde el módulo de configuración de Santi Inc para validar la autenticación y conectividad del servidor SMTP.',
+      trackingUrl: _portalHostUrlCtrl.text.trim().isNotEmpty
+          ? '${_portalHostUrlCtrl.text.trim()}/#/consulta'
+          : null,
     );
 
     await repo.registrarNotificacion(
@@ -1201,10 +1280,52 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                     TextFormField(
                       controller: _smtpApiUrlCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'URL Endpoint Serverless Vercel (Opcional)',
+                        labelText: 'URL Endpoint Serverless Vercel (Envío de Correos)',
                         hintText: 'https://su-proyecto.vercel.app/api/send-email',
-                        helperText: 'Déjelo vacío si la app web corre en el mismo dominio de Vercel. Indique la URL si prueba desde Desktop o en localhost.',
+                        helperText: 'Indique la URL de su función en Vercel para enviar correos desde Desktop o Web sin necesidad de servidor local.',
+                        prefixIcon: Icon(Icons.cloud_outlined),
                       ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    TextFormField(
+                      controller: _portalHostUrlCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Host / URL Pública del Sistema (para Búsqueda y Seguimiento de Clientes)',
+                        hintText: 'https://su-proyecto.vercel.app',
+                        helperText: 'Enlace base donde los usuarios consultan en vivo su ticket (/consulta). Se incluye en el correo de radicación.',
+                        prefixIcon: const Icon(Icons.language),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.copy, size: 20),
+                          tooltip: 'Copiar enlace directo de consulta pública',
+                          onPressed: _copiarOProbarPortal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _extraerHostDelEndpoint,
+                          icon: const Icon(Icons.auto_fix_high, size: 16),
+                          label: const Text('Extraer Host del Endpoint', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: SantiConstants.primaryBlue,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        OutlinedButton.icon(
+                          onPressed: _copiarOProbarPortal,
+                          icon: const Icon(Icons.search, size: 16),
+                          label: const Text('Copiar Enlace de Consulta para Clientes', style: TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF0F766E),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 
@@ -1213,7 +1334,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                       child: ElevatedButton.icon(
                         onPressed: _guardandoSmtp ? null : _guardarSmtp,
                         icon: const Icon(Icons.save),
-                        label: Text(_guardandoSmtp ? 'Guardando...' : 'Guardar Configuración SMTP'),
+                        label: Text(_guardandoSmtp ? 'Guardando...' : 'Guardar Configuración SMTP y Host'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SantiConstants.primaryBlue,
                           foregroundColor: Colors.white,

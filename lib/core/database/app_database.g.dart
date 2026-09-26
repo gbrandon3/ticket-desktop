@@ -6336,6 +6336,28 @@ class $ConfiguracionEmpresaTableTable extends ConfiguracionEmpresaTable
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _smtpApiUrlMeta = const VerificationMeta(
+    'smtpApiUrl',
+  );
+  @override
+  late final GeneratedColumn<String> smtpApiUrl = GeneratedColumn<String>(
+    'smtp_api_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _portalHostUrlMeta = const VerificationMeta(
+    'portalHostUrl',
+  );
+  @override
+  late final GeneratedColumn<String> portalHostUrl = GeneratedColumn<String>(
+    'portal_host_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _colorPrimarioMeta = const VerificationMeta(
     'colorPrimario',
   );
@@ -6390,6 +6412,8 @@ class $ConfiguracionEmpresaTableTable extends ConfiguracionEmpresaTable
     smtpPort,
     smtpUser,
     smtpPass,
+    smtpApiUrl,
+    portalHostUrl,
     colorPrimario,
     colorSecundario,
     isSetupCompleted,
@@ -6484,6 +6508,24 @@ class $ConfiguracionEmpresaTableTable extends ConfiguracionEmpresaTable
         smtpPass.isAcceptableOrUnknown(data['smtp_pass']!, _smtpPassMeta),
       );
     }
+    if (data.containsKey('smtp_api_url')) {
+      context.handle(
+        _smtpApiUrlMeta,
+        smtpApiUrl.isAcceptableOrUnknown(
+          data['smtp_api_url']!,
+          _smtpApiUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('portal_host_url')) {
+      context.handle(
+        _portalHostUrlMeta,
+        portalHostUrl.isAcceptableOrUnknown(
+          data['portal_host_url']!,
+          _portalHostUrlMeta,
+        ),
+      );
+    }
     if (data.containsKey('color_primario')) {
       context.handle(
         _colorPrimarioMeta,
@@ -6575,6 +6617,14 @@ class $ConfiguracionEmpresaTableTable extends ConfiguracionEmpresaTable
         DriftSqlType.string,
         data['${effectivePrefix}smtp_pass'],
       ),
+      smtpApiUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}smtp_api_url'],
+      ),
+      portalHostUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}portal_host_url'],
+      ),
       colorPrimario: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}color_primario'],
@@ -6611,6 +6661,8 @@ class ConfiguracionEmpresaTableData extends DataClass
   final int? smtpPort;
   final String? smtpUser;
   final String? smtpPass;
+  final String? smtpApiUrl;
+  final String? portalHostUrl;
   final String colorPrimario;
   final String colorSecundario;
   final bool isSetupCompleted;
@@ -6628,6 +6680,8 @@ class ConfiguracionEmpresaTableData extends DataClass
     this.smtpPort,
     this.smtpUser,
     this.smtpPass,
+    this.smtpApiUrl,
+    this.portalHostUrl,
     required this.colorPrimario,
     required this.colorSecundario,
     required this.isSetupCompleted,
@@ -6657,6 +6711,12 @@ class ConfiguracionEmpresaTableData extends DataClass
     }
     if (!nullToAbsent || smtpPass != null) {
       map['smtp_pass'] = Variable<String>(smtpPass);
+    }
+    if (!nullToAbsent || smtpApiUrl != null) {
+      map['smtp_api_url'] = Variable<String>(smtpApiUrl);
+    }
+    if (!nullToAbsent || portalHostUrl != null) {
+      map['portal_host_url'] = Variable<String>(portalHostUrl);
     }
     map['color_primario'] = Variable<String>(colorPrimario);
     map['color_secundario'] = Variable<String>(colorSecundario);
@@ -6689,6 +6749,12 @@ class ConfiguracionEmpresaTableData extends DataClass
       smtpPass: smtpPass == null && nullToAbsent
           ? const Value.absent()
           : Value(smtpPass),
+      smtpApiUrl: smtpApiUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(smtpApiUrl),
+      portalHostUrl: portalHostUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(portalHostUrl),
       colorPrimario: Value(colorPrimario),
       colorSecundario: Value(colorSecundario),
       isSetupCompleted: Value(isSetupCompleted),
@@ -6714,6 +6780,8 @@ class ConfiguracionEmpresaTableData extends DataClass
       smtpPort: serializer.fromJson<int?>(json['smtpPort']),
       smtpUser: serializer.fromJson<String?>(json['smtpUser']),
       smtpPass: serializer.fromJson<String?>(json['smtpPass']),
+      smtpApiUrl: serializer.fromJson<String?>(json['smtpApiUrl']),
+      portalHostUrl: serializer.fromJson<String?>(json['portalHostUrl']),
       colorPrimario: serializer.fromJson<String>(json['colorPrimario']),
       colorSecundario: serializer.fromJson<String>(json['colorSecundario']),
       isSetupCompleted: serializer.fromJson<bool>(json['isSetupCompleted']),
@@ -6736,6 +6804,8 @@ class ConfiguracionEmpresaTableData extends DataClass
       'smtpPort': serializer.toJson<int?>(smtpPort),
       'smtpUser': serializer.toJson<String?>(smtpUser),
       'smtpPass': serializer.toJson<String?>(smtpPass),
+      'smtpApiUrl': serializer.toJson<String?>(smtpApiUrl),
+      'portalHostUrl': serializer.toJson<String?>(portalHostUrl),
       'colorPrimario': serializer.toJson<String>(colorPrimario),
       'colorSecundario': serializer.toJson<String>(colorSecundario),
       'isSetupCompleted': serializer.toJson<bool>(isSetupCompleted),
@@ -6756,6 +6826,8 @@ class ConfiguracionEmpresaTableData extends DataClass
     Value<int?> smtpPort = const Value.absent(),
     Value<String?> smtpUser = const Value.absent(),
     Value<String?> smtpPass = const Value.absent(),
+    Value<String?> smtpApiUrl = const Value.absent(),
+    Value<String?> portalHostUrl = const Value.absent(),
     String? colorPrimario,
     String? colorSecundario,
     bool? isSetupCompleted,
@@ -6773,6 +6845,10 @@ class ConfiguracionEmpresaTableData extends DataClass
     smtpPort: smtpPort.present ? smtpPort.value : this.smtpPort,
     smtpUser: smtpUser.present ? smtpUser.value : this.smtpUser,
     smtpPass: smtpPass.present ? smtpPass.value : this.smtpPass,
+    smtpApiUrl: smtpApiUrl.present ? smtpApiUrl.value : this.smtpApiUrl,
+    portalHostUrl: portalHostUrl.present
+        ? portalHostUrl.value
+        : this.portalHostUrl,
     colorPrimario: colorPrimario ?? this.colorPrimario,
     colorSecundario: colorSecundario ?? this.colorSecundario,
     isSetupCompleted: isSetupCompleted ?? this.isSetupCompleted,
@@ -6798,6 +6874,12 @@ class ConfiguracionEmpresaTableData extends DataClass
       smtpPort: data.smtpPort.present ? data.smtpPort.value : this.smtpPort,
       smtpUser: data.smtpUser.present ? data.smtpUser.value : this.smtpUser,
       smtpPass: data.smtpPass.present ? data.smtpPass.value : this.smtpPass,
+      smtpApiUrl: data.smtpApiUrl.present
+          ? data.smtpApiUrl.value
+          : this.smtpApiUrl,
+      portalHostUrl: data.portalHostUrl.present
+          ? data.portalHostUrl.value
+          : this.portalHostUrl,
       colorPrimario: data.colorPrimario.present
           ? data.colorPrimario.value
           : this.colorPrimario,
@@ -6826,6 +6908,8 @@ class ConfiguracionEmpresaTableData extends DataClass
           ..write('smtpPort: $smtpPort, ')
           ..write('smtpUser: $smtpUser, ')
           ..write('smtpPass: $smtpPass, ')
+          ..write('smtpApiUrl: $smtpApiUrl, ')
+          ..write('portalHostUrl: $portalHostUrl, ')
           ..write('colorPrimario: $colorPrimario, ')
           ..write('colorSecundario: $colorSecundario, ')
           ..write('isSetupCompleted: $isSetupCompleted')
@@ -6848,6 +6932,8 @@ class ConfiguracionEmpresaTableData extends DataClass
     smtpPort,
     smtpUser,
     smtpPass,
+    smtpApiUrl,
+    portalHostUrl,
     colorPrimario,
     colorSecundario,
     isSetupCompleted,
@@ -6869,6 +6955,8 @@ class ConfiguracionEmpresaTableData extends DataClass
           other.smtpPort == this.smtpPort &&
           other.smtpUser == this.smtpUser &&
           other.smtpPass == this.smtpPass &&
+          other.smtpApiUrl == this.smtpApiUrl &&
+          other.portalHostUrl == this.portalHostUrl &&
           other.colorPrimario == this.colorPrimario &&
           other.colorSecundario == this.colorSecundario &&
           other.isSetupCompleted == this.isSetupCompleted);
@@ -6889,6 +6977,8 @@ class ConfiguracionEmpresaTableCompanion
   final Value<int?> smtpPort;
   final Value<String?> smtpUser;
   final Value<String?> smtpPass;
+  final Value<String?> smtpApiUrl;
+  final Value<String?> portalHostUrl;
   final Value<String> colorPrimario;
   final Value<String> colorSecundario;
   final Value<bool> isSetupCompleted;
@@ -6906,6 +6996,8 @@ class ConfiguracionEmpresaTableCompanion
     this.smtpPort = const Value.absent(),
     this.smtpUser = const Value.absent(),
     this.smtpPass = const Value.absent(),
+    this.smtpApiUrl = const Value.absent(),
+    this.portalHostUrl = const Value.absent(),
     this.colorPrimario = const Value.absent(),
     this.colorSecundario = const Value.absent(),
     this.isSetupCompleted = const Value.absent(),
@@ -6924,6 +7016,8 @@ class ConfiguracionEmpresaTableCompanion
     this.smtpPort = const Value.absent(),
     this.smtpUser = const Value.absent(),
     this.smtpPass = const Value.absent(),
+    this.smtpApiUrl = const Value.absent(),
+    this.portalHostUrl = const Value.absent(),
     this.colorPrimario = const Value.absent(),
     this.colorSecundario = const Value.absent(),
     this.isSetupCompleted = const Value.absent(),
@@ -6942,6 +7036,8 @@ class ConfiguracionEmpresaTableCompanion
     Expression<int>? smtpPort,
     Expression<String>? smtpUser,
     Expression<String>? smtpPass,
+    Expression<String>? smtpApiUrl,
+    Expression<String>? portalHostUrl,
     Expression<String>? colorPrimario,
     Expression<String>? colorSecundario,
     Expression<bool>? isSetupCompleted,
@@ -6960,6 +7056,8 @@ class ConfiguracionEmpresaTableCompanion
       if (smtpPort != null) 'smtp_port': smtpPort,
       if (smtpUser != null) 'smtp_user': smtpUser,
       if (smtpPass != null) 'smtp_pass': smtpPass,
+      if (smtpApiUrl != null) 'smtp_api_url': smtpApiUrl,
+      if (portalHostUrl != null) 'portal_host_url': portalHostUrl,
       if (colorPrimario != null) 'color_primario': colorPrimario,
       if (colorSecundario != null) 'color_secundario': colorSecundario,
       if (isSetupCompleted != null) 'is_setup_completed': isSetupCompleted,
@@ -6980,6 +7078,8 @@ class ConfiguracionEmpresaTableCompanion
     Value<int?>? smtpPort,
     Value<String?>? smtpUser,
     Value<String?>? smtpPass,
+    Value<String?>? smtpApiUrl,
+    Value<String?>? portalHostUrl,
     Value<String>? colorPrimario,
     Value<String>? colorSecundario,
     Value<bool>? isSetupCompleted,
@@ -6998,6 +7098,8 @@ class ConfiguracionEmpresaTableCompanion
       smtpPort: smtpPort ?? this.smtpPort,
       smtpUser: smtpUser ?? this.smtpUser,
       smtpPass: smtpPass ?? this.smtpPass,
+      smtpApiUrl: smtpApiUrl ?? this.smtpApiUrl,
+      portalHostUrl: portalHostUrl ?? this.portalHostUrl,
       colorPrimario: colorPrimario ?? this.colorPrimario,
       colorSecundario: colorSecundario ?? this.colorSecundario,
       isSetupCompleted: isSetupCompleted ?? this.isSetupCompleted,
@@ -7046,6 +7148,12 @@ class ConfiguracionEmpresaTableCompanion
     if (smtpPass.present) {
       map['smtp_pass'] = Variable<String>(smtpPass.value);
     }
+    if (smtpApiUrl.present) {
+      map['smtp_api_url'] = Variable<String>(smtpApiUrl.value);
+    }
+    if (portalHostUrl.present) {
+      map['portal_host_url'] = Variable<String>(portalHostUrl.value);
+    }
     if (colorPrimario.present) {
       map['color_primario'] = Variable<String>(colorPrimario.value);
     }
@@ -7074,6 +7182,8 @@ class ConfiguracionEmpresaTableCompanion
           ..write('smtpPort: $smtpPort, ')
           ..write('smtpUser: $smtpUser, ')
           ..write('smtpPass: $smtpPass, ')
+          ..write('smtpApiUrl: $smtpApiUrl, ')
+          ..write('portalHostUrl: $portalHostUrl, ')
           ..write('colorPrimario: $colorPrimario, ')
           ..write('colorSecundario: $colorSecundario, ')
           ..write('isSetupCompleted: $isSetupCompleted')
@@ -12866,6 +12976,8 @@ typedef $$ConfiguracionEmpresaTableTableCreateCompanionBuilder =
       Value<int?> smtpPort,
       Value<String?> smtpUser,
       Value<String?> smtpPass,
+      Value<String?> smtpApiUrl,
+      Value<String?> portalHostUrl,
       Value<String> colorPrimario,
       Value<String> colorSecundario,
       Value<bool> isSetupCompleted,
@@ -12885,6 +12997,8 @@ typedef $$ConfiguracionEmpresaTableTableUpdateCompanionBuilder =
       Value<int?> smtpPort,
       Value<String?> smtpUser,
       Value<String?> smtpPass,
+      Value<String?> smtpApiUrl,
+      Value<String?> portalHostUrl,
       Value<String> colorPrimario,
       Value<String> colorSecundario,
       Value<bool> isSetupCompleted,
@@ -12961,6 +13075,16 @@ class $$ConfiguracionEmpresaTableTableFilterComposer
 
   ColumnFilters<String> get smtpPass => $composableBuilder(
     column: $table.smtpPass,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get smtpApiUrl => $composableBuilder(
+    column: $table.smtpApiUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get portalHostUrl => $composableBuilder(
+    column: $table.portalHostUrl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13054,6 +13178,16 @@ class $$ConfiguracionEmpresaTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get smtpApiUrl => $composableBuilder(
+    column: $table.smtpApiUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get portalHostUrl => $composableBuilder(
+    column: $table.portalHostUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get colorPrimario => $composableBuilder(
     column: $table.colorPrimario,
     builder: (column) => ColumnOrderings(column),
@@ -13121,6 +13255,16 @@ class $$ConfiguracionEmpresaTableTableAnnotationComposer
 
   GeneratedColumn<String> get smtpPass =>
       $composableBuilder(column: $table.smtpPass, builder: (column) => column);
+
+  GeneratedColumn<String> get smtpApiUrl => $composableBuilder(
+    column: $table.smtpApiUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get portalHostUrl => $composableBuilder(
+    column: $table.portalHostUrl,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get colorPrimario => $composableBuilder(
     column: $table.colorPrimario,
@@ -13197,6 +13341,8 @@ class $$ConfiguracionEmpresaTableTableTableManager
                 Value<int?> smtpPort = const Value.absent(),
                 Value<String?> smtpUser = const Value.absent(),
                 Value<String?> smtpPass = const Value.absent(),
+                Value<String?> smtpApiUrl = const Value.absent(),
+                Value<String?> portalHostUrl = const Value.absent(),
                 Value<String> colorPrimario = const Value.absent(),
                 Value<String> colorSecundario = const Value.absent(),
                 Value<bool> isSetupCompleted = const Value.absent(),
@@ -13214,6 +13360,8 @@ class $$ConfiguracionEmpresaTableTableTableManager
                 smtpPort: smtpPort,
                 smtpUser: smtpUser,
                 smtpPass: smtpPass,
+                smtpApiUrl: smtpApiUrl,
+                portalHostUrl: portalHostUrl,
                 colorPrimario: colorPrimario,
                 colorSecundario: colorSecundario,
                 isSetupCompleted: isSetupCompleted,
@@ -13233,6 +13381,8 @@ class $$ConfiguracionEmpresaTableTableTableManager
                 Value<int?> smtpPort = const Value.absent(),
                 Value<String?> smtpUser = const Value.absent(),
                 Value<String?> smtpPass = const Value.absent(),
+                Value<String?> smtpApiUrl = const Value.absent(),
+                Value<String?> portalHostUrl = const Value.absent(),
                 Value<String> colorPrimario = const Value.absent(),
                 Value<String> colorSecundario = const Value.absent(),
                 Value<bool> isSetupCompleted = const Value.absent(),
@@ -13250,6 +13400,8 @@ class $$ConfiguracionEmpresaTableTableTableManager
                 smtpPort: smtpPort,
                 smtpUser: smtpUser,
                 smtpPass: smtpPass,
+                smtpApiUrl: smtpApiUrl,
+                portalHostUrl: portalHostUrl,
                 colorPrimario: colorPrimario,
                 colorSecundario: colorSecundario,
                 isSetupCompleted: isSetupCompleted,

@@ -157,11 +157,13 @@ class ConfiguracionEmpresaTable extends Table {
   TextColumn get ciudad => text().withDefault(const Constant('Colombia'))();
   TextColumn get logoBase64 => text().nullable()();
   
-  // Parámetros SMTP
+  // Parámetros SMTP y Conexión Web
   TextColumn get smtpHost => text().nullable()();
   IntColumn get smtpPort => integer().nullable()();
   TextColumn get smtpUser => text().nullable()();
   TextColumn get smtpPass => text().nullable()();
+  TextColumn get smtpApiUrl => text().nullable()();
+  TextColumn get portalHostUrl => text().nullable()();
 
   // Personalización visual
   TextColumn get colorPrimario => text().withDefault(const Constant('#1E3A8A'))();
@@ -209,7 +211,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(configuracionEmpresaTable, configuracionEmpresaTable.smtpApiUrl);
+            await m.addColumn(configuracionEmpresaTable, configuracionEmpresaTable.portalHostUrl);
+          }
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(

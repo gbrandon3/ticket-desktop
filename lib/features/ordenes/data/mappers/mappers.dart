@@ -187,6 +187,8 @@ class Mappers {
       smtpPort: data.smtpPort,
       smtpUser: data.smtpUser,
       smtpPass: data.smtpPass,
+      smtpApiUrl: data.smtpApiUrl,
+      portalHostUrl: data.portalHostUrl,
       colorPrimario: data.colorPrimario,
       colorSecundario: data.colorSecundario,
       isSetupCompleted: data.isSetupCompleted,
