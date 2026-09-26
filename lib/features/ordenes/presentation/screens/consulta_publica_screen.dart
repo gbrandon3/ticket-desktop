@@ -10,7 +10,9 @@ import '../providers/ordenes_providers.dart';
 import 'login_screen.dart';
 
 class ConsultaPublicaScreen extends ConsumerStatefulWidget {
-  const ConsultaPublicaScreen({super.key});
+  final String? initialQuery;
+
+  const ConsultaPublicaScreen({super.key, this.initialQuery});
 
   @override
   ConsumerState<ConsultaPublicaScreen> createState() => _ConsultaPublicaScreenState();
@@ -22,6 +24,17 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
   String? _errorMsg;
   Map<String, dynamic>? _resultado;
   String? _fotoAmpliadaBase64;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty) {
+      _searchCtrl.text = widget.initialQuery!.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _ejecutarConsulta(widget.initialQuery!.trim());
+      });
+    }
+  }
 
   @override
   void dispose() {

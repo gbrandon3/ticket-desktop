@@ -19,6 +19,7 @@ class EmailService {
     required String to,
     required String subject,
     required String message,
+    String? trackingUrl,
   }) async {
     Uri endpoint;
     final trimmedUrl = apiUrl?.trim() ?? '';
@@ -50,6 +51,7 @@ class EmailService {
           'to': to.trim(),
           'subject': subject.trim(),
           'message': message.trim(),
+          if (trackingUrl != null && trackingUrl.trim().isNotEmpty) 'trackingUrl': trackingUrl.trim(),
         }),
       ).timeout(const Duration(seconds: 15));
 

@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
         // keep as is
       }
     }
-    const { host, port, user, pass, to, subject, message } = body || {};
+    const { host, port, user, pass, to, subject, message, trackingUrl } = body || {};
 
     if (!to || !subject || !message) {
       return res.status(400).json({
@@ -81,6 +81,19 @@ module.exports = async (req, res) => {
           <div style="font-size: 15px; color: #1e293b; line-height: 1.6; margin-bottom: 24px;">
             ${message.replace(/\n/g, '<br/>')}
           </div>
+          ${trackingUrl ? `
+            <div style="text-align: center; margin: 28px 0; padding: 18px; background-color: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+              <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; font-weight: 500;">
+                Haga clic para ver el estado, procedimientos y evidencias en vivo:
+              </p>
+              <a href="${trackingUrl}" target="_blank" style="background-color: #2563eb; color: #ffffff; padding: 13px 26px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                🔍 Consultar Estado de mi Incidencia en Vivo
+              </a>
+              <div style="margin-top: 10px; font-size: 11px; color: #94a3b8;">
+                Enlace directo: <a href="${trackingUrl}" style="color: #2563eb; word-break: break-all;">${trackingUrl}</a>
+              </div>
+            </div>
+          ` : ''}
           <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 12px; color: #94a3b8; text-align: center;">
             Este es un mensaje automático de confirmación generado por el sistema de tickets de Santi Inc.
           </div>

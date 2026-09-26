@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/santi_constants.dart';
 import '../../../../core/services/email_service.dart';
+import '../../../../core/services/export_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/notificacion_auditoria.dart';
 import '../../domain/entities/usuario.dart';
@@ -80,12 +81,17 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
   Color _customHeaderColor = const Color(0xFF0F172A);
   final _hexColorCtrl = TextEditingController(text: '#EA580C');
 
+  // TAB 7: RESPALDO & DATOS
+  bool _exportandoBackup = false;
+  bool _exportandoTicketsCsv = false;
+  bool _exportandoClientesCsv = false;
+
   @override
   void initState() {
     super.initState();
     final user = ref.read(authProvider);
     final esAdmin = user?.rol == 'admin';
-    final count = esAdmin ? 6 : 1;
+    final count = esAdmin ? 7 : 1;
     final initialIdx = (widget.initialTabIndex >= count || !esAdmin) ? 0 : widget.initialTabIndex;
     _tabController = TabController(length: count, vsync: this, initialIndex: initialIdx);
     _cargarDatosIniciales();
@@ -414,7 +420,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     final user = ref.watch(authProvider);
     final esAdmin = user?.rol == 'admin';
     final themeState = ref.watch(appThemeNotifierProvider);
-    final expectedLength = esAdmin ? 6 : 1;
+    final expectedLength = esAdmin ? 7 : 1;
 
     if (_tabController.length != expectedLength) {
       _tabController.dispose();
@@ -440,6 +446,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                   Tab(icon: Icon(Icons.mark_email_read, size: 20), text: 'Servidor SMTP'),
                   Tab(icon: Icon(Icons.palette, size: 20), text: 'Tema Visual'),
                   Tab(icon: Icon(Icons.build_circle_outlined, size: 20), text: 'Fallas & Diagnósticos'),
+                  Tab(icon: Icon(Icons.cloud_download_outlined, size: 20), text: 'Respaldo & Datos'),
                 ]
               : const [
                   Tab(icon: Icon(Icons.person, size: 20), text: 'Mi Perfil'),
@@ -456,6 +463,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                 _buildTabSmtp(),
                 _buildTabTema(themeState),
                 _buildTabCatalogoFallas(),
+                _buildTabRespaldo(),
               ]
             : [
                 _buildTabPerfil(),
@@ -1959,6 +1967,283 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
             },
             child: const Text('Agregar'),
           ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== TAB 7: RESPALDO & DATOS ====================
+  Widget _buildTabRespaldo() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Copias de Seguridad & Exportación de Datos',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: SantiConstants.primaryNavy),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Descargue respaldos íntegros de la base de datos o exporte tablas individuales a formato Excel/CSV para auditorías, reportes y salvaguarda de información.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+
+          // Card 1: Full Backup
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.cloud_download, color: SantiConstants.primaryBlue, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Copia de Seguridad Completa (Full Backup JSON)',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Genera un archivo JSON con todos los clientes, equipos, historial de órdenes, catálogo de fallas y configuración institucional.',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _exportandoBackup
+                        ? null
+                        : () async {
+                            setState(() => _exportandoBackup = true);
+                            try {
+                              final repo = ref.read(ordenesRepositoryProvider);
+                              final res = await ExportService.exportFullBackup(repo);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res ?? 'Copia de seguridad generada exitosamente'),
+                                    backgroundColor: SantiConstants.successGreen,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error al generar respaldo: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _exportandoBackup = false);
+                            }
+                          },
+                    icon: _exportandoBackup
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.download),
+                    label: Text(_exportandoBackup ? 'Generando Respaldo...' : 'Descargar Copia de Seguridad Completa (.JSON)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SantiConstants.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Card 2: Exportar Órdenes a CSV
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.table_chart, color: Colors.green, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Historial Operativo de Tickets y Órdenes (.CSV / Excel)',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Exporta todas las órdenes con clientes, equipos asociados, fechas, estado y técnicos asignados con codificación UTF-8 compatible con Excel.',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _exportandoTicketsCsv
+                        ? null
+                        : () async {
+                            setState(() => _exportandoTicketsCsv = true);
+                            try {
+                              final repo = ref.read(ordenesRepositoryProvider);
+                              final ordenes = await repo.getOrdenes();
+                              final res = await ExportService.exportOrdenesCsv(ordenes);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res ?? 'Se exportaron ${ordenes.length} órdenes a CSV'),
+                                    backgroundColor: SantiConstants.successGreen,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error al exportar CSV: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _exportandoTicketsCsv = false);
+                            }
+                          },
+                    icon: _exportandoTicketsCsv
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.file_download),
+                    label: Text(_exportandoTicketsCsv ? 'Exportando...' : 'Exportar Tickets a Excel / CSV'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Card 3: Exportar Clientes y Equipos a CSV
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.people_alt, color: Colors.orange, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Directorio de Clientes y Equipos (.CSV / Excel)',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Exporta la base de clientes registrados con sus datos de contacto y total de equipos vinculados.',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _exportandoClientesCsv
+                        ? null
+                        : () async {
+                            setState(() => _exportandoClientesCsv = true);
+                            try {
+                              final repo = ref.read(ordenesRepositoryProvider);
+                              final clientes = await repo.searchClientes('');
+                              final equipos = await repo.getInventarioEquipos();
+                              final res = await ExportService.exportClientesEquiposCsv(clientes: clientes, equipos: equipos);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(res ?? 'Se exportaron ${clientes.length} clientes a CSV'),
+                                    backgroundColor: SantiConstants.successGreen,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error al exportar clientes: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _exportandoClientesCsv = false);
+                            }
+                          },
+                    icon: _exportandoClientesCsv
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.file_download),
+                    label: Text(_exportandoClientesCsv ? 'Exportando...' : 'Exportar Directorio de Clientes (.CSV)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
         ],
       ),
     );

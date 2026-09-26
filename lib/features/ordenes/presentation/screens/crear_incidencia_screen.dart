@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import '../../../../core/services/email_service.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/entities/equipo.dart';
+import '../../domain/entities/notificacion_auditoria.dart';
 import '../../domain/entities/orden.dart';
 import '../../domain/entities/usuario.dart';
 import '../providers/auth_provider.dart';
@@ -538,6 +542,76 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
         fotoIngresoBase64: _fotoBase64,
       );
 
+      bool correoEnviado = false;
+      String? errorCorreo;
+
+      if (cliente.email != null && cliente.email!.trim().isNotEmpty) {
+        try {
+          final repo = ref.read(ordenesRepositoryProvider);
+          final config = await repo.getEmpresaConfig();
+
+          if (config.smtpUser != null &&
+              config.smtpPass != null &&
+              config.smtpUser!.trim().isNotEmpty &&
+              config.smtpPass!.trim().isNotEmpty) {
+            String baseUrl = 'https://ticket-desktop.vercel.app';
+            if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+              baseUrl = Uri.base.origin;
+            }
+            final trackingUrl = '$baseUrl/#/consulta?q=$codigo';
+
+            final msg = '''Estimado(a) ${cliente.nombreCompleto},
+
+Su orden de servicio técnico ha sido radicada exitosamente en ${config.nombreEmpresa}.
+
+RESUMEN DE LA INCIDENCIA:
+• Código de Ticket: $codigo
+• Equipo: $_tipoEquipo - ${_marcaCtrl.text.trim()} ${_modeloCtrl.text.trim()}
+• Número de Serie: ${_serialCtrl.text.trim().isNotEmpty ? _serialCtrl.text.trim() : 'N/A'}
+• Tipo de Servicio: $_tipoServicio
+• Falla / Motivo: ${_categoriaFallaCtrl.text.trim().isNotEmpty ? _categoriaFallaCtrl.text.trim() : _categoriaFalla}
+• Prioridad: $prioridadCorta
+• Fecha de Radicación: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}
+
+SEGUIMIENTO EN VIVO:
+Puede consultar en tiempo real el avance, diagnósticos y fotografías de evidencia de su equipo ingresando al siguiente enlace:
+$trackingUrl
+
+Atentamente,
+${config.nombreEmpresa}
+Área de Soporte & Mantenimiento Técnico''';
+
+            final resEmail = await EmailService.sendEmail(
+              host: config.smtpHost ?? 'smtp.gmail.com',
+              port: config.smtpPort ?? 465,
+              user: config.smtpUser!,
+              pass: config.smtpPass!,
+              to: cliente.email!.trim(),
+              subject: 'Incidencia Radicada #$codigo - ${config.nombreEmpresa}',
+              message: msg,
+              trackingUrl: trackingUrl,
+            );
+
+            correoEnviado = resEmail.success;
+            if (!resEmail.success) {
+              errorCorreo = resEmail.message;
+            }
+
+            await repo.registrarNotificacion(
+              NotificacionAuditoria(
+                destinatario: cliente.email!.trim(),
+                asunto: 'Incidencia Radicada #$codigo',
+                evento: 'NUEVA_ORDEN_CLIENTE',
+                estado: resEmail.success ? 'ENVIADO' : 'FALLIDO',
+                fechaEnvio: DateTime.now(),
+              ),
+            );
+          }
+        } catch (err) {
+          errorCorreo = err.toString();
+        }
+      }
+
       setState(() => _guardando = false);
 
       if (mounted) {
@@ -595,6 +669,41 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                             color: _tecnicoSeleccionado != null ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                           ),
                         ),
+                        if (cliente.email != null && cliente.email!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: correoEnviado ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: correoEnviado ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  correoEnviado ? Icons.mark_email_read : Icons.mail_outline,
+                                  size: 16,
+                                  color: correoEnviado ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    correoEnviado
+                                        ? 'Notificación enviada con enlace de seguimiento a ${cliente.email}'
+                                        : (errorCorreo != null
+                                            ? 'No se pudo enviar correo: $errorCorreo'
+                                            : 'Aviso: Configure el servidor SMTP para enviar enlaces automáticos.'),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: correoEnviado ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
