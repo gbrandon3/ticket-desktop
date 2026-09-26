@@ -1,0 +1,9 @@
+{
+  "name": "tickets-app-backend",
+  "version": "1.0.0",
+  "description": "Servicio Serverless de Notificaciones SMTP para Santi Inc",
+  "main": "api/send-email.js",
+  "dependencies": {
+    "nodemailer": "^6.9.15"
+  }
+}

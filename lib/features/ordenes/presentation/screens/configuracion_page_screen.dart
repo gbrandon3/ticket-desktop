@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/santi_constants.dart';
+import '../../../../core/services/email_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/notificacion_auditoria.dart';
 import '../../domain/entities/usuario.dart';
@@ -66,6 +67,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
   final _smtpUserCtrl = TextEditingController();
   final _smtpPassCtrl = TextEditingController();
   final _smtpRemitenteCtrl = TextEditingController();
+  final _smtpApiUrlCtrl = TextEditingController();
   final _emailPruebaCtrl = TextEditingController();
   bool _ocultarSmtpPass = true;
   bool _guardandoSmtp = false;
@@ -119,6 +121,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     _smtpUserCtrl.dispose();
     _smtpPassCtrl.dispose();
     _smtpRemitenteCtrl.dispose();
+    _smtpApiUrlCtrl.dispose();
     _emailPruebaCtrl.dispose();
     _hexColorCtrl.dispose();
     super.dispose();
@@ -362,6 +365,13 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
       return;
     }
 
+    if (_smtpUserCtrl.text.trim().isEmpty || _smtpPassCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingrese usuario y contraseña de aplicación SMTP antes de probar'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
     setState(() {
       _probandoSmtp = true;
       _resultadoPruebaSmtp = null;
@@ -369,20 +379,23 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
 
     final repo = ref.read(ordenesRepositoryProvider);
 
-    // Simulación de envío y registro en auditoría Drift
-    await Future.delayed(const Duration(seconds: 2));
-
-    final exito = _smtpUserCtrl.text.trim().isNotEmpty && _smtpPassCtrl.text.trim().isNotEmpty;
-    final mensaje = exito
-        ? 'Correo de prueba enviado exitosamente a $dest vía ${_smtpHostCtrl.text}:${_smtpPortCtrl.text}'
-        : 'Fallo al autenticar en el servidor SMTP: Usuario o contraseña incompletos';
+    final res = await EmailService.sendEmail(
+      apiUrl: _smtpApiUrlCtrl.text.trim(),
+      host: _smtpHostCtrl.text.trim(),
+      port: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
+      user: _smtpUserCtrl.text.trim(),
+      pass: _smtpPassCtrl.text.trim(),
+      to: dest,
+      subject: 'Diagnóstico de Conexión SMTP - Santi Inc',
+      message: 'Este es un mensaje de prueba generado desde el módulo de configuración de Santi Inc para validar la autenticación y conectividad del servidor SMTP.',
+    );
 
     await repo.registrarNotificacion(
       NotificacionAuditoria(
         destinatario: dest,
         asunto: 'Diagnóstico de Conexión SMTP',
         evento: 'TEST_CONEXION_SMTP',
-        estado: exito ? 'ENVIADO' : 'FALLIDO',
+        estado: res.success ? 'ENVIADO' : 'FALLIDO',
         fechaEnvio: DateTime.now(),
       ),
     );
@@ -390,8 +403,8 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     if (mounted) {
       setState(() {
         _probandoSmtp = false;
-        _exitoPruebaSmtp = exito;
-        _resultadoPruebaSmtp = mensaje;
+        _exitoPruebaSmtp = res.success;
+        _resultadoPruebaSmtp = res.message;
       });
     }
   }
@@ -1122,6 +1135,16 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                       controller: _smtpRemitenteCtrl,
                       decoration: const InputDecoration(labelText: 'Nombre o Correo Remitente (Header FROM) *', hintText: 'ej. Soporte Técnico <contacto@empresa.com>'),
                       validator: (v) => v == null || v.trim().isEmpty ? 'Requerido' : null,
+                    ),
+                    const SizedBox(height: 14),
+
+                    TextFormField(
+                      controller: _smtpApiUrlCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'URL Endpoint Serverless Vercel (Opcional)',
+                        hintText: 'https://su-proyecto.vercel.app/api/send-email',
+                        helperText: 'Déjelo vacío si la app web corre en el mismo dominio de Vercel. Indique la URL si prueba desde Desktop o en localhost.',
+                      ),
                     ),
                     const SizedBox(height: 20),
 
