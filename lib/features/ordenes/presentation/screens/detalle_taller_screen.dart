@@ -1,14 +1,17 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/santi_constants.dart';
+import '../../../../core/services/email_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/formato_acta_entrega.dart';
 import '../../domain/entities/formato_actividades.dart';
 import '../../domain/entities/formato_ot.dart';
 import '../../domain/entities/foto_evidencia.dart';
+import '../../domain/entities/notificacion_auditoria.dart';
 import '../../domain/entities/orden.dart';
 import '../../domain/entities/repuesto.dart';
 import '../providers/ordenes_providers.dart';
@@ -540,12 +543,118 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
     await useCase.cerrarOrdenConActa(acta);
     await _cargarDatos();
 
+    bool? emailEnviado;
+    String? emailDestinatario;
+    final cliente = _orden?.cliente;
+
+    if (cliente?.email != null && cliente!.email!.trim().isNotEmpty) {
+      emailDestinatario = cliente.email!.trim();
+      try {
+        final repo = ref.read(ordenesRepositoryProvider);
+        final config = await repo.getEmpresaConfig();
+
+        if (config.smtpUser != null &&
+            config.smtpPass != null &&
+            config.smtpUser!.trim().isNotEmpty &&
+            config.smtpPass!.trim().isNotEmpty) {
+          String baseUrl = 'https://ticket-desktop.vercel.app';
+          if (config.portalHostUrl != null && config.portalHostUrl!.trim().isNotEmpty) {
+            baseUrl = config.portalHostUrl!.trim();
+            if (baseUrl.endsWith('/')) {
+              baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+            }
+          } else if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+            baseUrl = Uri.base.origin;
+          }
+          final trackingUrl = '$baseUrl/#/consulta';
+
+          final obsText = _obsEntregaController.text.trim().isNotEmpty
+              ? '• Observaciones: ${_obsEntregaController.text.trim()}\n'
+              : '';
+          final recomText = _recomController.text.trim().isNotEmpty
+              ? _recomController.text.trim()
+              : 'Seguir las pautas habituales de uso y mantenimiento preventivo periódico.';
+          final garantiaHumana = _garantiaDias.replaceAll('_', ' ');
+
+          final equipoDesc = _orden?.equipo != null
+              ? '${_orden!.equipo!.tipoEquipo} - ${_orden!.equipo!.marca} ${_orden!.equipo!.modelo}'
+              : 'Equipo';
+          final serialText = (_orden?.equipo?.numeroSerie != null && _orden!.equipo!.numeroSerie.isNotEmpty)
+              ? _orden!.equipo!.numeroSerie
+              : 'N/A';
+          final codigo = _orden?.codigoOrden ?? widget.ordenId.toString();
+
+          final msg = '''Estimado(a) ${cliente.nombreCompleto},
+
+Le informamos que el servicio técnico para su equipo ha sido FINALIZADO Y ENTREGADO exitosamente en ${config.nombreEmpresa}. A continuación encontrará el resumen del Acta Oficial de Entrega:
+
+RESUMEN DE LA ENTREGA:
+• Código de Orden: $codigo
+• Equipo: $equipoDesc
+• Número de Serie: $serialText
+• Estado de Operatividad: $_estadoOperatividad
+• Garantía Otorgada: $garantiaHumana
+• Entregado a: ${_nombreRecibeController.text.trim()} (Doc: ${_docRecibeController.text.trim()})
+• Fecha de Entrega: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}
+$obsText
+RECOMENDACIONES DE CUIDADO Y USO:
+$recomText
+
+CONSULTA DE HISTORIAL Y EVIDENCIAS:
+Puede consultar en todo momento el informe técnico completo, diagnóstico de ingreso, bitácora de procedimientos, pruebas técnicas aplicadas y fotos de evidencia ingresando al portal de consulta con su código ($codigo):
+$trackingUrl
+
+Agradecemos su preferencia y confianza.
+
+Atentamente,
+${config.nombreEmpresa}
+Laboratorio de Soporte & Mantenimiento Técnico''';
+
+          final resEmail = await EmailService.sendEmail(
+            apiUrl: config.smtpApiUrl,
+            host: config.smtpHost ?? 'smtp.gmail.com',
+            port: config.smtpPort ?? 465,
+            user: config.smtpUser!,
+            pass: config.smtpPass!,
+            to: emailDestinatario,
+            subject: 'Servicio Finalizado y Entregado #$codigo - ${config.nombreEmpresa}',
+            message: msg,
+            trackingUrl: trackingUrl,
+          );
+
+          emailEnviado = resEmail.success;
+
+          await repo.registrarNotificacion(
+            NotificacionAuditoria(
+              destinatario: emailDestinatario,
+              asunto: 'Servicio Finalizado y Entregado #$codigo',
+              evento: 'ORDEN_FINALIZADA_ENTREGADA',
+              estado: resEmail.success ? 'ENVIADO' : 'FALLIDO',
+              fechaEnvio: DateTime.now(),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error enviando correo de cierre: $e');
+        emailEnviado = false;
+      }
+    }
+
     if (mounted) {
+      String emailMessage = '';
+      if (emailEnviado == true) {
+        emailMessage = '\n\n📧 Se envió el comprobante y recomendaciones por correo al cliente ($emailDestinatario).';
+      } else if (emailDestinatario != null && emailEnviado == false) {
+        emailMessage = '\n\n⚠️ No se pudo enviar el correo automático al cliente ($emailDestinatario). Verifique la configuración SMTP.';
+      }
+
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Orden Cerrada y Entregada'),
-          content: const Text('Se ha registrado el Acta de Entrega oficial. Toda la información ha sido archivada en modo solo lectura. ¿Desea ver e imprimir el Documento Oficial ahora?'),
+          content: Text(
+            'Se ha registrado el Acta de Entrega oficial. Toda la información ha sido archivada en modo solo lectura.$emailMessage\n\n¿Desea ver e imprimir el Documento Oficial ahora?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
