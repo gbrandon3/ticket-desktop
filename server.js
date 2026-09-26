@@ -1342,9 +1342,11 @@ app.post('/api/send-email', async (req, res) => {
 const webBuildPath = path.join(__dirname, 'build', 'web');
 if (fs.existsSync(webBuildPath)) {
   app.use(express.static(webBuildPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(webBuildPath, 'index.html'));
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+      return res.sendFile(path.join(webBuildPath, 'index.html'));
+    }
+    next();
   });
 } else {
   app.get('/', (req, res) => {
