@@ -420,7 +420,98 @@ class ApiOrdenesRepository implements IOrdenesRepository {
             } else if (ord.id != null) {
               fotos = await getFotosEvidencia(ord.id!);
             }
-            return {'tipo': 'ticket', 'orden': ord, 'fotos': fotos};
+
+            FormatoOt? formatoOt;
+            if (d['formatoOt'] != null) {
+              final ot = d['formatoOt'];
+              formatoOt = FormatoOt(
+                id: ot['id'],
+                ordenId: ot['ordenId'],
+                diagnosticoPreliminar: ot['diagnosticoPreliminar'],
+                herramientasChips: (ot['herramientasChips'] as List? ?? []).cast<String>(),
+                tiempoEstimadoEntrega: DateTime.tryParse(ot['tiempoEstimadoEntrega'] ?? ''),
+                accesorioCargador: ot['accesorioCargador'] == true,
+                accesorioCablePoder: ot['accesorioCablePoder'] == true,
+                accesorioMouse: ot['accesorioMouse'] == true,
+                accesorioMaletin: ot['accesorioMaletin'] == true,
+                encendidoInicial: ot['encendidoInicial'] != false,
+                estadoCarcasa: ot['estadoCarcasa'],
+                pinContrasena: ot['pinContrasena'],
+              );
+            } else if (ord.id != null) {
+              formatoOt = await getFormatoOt(ord.id!);
+            }
+
+            FormatoActividades? actividades;
+            if (d['formatoActividades'] != null) {
+              final act = d['formatoActividades'];
+              actividades = FormatoActividades(
+                id: act['id'],
+                ordenId: act['ordenId'],
+                procedimientosRealizados: act['procedimientosRealizados'],
+                pastaTermica: act['pastaTermica'] == true,
+                alcoholIsopropilico: act['alcoholIsopropilico'] == true,
+                sopleteadoContactos: act['sopleteadoContactos'] == true,
+                brochaAntiestatica: act['brochaAntiestatica'] == true,
+                panoMicrofibra: act['panoMicrofibra'] == true,
+                depuracionTemporales: act['depuracionTemporales'] == true,
+                optimizacionInicio: act['optimizacionInicio'] == true,
+                escaneoMalware: act['escaneoMalware'] == true,
+                actualizacionDrivers: act['actualizacionDrivers'] == true,
+                comprobacionDisco: act['comprobacionDisco'] == true,
+                qaEstresTermico: act['qaEstresTermico'] == true,
+                qaPuertos: act['qaPuertos'] == true,
+                qaConectividad: act['qaConectividad'] == true,
+                qaBateria: act['qaBateria'] == true,
+                qaTecladoTouchpad: act['qaTecladoTouchpad'] == true,
+                costoManoObra: (act['costoManoObra'] as num?)?.toDouble() ?? 0.0,
+              );
+            } else if (ord.id != null) {
+              actividades = await getFormatoActividades(ord.id!);
+            }
+
+            FormatoActaEntrega? actaEntrega;
+            if (d['actaEntrega'] != null) {
+              final a = d['actaEntrega'];
+              actaEntrega = FormatoActaEntrega(
+                id: a['id'],
+                ordenId: a['ordenId'],
+                estadoOperatividad: a['estadoOperatividad'] ?? 'OPERATIVO',
+                observaciones: a['observaciones'],
+                recomendacionesCuidado: a['recomendacionesCuidado'],
+                garantiaDias: a['garantiaDias']?.toString() ?? '30_DIAS',
+                personaRecibeNombre: a['personaRecibeNombre'] ?? '',
+                personaRecibeDocumento: a['personaRecibeDocumento'] ?? '',
+                checkConformidad: a['checkConformidad'] == true,
+                fechaEntrega: DateTime.tryParse(a['fechaEntrega'] ?? '') ?? DateTime.now(),
+              );
+            } else if (ord.id != null) {
+              actaEntrega = await getActaEntrega(ord.id!);
+            }
+
+            List<Repuesto> repuestos = [];
+            if (d['repuestos'] is List) {
+              repuestos = (d['repuestos'] as List).map((r) => Repuesto(
+                id: r['id'],
+                ordenId: r['ordenId'],
+                referencia: r['referencia'] ?? '',
+                cantidad: r['cantidad'] ?? 1,
+                precioUnitario: (r['precioUnitario'] as num?)?.toDouble() ?? 0.0,
+                subtotal: (r['subtotal'] as num?)?.toDouble() ?? 0.0,
+              )).toList();
+            } else if (ord.id != null) {
+              repuestos = await getRepuestos(ord.id!);
+            }
+
+            return {
+              'tipo': 'ticket',
+              'orden': ord,
+              'fotos': fotos,
+              'formatoOt': formatoOt,
+              'formatoActividades': actividades,
+              'actaEntrega': actaEntrega,
+              'repuestos': repuestos,
+            };
           } else if (tipo == 'cliente') {
             final c = _mapCliente(d['cliente']);
             final eqs = (d['equipos'] as List? ?? []).map((e) => _mapEquipo(e)).toList();
