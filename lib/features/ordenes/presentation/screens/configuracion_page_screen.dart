@@ -251,28 +251,37 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     if (!_empresaFormKey.currentState!.validate()) return;
 
     setState(() => _guardandoEmpresa = true);
-    final repo = ref.read(ordenesRepositoryProvider);
-    final configActual = await repo.getEmpresaConfig();
+    try {
+      final repo = ref.read(ordenesRepositoryProvider);
+      final configActual = await repo.getEmpresaConfig();
 
-    final nuevaConfig = configActual.copyWith(
-      nombreEmpresa: _nombreEmpresaCtrl.text.trim(),
-      slogan: _sloganCtrl.text.trim(),
-      nit: _nitCtrl.text.trim(),
-      telefono: _telefonoEmpresaCtrl.text.trim(),
-      email: _emailEmpresaCtrl.text.trim(),
-      direccion: _direccionCtrl.text.trim(),
-      ciudad: _ciudadCtrl.text.trim(),
-      logoBase64: _logoBase64,
-      colorPrimario: _colorPdfEmpresa,
-    );
-
-    await repo.saveEmpresaConfig(nuevaConfig);
-    setState(() => _guardandoEmpresa = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Identidad corporativa guardada con éxito'), backgroundColor: SantiConstants.successGreen),
+      final nuevaConfig = configActual.copyWith(
+        nombreEmpresa: _nombreEmpresaCtrl.text.trim(),
+        slogan: _sloganCtrl.text.trim(),
+        nit: _nitCtrl.text.trim(),
+        telefono: _telefonoEmpresaCtrl.text.trim(),
+        email: _emailEmpresaCtrl.text.trim(),
+        direccion: _direccionCtrl.text.trim(),
+        ciudad: _ciudadCtrl.text.trim(),
+        logoBase64: _logoBase64,
+        colorPrimario: _colorPdfEmpresa,
       );
+
+      await repo.saveEmpresaConfig(nuevaConfig);
+      setState(() => _guardandoEmpresa = false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Identidad corporativa guardada con éxito'), backgroundColor: SantiConstants.successGreen),
+        );
+      }
+    } catch (e) {
+      setState(() => _guardandoEmpresa = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar datos de la empresa: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -392,28 +401,41 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     if (!_smtpFormKey.currentState!.validate()) return;
 
     setState(() => _guardandoSmtp = true);
-    final repo = ref.read(ordenesRepositoryProvider);
-    final configActual = await repo.getEmpresaConfig();
+    try {
+      final repo = ref.read(ordenesRepositoryProvider);
+      final configActual = await repo.getEmpresaConfig();
 
-    final nuevaConfig = configActual.copyWith(
-      smtpHost: _smtpHostCtrl.text.trim(),
-      smtpPort: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
-      smtpUser: _smtpUserCtrl.text.trim(),
-      smtpPass: _smtpPassCtrl.text.trim(),
-      smtpApiUrl: '',
-      portalHostUrl: _portalHostUrlCtrl.text.trim(),
-    );
-
-    await repo.saveEmpresaConfig(nuevaConfig);
-    setState(() => _guardandoSmtp = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Parámetros SMTP y Host de Consulta guardados correctamente'),
-          backgroundColor: SantiConstants.successGreen,
-        ),
+      final nuevaConfig = configActual.copyWith(
+        smtpHost: _smtpHostCtrl.text.trim(),
+        smtpPort: int.tryParse(_smtpPortCtrl.text.trim()) ?? 465,
+        smtpUser: _smtpUserCtrl.text.trim(),
+        smtpPass: _smtpPassCtrl.text.trim(),
+        email: _smtpRemitenteCtrl.text.trim().isNotEmpty ? _smtpRemitenteCtrl.text.trim() : configActual.email,
+        smtpApiUrl: '',
+        portalHostUrl: _portalHostUrlCtrl.text.trim(),
       );
+
+      await repo.saveEmpresaConfig(nuevaConfig);
+      setState(() => _guardandoSmtp = false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Parámetros SMTP y Host de Consulta guardados correctamente'),
+            backgroundColor: SantiConstants.successGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _guardandoSmtp = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar configuración SMTP: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

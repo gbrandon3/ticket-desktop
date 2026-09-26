@@ -58,13 +58,22 @@ app.get('/api/config', (req, res) => {
 app.post('/api/config', (req, res) => {
   try {
     const b = req.body;
+    let row = db.prepare('SELECT id FROM configuracion_empresa ORDER BY id ASC LIMIT 1').get();
+    if (!row) {
+      db.prepare(`
+        INSERT INTO configuracion_empresa (
+          nombre_empresa, portal_host_url, is_setup_completed
+        ) VALUES ('Santi Inc', 'http://localhost:3000', 0)
+      `).run();
+      row = db.prepare('SELECT id FROM configuracion_empresa ORDER BY id ASC LIMIT 1').get();
+    }
     db.prepare(`
       UPDATE configuracion_empresa SET
         nombre_empresa = ?, slogan = ?, nit = ?, telefono = ?, email = ?,
         direccion = ?, ciudad = ?, logo_base64 = ?, smtp_host = ?,
-        smtp_port = ?, smtp_user = ?, smtpPass = ?, smtp_api_url = ?,
+        smtp_port = ?, smtp_user = ?, smtp_pass = ?, smtp_api_url = ?,
         portal_host_url = ?, color_primario = ?, color_secundario = ?
-      WHERE id = (SELECT id FROM configuracion_empresa ORDER BY id ASC LIMIT 1)
+      WHERE id = ?
     `).run(
       b.nombreEmpresa || 'Santi Inc',
       b.slogan || null,
@@ -81,10 +90,12 @@ app.post('/api/config', (req, res) => {
       b.smtpApiUrl || null,
       b.portalHostUrl || 'http://localhost:3000',
       b.colorPrimario || '#0F172A',
-      b.colorSecundario || '#0284C7'
+      b.colorSecundario || '#0284C7',
+      row.id
     );
     res.json({ success: true, message: 'Configuración actualizada con éxito' });
   } catch (err) {
+    console.error('Error actualizando configuracion_empresa:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

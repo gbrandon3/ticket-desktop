@@ -812,7 +812,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> saveEmpresaConfig(EmpresaConfig config) async {
-    await http.post(
+    final res = await http.post(
       Uri.parse(_buildUrl('/api/config')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -834,6 +834,9 @@ class ApiOrdenesRepository implements IOrdenesRepository {
         'colorSecundario': config.colorSecundario,
       }),
     );
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      throw Exception('Error al guardar configuración (${res.statusCode}): ${res.body}');
+    }
     _notifyChange();
   }
 
