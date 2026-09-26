@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/santi_constants.dart';
 import '../../domain/entities/empresa_config.dart';
 import '../../domain/entities/usuario.dart';
@@ -50,6 +51,24 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
   final _tecTelCtrl = TextEditingController();
 
   bool _guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _verificarSiYaEstaConfigurado();
+    });
+  }
+
+  Future<void> _verificarSiYaEstaConfigurado() async {
+    try {
+      final repo = ref.read(ordenesRepositoryProvider);
+      final yaListo = await repo.isSetupCompleted();
+      if (yaListo && mounted) {
+        context.go('/login');
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -140,6 +159,11 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
         ref.read(authProvider.notifier).login(adminLogueado);
       }
       ref.invalidate(setupCompletedProvider);
+
+      if (mounted) {
+        setState(() => _guardando = false);
+        context.go('/dashboard');
+      }
     } catch (e) {
       setState(() => _guardando = false);
       if (mounted) {
