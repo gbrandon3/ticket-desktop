@@ -88,3 +88,6 @@ Los paquetes finales se encuentran en releases/: tickets_app_windows_x64.zip, ti
 Las pruebas de correo usan SMTP simulado; la entrega real de correo requiere configurar su cuenta en la aplicación. La impresión física requiere una impresora disponible. Los PDF de demostración se revisaron visualmente y no contienen datos reales.
 
 Para volver a generar los ZIP después de compilar: `./scripts/empaquetar.ps1`. Los ZIP antiguos de la raíz no son la entrega actual; utilice los de releases/.
+
+Para generar únicamente el release web con backend y dependencias incluidos: `./scripts/empaquetar_web.ps1`.
+Descomprima `releases/tickets_app_web_release.zip` y ejecute `npm start` en esa carpeta: sirve la API y el frontend juntos en http://localhost:3000. También puede abrir `iniciar_web.cmd` en Windows. No requiere Flutter ni instalar dependencias en el equipo de destino; requiere Node.js 22.13 o superior.

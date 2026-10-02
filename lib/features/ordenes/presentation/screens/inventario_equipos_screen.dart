@@ -1,10 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/santi_constants.dart';
 import '../../domain/entities/equipo.dart';
 import '../../domain/entities/orden.dart';
 import '../providers/ordenes_providers.dart';
 import 'detalle_taller_screen.dart';
+
+class _SerialCopiable extends StatelessWidget {
+  const _SerialCopiable({required this.serial});
+
+  final String serial;
+
+  Future<void> _copiar(BuildContext context) async {
+    try {
+      await Clipboard.setData(ClipboardData(text: serial));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Serial copiado')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo copiar. Selecciona el serial y usa la opción Copiar.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: SelectableText(
+            serial,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SantiConstants.primaryNavy),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Copiar serial',
+          icon: const Icon(Icons.copy, size: 18),
+          onPressed: serial.trim().isEmpty ? null : () => _copiar(context),
+        ),
+      ],
+    );
+  }
+}
 
 class InventarioEquiposScreen extends ConsumerStatefulWidget {
   const InventarioEquiposScreen({super.key});
@@ -260,13 +301,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
                                       children: [
                                         _getDeviceIcon(eq.tipoEquipo),
                                         const SizedBox(width: 10),
-                                        Flexible(
-                                          child: Text(
-                                            eq.numeroSerie,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: SantiConstants.primaryNavy),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
+                                        Expanded(child: _SerialCopiable(serial: eq.numeroSerie)),
                                       ],
                                     ),
                                   ),
@@ -530,7 +565,8 @@ class _HojaVidaDialogState extends ConsumerState<_HojaVidaDialog> with SingleTic
                         'Hoja de Vida Clínica: ${eq.marca} ${eq.modelo}',
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: SantiConstants.primaryNavy),
                       ),
-                      Text('Serial: ${eq.numeroSerie} | Tipo: ${eq.tipoEquipo}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      _SerialCopiable(serial: eq.numeroSerie),
+                      Text('Tipo: ${eq.tipoEquipo}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 ),

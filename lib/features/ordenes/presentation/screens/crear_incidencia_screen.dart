@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/services/email_service.dart';
+import '../../../../core/utils/evidence_picker.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/entities/equipo.dart';
 import '../../domain/entities/notificacion_auditoria.dart';
@@ -178,16 +178,12 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
 
   Future<void> _tomarFoto() async {
     try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 80,
-      );
+      final image = await pickEvidenceImage(context);
+      if (!mounted) return;
 
       if (image != null) {
         final bytes = await image.readAsBytes();
+        if (!mounted) return;
         setState(() {
           _fotoBase64 = base64Encode(bytes);
         });

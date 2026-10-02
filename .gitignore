@@ -81,6 +81,7 @@ node_modules/
 *.so
 *.dylib
 *.zip
+!/releases/tickets_app_web_release.zip
 
 # Backups and local secrets
 /backups/

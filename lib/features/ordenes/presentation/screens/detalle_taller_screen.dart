@@ -4,12 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/santi_constants.dart';
 import '../../../../core/services/email_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/evidence_picker.dart';
 import '../../domain/entities/formato_acta_entrega.dart';
 import '../../domain/entities/formato_actividades.dart';
 import '../../domain/entities/formato_ot.dart';
@@ -541,13 +541,8 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen>
 
   Future<void> _subirFotoEvidencia(String etapa, {String? defaultNota}) async {
     try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 80,
-      );
+      final image = await pickEvidenceImage(context);
+      if (!mounted) return;
 
       if (image != null) {
         final bytes = await image.readAsBytes();
@@ -1031,17 +1026,19 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: _diagController,
-            readOnly: isCerrada,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Consigne las observaciones de encendido, voltajes, ruidos, temperaturas iniciales...',
-              filled: isCerrada,
-              fillColor: isCerrada ? Colors.grey.shade100 : null,
+          if (isCerrada)
+            _datoRecepcion('Diagnóstico registrado', _diagController.text)
+          else
+            TextField(
+              controller: _diagController,
+              readOnly: isCerrada,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Consigne las observaciones de encendido, voltajes, ruidos, temperaturas iniciales...',
+                filled: isCerrada,
+                fillColor: isCerrada ? Colors.grey.shade100 : null,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
         ]),
         const SizedBox(height: 20),
         _workshopCard([
@@ -1102,8 +1099,9 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               ],
             ),
           ],
-          const SizedBox(height: 20),
         ]),
+        const SizedBox(height: 20),
+        _buildSeccionEvidenciasRecepcion(isCerrada),
       ],
     );
     final right = _workshopCard([
@@ -1113,69 +1111,93 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
       ),
       const SizedBox(height: 8),
       Wrap(
-        spacing: 16,
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          FilterChip(
-            label: const Text('Cargador / Adaptador'),
-            selected: _accCargador,
-            onSelected: isCerrada
-                ? null
-                : (v) => setState(() => _accCargador = v),
-          ),
-          FilterChip(
-            label: const Text('Cable de Poder'),
-            selected: _accCablePoder,
-            onSelected: isCerrada
-                ? null
-                : (v) => setState(() => _accCablePoder = v),
-          ),
-          FilterChip(
-            label: const Text('Mouse USB / Inalámbrico'),
-            selected: _accMouse,
-            onSelected: isCerrada ? null : (v) => setState(() => _accMouse = v),
-          ),
-          FilterChip(
-            label: const Text('Maletín / Funda'),
-            selected: _accMaletin,
-            onSelected: isCerrada
-                ? null
-                : (v) => setState(() => _accMaletin = v),
-          ),
+          if (isCerrada) ...[
+            _accesorioRegistrado('Cargador / Adaptador', _accCargador),
+            _accesorioRegistrado('Cable de Poder', _accCablePoder),
+            _accesorioRegistrado('Mouse USB / Inalámbrico', _accMouse),
+            _accesorioRegistrado('Maletín / Funda', _accMaletin),
+          ] else ...[
+            FilterChip(
+              label: const Text('Cargador / Adaptador'),
+              selected: _accCargador,
+              onSelected: isCerrada
+                  ? null
+                  : (v) => setState(() => _accCargador = v),
+            ),
+            FilterChip(
+              label: const Text('Cable de Poder'),
+              selected: _accCablePoder,
+              onSelected: isCerrada
+                  ? null
+                  : (v) => setState(() => _accCablePoder = v),
+            ),
+            FilterChip(
+              label: const Text('Mouse USB / Inalámbrico'),
+              selected: _accMouse,
+              onSelected: isCerrada
+                  ? null
+                  : (v) => setState(() => _accMouse = v),
+            ),
+            FilterChip(
+              label: const Text('Maletín / Funda'),
+              selected: _accMaletin,
+              onSelected: isCerrada
+                  ? null
+                  : (v) => setState(() => _accMaletin = v),
+            ),
+          ],
         ],
       ),
       const SizedBox(height: 12),
-      SwitchListTile(
-        title: const Text('¿El equipo enciende al momento de la recepción?'),
-        value: _encendido,
-        onChanged: isCerrada ? null : (v) => setState(() => _encendido = v),
-      ),
+      if (isCerrada)
+        _datoRecepcion(
+          'Encendido en recepción',
+          _encendido ? 'Sí, el equipo enciende' : 'No, el equipo no enciende',
+        )
+      else
+        SwitchListTile(
+          title: const Text('¿El equipo enciende al momento de la recepción?'),
+          value: _encendido,
+          onChanged: isCerrada ? null : (v) => setState(() => _encendido = v),
+        ),
       const SizedBox(height: 12),
-      TextField(
-        controller: _carcasaController,
-        readOnly: isCerrada,
-        minLines: 2,
-        maxLines: 4,
-        decoration: InputDecoration(
-          labelText: 'Observaciones Físicas',
-          hintText: 'Detalle el estado estético, rayones, bisagras flojas, tornillos faltantes, golpes o fisuras observadas...',
-          filled: isCerrada,
-          fillColor: isCerrada ? Colors.grey.shade100 : null,
-          border: const OutlineInputBorder(),
+      if (isCerrada)
+        _datoRecepcion('Observaciones físicas', _carcasaController.text)
+      else
+        TextField(
+          controller: _carcasaController,
+          readOnly: isCerrada,
+          minLines: 2,
+          maxLines: 4,
+          decoration: InputDecoration(
+            labelText: 'Observaciones Físicas',
+            hintText: 'Detalle el estado estético, rayones, bisagras flojas, tornillos faltantes, golpes o fisuras observadas...',
+            filled: isCerrada,
+            fillColor: isCerrada ? Colors.grey.shade100 : null,
+            border: const OutlineInputBorder(),
+          ),
         ),
-      ),
       const SizedBox(height: 14),
-      TextField(
-        controller: _pinController,
-        readOnly: isCerrada,
-        decoration: InputDecoration(
-          labelText: 'Contraseña / PIN de Inicio de Sesión',
-          hintText: 'Sin contraseña o PIN de 4 dígitos',
-          filled: isCerrada,
-          fillColor: isCerrada ? Colors.grey.shade100 : null,
-          border: const OutlineInputBorder(),
+      if (isCerrada)
+        _datoRecepcion(
+          'Contraseña / PIN de inicio de sesión',
+          _pinController.text,
+        )
+      else
+        TextField(
+          controller: _pinController,
+          readOnly: isCerrada,
+          decoration: InputDecoration(
+            labelText: 'Contraseña / PIN de Inicio de Sesión',
+            hintText: 'Sin contraseña o PIN de 4 dígitos',
+            filled: isCerrada,
+            fillColor: isCerrada ? Colors.grey.shade100 : null,
+            border: const OutlineInputBorder(),
+          ),
         ),
-      ),
-      const SizedBox(height: 24),
     ]);
     return _buildWorkshopPage(
       child: Column(
@@ -1190,9 +1212,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Registre el diagnóstico, los accesorios y el estado del equipo antes de comenzar el servicio.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+          Text(
+            isCerrada
+                ? 'Consulta del diagnóstico, los accesorios y las evidencias registrados al recibir el equipo.'
+                : 'Registre el diagnóstico, los accesorios y el estado del equipo antes de comenzar el servicio.',
+            style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 24),
           LayoutBuilder(
@@ -1212,8 +1236,6 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               );
             },
           ),
-          const SizedBox(height: 24),
-          _buildSeccionEvidenciasRecepcion(isCerrada),
           const SizedBox(height: 24),
           Align(
             alignment: Alignment.centerRight,
@@ -1241,6 +1263,60 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
       ),
     );
   }
+
+  Widget _datoRecepcion(String label, String value) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0xFFE2E8F0)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF475569),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SelectableText(
+          value.trim().isEmpty ? 'Sin información registrada' : value,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _accesorioRegistrado(String label, bool recibido) => Tooltip(
+    message: recibido ? 'Recibido con el equipo' : 'No recibido',
+    child: Chip(
+      avatar: Icon(
+        recibido ? Icons.check_circle_outline : Icons.remove_circle_outline,
+        size: 18,
+        color: recibido ? const Color(0xFF166534) : const Color(0xFF64748B),
+      ),
+      label: Text(label),
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: recibido ? const Color(0xFF166534) : const Color(0xFF475569),
+      ),
+      backgroundColor: recibido
+          ? const Color(0xFFF0FDF4)
+          : const Color(0xFFF8FAFC),
+      side: BorderSide(
+        color: recibido ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+      ),
+    ),
+  );
 
   Widget _workshopCard(List<Widget> children) => Material(
     color: Colors.white,
