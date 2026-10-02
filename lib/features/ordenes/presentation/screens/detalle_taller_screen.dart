@@ -36,6 +36,7 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _loading = true;
+  bool _procesandoPaso = false;
 
   Orden? _orden;
   List<Repuesto> _repuestos = [];
@@ -842,13 +843,36 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
   Future<void> _prepararEntrega() async {
     if (!_otCompletada || !_bitacoraCompletada) {
-      _mostrarError('Guarde primero el diagnóstico y la bitácora del trabajo realizado.');
+      _mostrarError(
+        'Guarde primero el diagnóstico y la bitácora del trabajo realizado.',
+      );
       return;
     }
     try {
       await _avanzarHasta('LISTO_ENTREGA');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Entrega preparada. Ahora puede finalizar el servicio y emitir el acta.',
+            ),
+          ),
+        );
+      }
     } catch (error) {
       _mostrarError(error.toString());
+    }
+  }
+
+  Future<void> _ejecutarPaso(Future<void> Function() action) async {
+    if (_procesandoPaso) return;
+    setState(() => _procesandoPaso = true);
+    try {
+      await action();
+    } catch (error) {
+      _mostrarError(error.toString());
+    } finally {
+      if (mounted) setState(() => _procesandoPaso = false);
     }
   }
 
@@ -1196,12 +1220,14 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             child: ElevatedButton.icon(
               onPressed: isCerrada
                   ? () => _tabController.animateTo(1)
-                  : _guardarPestana1,
+                  : (_procesandoPaso
+                        ? null
+                        : () => _ejecutarPaso(_guardarPestana1)),
               icon: Icon(isCerrada ? Icons.arrow_forward : Icons.save_outlined),
               label: Text(
                 isCerrada
                     ? 'Continuar a Bitácora & Insumos (Solo Lectura)'
-                    : 'Guardar Formato de Orden de Trabajo',
+                    : 'Guardar diagnóstico y comenzar trabajo',
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -1266,14 +1292,16 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 children: [
                   Icon(Icons.photo_camera, color: SantiConstants.primaryBlue),
                   SizedBox(width: 8),
-                  Flexible(child: Text(
-                    'Evidencias Fotográficas de Recepción',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: SantiConstants.primaryNavy,
+                  Flexible(
+                    child: Text(
+                      'Evidencias Fotográficas de Recepción',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: SantiConstants.primaryNavy,
+                      ),
                     ),
-                  )),
+                  ),
                 ],
               ),
               if (!isCerrada)
@@ -2108,11 +2136,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           const SizedBox(height: 24),
           if (!isCerrada)
             ElevatedButton.icon(
-              onPressed: _guardarPestana2,
+              onPressed: _procesandoPaso
+                  ? null
+                  : () => _ejecutarPaso(_guardarPestana2),
               icon: const Icon(Icons.save),
-              label: const Text(
-                'Guardar trabajo y preparar entrega',
-              ),
+              label: const Text('Guardar trabajo y preparar entrega'),
             )
           else
             ElevatedButton.icon(
@@ -2342,11 +2370,28 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
           const SizedBox(height: 24),
 
+          if (!isCerrada) ...[
+            Text(
+              _orden?.estado == 'LISTO_ENTREGA'
+                  ? 'El trabajo está terminado. Verifique el receptor y la conformidad para registrar la entrega.'
+                  : 'Prepare la entrega aquí para marcar el trabajo como terminado. Después podrá emitir el acta y cerrar la orden.',
+              style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (!isCerrada)
             ElevatedButton.icon(
-              onPressed: _cerrarOrdenYGenerarActa,
+              onPressed: _procesandoPaso
+                  ? null
+                  : () => _ejecutarPaso(_cerrarOrdenYGenerarActa),
               icon: const Icon(Icons.check_circle),
-              label: Text(_orden?.estado == 'LISTO_ENTREGA' ? 'Finalizar Servicio y Emitir Acta Oficial' : 'Marcar trabajo terminado y preparar entrega'),
+              label: Text(
+                _procesandoPaso
+                    ? 'Guardando...'
+                    : (_orden?.estado == 'LISTO_ENTREGA'
+                          ? 'Finalizar Servicio y Emitir Acta Oficial'
+                          : 'Preparar entrega'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SantiConstants.successGreen,
                 foregroundColor: Colors.white,
@@ -2446,14 +2491,16 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 children: [
                   Icon(Icons.camera_alt_outlined, color: Color(0xFF16A34A)),
                   SizedBox(width: 8),
-                  Flexible(child: Text(
-                    'Evidencias Fotográficas de la Entrega',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF166534),
+                  Flexible(
+                    child: Text(
+                      'Evidencias Fotográficas de la Entrega',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF166534),
+                      ),
                     ),
-                  )),
+                  ),
                 ],
               ),
               if (!isCerrada)

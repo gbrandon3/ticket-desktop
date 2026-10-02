@@ -74,7 +74,7 @@ La consulta pública omite identidad de cliente, técnico y PIN; ya no busca por
 
 README.md contiene instalación, variables de entorno, compilación y respaldo/restauración. La entrega escolar usa HTTP local; HTTPS se excluyó por solicitud del usuario. node server/backup.js genera una copia consistente mediante VACUUM INTO; hay respaldos automáticos al iniciar y cada 24 horas mientras el servidor está encendido. BACKUP_INTERVAL_HOURS=0 los desactiva. Conservar la clave SMTP separadamente.
 
-Hay 18 pruebas de widgets y flujos, dos pruebas de generación de PDF y siete pruebas del backend (API, cifrado, copia/restauración, programación de copias, correo simulado y descarga/restauración por API). scripts/validar.ps1 ejecuta la verificación local completa. .github/workflows/pruebas.yml prepara CI para GitHub; no se ejecutó remotamente en esta revisión.
+Hay 19 pruebas de widgets y flujos, dos pruebas de generación de PDF y siete pruebas del backend (API, cifrado, copia/restauración, programación de copias, correo simulado y descarga/restauración por API). scripts/validar.ps1 ejecuta la verificación local completa. .github/workflows/pruebas.yml prepara CI para GitHub; no se ejecutó remotamente en esta revisión.
 
 Los PDF usan fuentes Roboto incorporadas con licencia Apache 2.0 para evitar símbolos faltantes y no requieren descargas de fuentes. El encabezado limita nombres y códigos largos; se añadió numeración de páginas. La exportación web usa package:web y dart:js_interop.
 
@@ -84,7 +84,7 @@ Los paquetes recompilados se guardan en releases/. El backend distribuido incluy
 
 Correo SMTP real e impresión física dependen de una cuenta y una impresora disponibles; se verificaron preparación de correo sin envíos reales y generación/renderizado de PDF. Las sesiones en memoria se pierden al reiniciar. Las órdenes antiguas conservan sus códigos previos; no se alteraron datos históricos. No se desplegó el proyecto en internet ni se habilitó HTTPS.
 
-Verificación local final: 20 pruebas de Flutter (incluye 2 PDF), 7 de backend y análisis sin avisos ni errores. Los PDF de demostración se revisaron en todas sus páginas.
+Verificación local final: 21 pruebas de Flutter (incluye 2 PDF), 7 de backend y análisis sin avisos ni errores. Los PDF de demostración se revisaron en todas sus páginas.
 
 ## Correcciones de flujo e interfaz
 
@@ -92,3 +92,5 @@ La caída del backend muestra un error de conexión con reintento y no redirige 
 
 Crear incidencia conserva un único aviso SMTP en AppShell. El formulario tiene ancho máximo de 1120 px, filas adaptables, una sola entrada de categoría con catálogo y mensajes neutrales en la búsqueda de equipos. El diálogo de éxito permite seleccionar/copiar códigos largos sin desbordarse. test/ui_flow_test.dart verifica el registro completo y ventanas estrechas; GENERATE_UI_EVIDENCE=1 genera capturas en output/ui/ sin tocar la base real. Las últimas correcciones están en el código fuente; los ZIP de releases/ requieren recompilación para incorporarlas.
 El taller usa un encabezado blanco con el consecutivo visible y acceso para copiar el código completo. La recepción se organiza en tarjetas de diagnóstico/herramientas e inspección; cambia de dos columnas a una en ventanas estrechas. Las tres pestañas tienen ancho máximo de 1120 px. Las pruebas verifican escritorio, ventana estrecha y bloqueo de órdenes cerradas.
+
+El avance de estado está integrado en los botones del taller: guardar diagnóstico inicia el trabajo, guardar trabajo prepara la entrega, y emitir el acta registra el cierre. Las órdenes con formatos ya guardados ofrecen Preparar entrega en el acta. Los botones se deshabilitan mientras guardan para evitar clics repetidos. La prueba de flujo verifica las transiciones secuenciales desde RECIBIDO hasta LISTO_ENTREGA.

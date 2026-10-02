@@ -61,6 +61,55 @@ class DemoRepository extends Fake implements IOrdenesRepository {
 
 void main() {
   testWidgets(
+    'Taller avanza de recibido a entrega desde los botones del trabajo',
+    (tester) async {
+      tester.view.physicalSize = const Size(1280, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = DemoWorkshopRepository()..estado = 'RECIBIDO';
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [ordenesRepositoryProvider.overrideWithValue(repository)],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const DetalleTallerScreen(ordenId: 1),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(DropdownButton<String>), findsNothing);
+      final diagnosis = find.text('Guardar diagnóstico y comenzar trabajo');
+      await tester.ensureVisible(diagnosis);
+      await tester.tap(diagnosis);
+      await tester.pumpAndSettle();
+      expect(repository.transitions, ['EN_DIAGNOSTICO', 'EN_TALLER']);
+      final procedures = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.hintText == 'Describa el paso a paso del mantenimiento o reparación ejecutado...',
+      );
+      await tester.ensureVisible(procedures);
+      await tester.enterText(
+        procedures,
+        'Se reparó la alimentación y se verificó el encendido.',
+      );
+      final prepare = find.text('Guardar trabajo y preparar entrega');
+      await tester.ensureVisible(prepare);
+      await tester.tap(prepare);
+      await tester.pumpAndSettle();
+      expect(repository.transitions, [
+        'EN_DIAGNOSTICO',
+        'EN_TALLER',
+        'LISTO_ENTREGA',
+      ]);
+      expect(
+        find.text('Finalizar Servicio y Emitir Acta Oficial'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'Taller: encabezado largo y secciones en escritorio y ventana estrecha',
     (tester) async {
       final repository = DemoWorkshopRepository();
@@ -82,11 +131,7 @@ void main() {
       }
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            ordenesRepositoryProvider.overrideWithValue(
-                repository,
-            ),
-          ],
+          overrides: [ordenesRepositoryProvider.overrideWithValue(repository)],
           child: RepaintBoundary(
             key: capture,
             child: MaterialApp(
@@ -244,6 +289,18 @@ void main() {
 }
 
 class DemoWorkshopRepository extends DemoRepository {
+  String estado = 'EN_DIAGNOSTICO';
+  final List<String> transitions = [];
+  @override
+  Future<void> saveFormatoOt(FormatoOt formatoOt) async {}
+  @override
+  Future<void> saveFormatoActividades(FormatoActividades actividades) async {}
+  @override
+  Future<void> updateEstadoOrden(int ordenId, String nuevoEstado) async {
+    transitions.add(nuevoEstado);
+    estado = nuevoEstado;
+  }
+
   @override
   Future<Orden?> getOrdenById(int id) async => Orden(
     id: id,
@@ -255,7 +312,7 @@ class DemoWorkshopRepository extends DemoRepository {
     prioridad: 'MEDIA',
     titulo: 'No enciende',
     descripcion: 'No responde al botón de encendido',
-    estado: 'EN_DIAGNOSTICO',
+    estado: estado,
     fechaIngreso: DateTime(2026, 10, 1),
   );
   @override

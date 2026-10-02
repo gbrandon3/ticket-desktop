@@ -444,7 +444,7 @@ void main() {
     // Validar que la sección de evidencias fotográficas está dentro de la orden de trabajo
     expect(find.text('Evidencias Fotográficas de Recepción'), findsOneWidget);
     expect(find.text('Cargar Evidencia de Recepción'), findsOneWidget);
-    expect(find.text('Guardar Formato de Orden de Trabajo'), findsOneWidget);
+    expect(find.text('Guardar diagnóstico y comenzar trabajo'), findsOneWidget);
 
     // 2. Probar orden cerrada (ENTREGADO_CERRADO)
     await tester.pumpWidget(
@@ -463,7 +463,7 @@ void main() {
     // Debe mostrar banner de modo solo lectura
     expect(find.textContaining('ORDEN FINALIZADA Y ENTREGADA'), findsOneWidget);
     // Botón de guardar OT debe estar reemplazado por botón de lectura
-    expect(find.text('Guardar Formato de Orden de Trabajo'), findsNothing);
+    expect(find.text('Guardar diagnóstico y comenzar trabajo'), findsNothing);
     expect(find.text('Cargar Evidencia de Recepción'), findsNothing);
   });
 
