@@ -1,3 +1,6 @@
+import '../widgets/change_history_panel.dart';
+import '../widgets/server_backup_panel.dart';
+import '../../../../core/services/api_session.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +97,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     super.initState();
     final user = ref.read(authProvider);
     final esAdmin = user?.rol == 'admin';
-    final count = esAdmin ? 7 : 1;
+    final count = esAdmin ? 8 : 1;
     final initialIdx = (widget.initialTabIndex >= count || !esAdmin) ? 0 : widget.initialTabIndex;
     _tabController = TabController(length: count, vsync: this, initialIndex: initialIdx);
     _cargarDatosIniciales();
@@ -231,8 +234,19 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
       password: _passNuevaCtrl.text.isNotEmpty ? _passNuevaCtrl.text.trim() : user.password,
     );
 
-    await repo.updateUsuario(updated);
-    ref.read(authProvider.notifier).updateProfile(updated);
+    ApiSession.currentPassword = _passActualCtrl.text;
+    try {
+      await repo.updateUsuario(updated);
+    } catch (error) {
+      if (mounted) {
+        setState(() => _guardandoPerfil = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+      return;
+    } finally {
+      ApiSession.currentPassword = null;
+    }
+    ref.read(authProvider.notifier).updateProfile(updated.copyWith(password: ''));
 
     setState(() => _guardandoPerfil = false);
     _passActualCtrl.clear();
@@ -549,7 +563,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
     final user = ref.watch(authProvider);
     final esAdmin = user?.rol == 'admin';
     final themeState = ref.watch(appThemeNotifierProvider);
-    final expectedLength = esAdmin ? 7 : 1;
+    final expectedLength = esAdmin ? 8 : 1;
 
     if (_tabController.length != expectedLength) {
       _tabController.dispose();
@@ -576,6 +590,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                   Tab(icon: Icon(Icons.palette, size: 20), text: 'Tema Visual'),
                   Tab(icon: Icon(Icons.build_circle_outlined, size: 20), text: 'Fallas & Diagnósticos'),
                   Tab(icon: Icon(Icons.cloud_download_outlined, size: 20), text: 'Respaldo & Datos'),
+                  Tab(icon: Icon(Icons.history, size: 20), text: 'Historial de Cambios'),
                 ]
               : const [
                   Tab(icon: Icon(Icons.person, size: 20), text: 'Mi Perfil'),
@@ -593,6 +608,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                 _buildTabTema(themeState),
                 _buildTabCatalogoFallas(),
                 _buildTabRespaldo(),
+                const ChangeHistoryPanel(),
               ]
             : [
                 _buildTabPerfil(),
@@ -1045,7 +1061,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                           Expanded(
                             flex: 1,
                             child: DropdownButtonFormField<String>(
-                              value: _newRol,
+                              initialValue: _newRol,
                               decoration: const InputDecoration(labelText: 'Rol Asignado'),
                               items: const [
                                 DropdownMenuItem(value: 'admin', child: Text('Administrador')),
@@ -1130,7 +1146,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _usuarios.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, i) {
                         final u = _usuarios[i];
                         return Padding(
@@ -1182,7 +1198,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                                   children: [
                                     Switch(
                                       value: u.activo,
-                                      activeColor: SantiConstants.successGreen,
+                                      activeThumbColor: SantiConstants.successGreen,
                                       onChanged: (val) => _toggleUsuario(u),
                                     ),
                                     IconButton(
@@ -2000,7 +2016,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -2157,7 +2173,10 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
           ),
           const SizedBox(height: 24),
 
-          // Card 1: Full Backup
+          const ServerBackupPanel(),
+          const SizedBox(height: 20),
+
+          // Card 1: Exportación de datos
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -2182,12 +2201,12 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Copia de Seguridad Completa (Full Backup JSON)',
+                              'Exportación de Datos (JSON)',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Genera un archivo JSON con todos los clientes, equipos, historial de órdenes, catálogo de fallas y configuración institucional.',
+                              'Exporta un resumen de clientes, equipos, órdenes, catálogo y configuración. Para restaurar el sistema utilice el respaldo SQLite.',
                               style: TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           ],
@@ -2228,7 +2247,7 @@ class _ConfiguracionPageScreenState extends ConsumerState<ConfiguracionPageScree
                     icon: _exportandoBackup
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.download),
-                    label: Text(_exportandoBackup ? 'Generando Respaldo...' : 'Descargar Copia de Seguridad Completa (.JSON)'),
+                    label: Text(_exportandoBackup ? 'Generando Respaldo...' : 'Descargar Exportación de Datos (.JSON)'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SantiConstants.primaryBlue,
                       foregroundColor: Colors.white,

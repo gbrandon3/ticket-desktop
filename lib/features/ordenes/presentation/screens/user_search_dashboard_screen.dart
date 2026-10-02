@@ -154,7 +154,7 @@ class _UserSearchDashboardScreenState extends ConsumerState<UserSearchDashboardS
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundColor: SantiConstants.primaryBlue.withOpacity(0.12),
+                              backgroundColor: SantiConstants.primaryBlue.withValues(alpha: 0.12),
                               child: const Icon(Icons.person, color: SantiConstants.primaryBlue, size: 28),
                             ),
                             const SizedBox(width: 14),
@@ -227,7 +227,7 @@ class _UserSearchDashboardScreenState extends ConsumerState<UserSearchDashboardS
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(16),
                                       itemCount: _equipos.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1),
+                                      separatorBuilder: (_, _) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final eq = _equipos[index];
                                         return ListTile(
@@ -267,7 +267,7 @@ class _UserSearchDashboardScreenState extends ConsumerState<UserSearchDashboardS
                                   : ListView.separated(
                                       padding: const EdgeInsets.all(16),
                                       itemCount: _historialOrdenes.length,
-                                      separatorBuilder: (_, __) => const Divider(height: 1),
+                                      separatorBuilder: (_, _) => const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final o = _historialOrdenes[index];
                                         return ListTile(

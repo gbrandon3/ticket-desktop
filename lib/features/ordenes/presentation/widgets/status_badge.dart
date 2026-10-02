@@ -96,7 +96,7 @@ class PriorityBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: text.withOpacity(0.3), width: 0.8),
+        border: Border.all(color: text.withValues(alpha: 0.3), width: 0.8),
       ),
       child: Text(
         priority,

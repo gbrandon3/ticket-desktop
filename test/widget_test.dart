@@ -132,6 +132,33 @@ class _MockDashboardRepository extends Fake implements IOrdenesRepository {
 }
 
 void main() {
+  testWidgets('Fallo de conexión muestra reintento y no abre el setup', (tester) async {
+    var available = false;
+    final container = ProviderContainer(overrides: [
+      setupCompletedProvider.overrideWith((ref) async {
+        if (!available) throw Exception('Servidor desconectado');
+        return true;
+      }),
+      ordenesRepositoryProvider.overrideWithValue(_MockDashboardRepository()),
+    ]);
+    addTearDown(container.dispose);
+    final router = container.read(appRouterProvider);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp.router(routerConfig: router),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('No se pudo conectar al backend'), findsOneWidget);
+    expect(find.byType(SetupWizardScreen), findsNothing);
+    available = true;
+    await tester.tap(find.text('Reintentar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(SetupWizardScreen), findsNothing);
+  });
+
   testWidgets('Carga inicial y prueba de hitTest con puntero/mouse', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(

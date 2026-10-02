@@ -588,7 +588,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => onSelected(),
-      selectedColor: SantiConstants.primaryBlue.withOpacity(0.15),
+      selectedColor: SantiConstants.primaryBlue.withValues(alpha: 0.15),
       labelStyle: TextStyle(
         fontSize: 12,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

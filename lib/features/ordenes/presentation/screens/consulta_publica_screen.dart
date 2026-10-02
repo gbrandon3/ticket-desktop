@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +11,7 @@ import '../../domain/entities/foto_evidencia.dart';
 import '../../domain/entities/orden.dart';
 import '../../domain/entities/repuesto.dart';
 import '../providers/ordenes_providers.dart';
-import 'login_screen.dart';
+import '../widgets/evidencia_image.dart';
 
 class ConsultaPublicaScreen extends ConsumerStatefulWidget {
   final String? initialQuery;
@@ -171,7 +170,7 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Ingrese el número de serie de su equipo, el código de ticket o su número de identificación (cédula o NIT).',
+                          'Ingrese el código completo de su orden recibido en el comprobante o por correo.',
                           style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                         ),
                         const SizedBox(height: 18),
@@ -183,7 +182,7 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
                               child: TextField(
                                 controller: _searchCtrl,
                                 decoration: InputDecoration(
-                                  hintText: 'Ej: TCK-2026-7311, HP-ELITE-840-001 o 1098765432',
+                                  hintText: 'Código completo de la orden',
                                   prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8)),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -484,7 +483,7 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Image.memory(base64Decode(_fotoAmpliadaBase64!), fit: BoxFit.contain),
+                  child: EvidenciaImage(rutaOBytes: _fotoAmpliadaBase64!, fit: BoxFit.contain),
                 ),
                 Positioned(
                   top: 8,
@@ -808,7 +807,7 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: repuestos.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final r = repuestos[i];
               return Padding(
@@ -1048,8 +1047,8 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Image.memory(
-                          base64Decode(f.fotoBase64),
+                        EvidenciaImage(
+                          rutaOBytes: f.fotoBase64,
                           height: 95,
                           width: 130,
                           fit: BoxFit.cover,

@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/services/email_service.dart';
 import '../../domain/entities/cliente.dart';
 import '../../domain/entities/equipo.dart';
@@ -21,12 +24,12 @@ class CrearIncidenciaScreen extends ConsumerStatefulWidget {
   const CrearIncidenciaScreen({super.key, this.onOrdenCreada});
 
   @override
-  ConsumerState<CrearIncidenciaScreen> createState() => _CrearIncidenciaScreenState();
+  ConsumerState<CrearIncidenciaScreen> createState() =>
+      _CrearIncidenciaScreenState();
 }
 
 class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
   int _currentStep = 0;
-  bool _mostrarAlertaSmtp = true;
 
   // ==================== PASO 1: CLIENTE ====================
   final _searchClienteCtrl = TextEditingController();
@@ -37,14 +40,17 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
   // ==================== PASO 2: TIPO E INCIDENCIA ====================
   String _tipoServicio = 'CORRECTIVO'; // CORRECTIVO | PREVENTIVO
   String _categoriaFalla = 'Hardware Físico / Componentes';
-  final _categoriaFallaCtrl = TextEditingController(text: 'Hardware Físico / Componentes');
+  final _categoriaFallaCtrl = TextEditingController(
+    text: 'Hardware Físico / Componentes',
+  );
 
   final _tituloCtrl = TextEditingController();
   final _descripcionCtrl = TextEditingController();
   String _prioridad = 'Media - Funcionamiento parcial / Falla no bloqueante';
 
   // ==================== PASO 3: EQUIPO Y ESPECIFICACIONES ====================
-  String _tipoEquipo = 'Portátil / Laptop'; // Portátil / Laptop | PC de Mesa | All-in-One
+  String _tipoEquipo =
+      'Portátil / Laptop'; // Portátil / Laptop | PC de Mesa | All-in-One
   final _searchEquipoCtrl = TextEditingController();
   List<Equipo> _equiposEncontrados = [];
   bool _buscandoEquipos = false;
@@ -188,9 +194,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar imagen: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar imagen: $e')));
       }
     }
   }
@@ -207,11 +213,19 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.person_add, color: Color(0xFF2563EB)),
             SizedBox(width: 8),
-            Text('Registrar Nuevo Cliente', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text(
+                'Registrar Nuevo Cliente',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
         content: SizedBox(
@@ -222,17 +236,39 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Datos de contacto para registrar y entregar el equipo. Los campos con * son obligatorios.',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   ValueListenableBuilder<String>(
                     valueListenable: tipoDocCtrl,
                     builder: (context, value, _) {
                       return DropdownButtonFormField<String>(
-                        value: value,
-                        decoration: const InputDecoration(labelText: 'Tipo de Documento *'),
+                        initialValue: value,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de Documento *',
+                        ),
                         items: const [
-                          DropdownMenuItem(value: 'CC', child: Text('Cédula de Ciudadanía (CC)')),
-                          DropdownMenuItem(value: 'NIT', child: Text('NIT (Empresarial)')),
-                          DropdownMenuItem(value: 'CE', child: Text('Cédula de Extranjería (CE)')),
-                          DropdownMenuItem(value: 'PASAPORTE', child: Text('Pasaporte')),
+                          DropdownMenuItem(
+                            value: 'CC',
+                            child: Text('Cédula de Ciudadanía (CC)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'NIT',
+                            child: Text('NIT (Empresarial)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'CE',
+                            child: Text('Cédula de Extranjería (CE)'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'PASAPORTE',
+                            child: Text('Pasaporte'),
+                          ),
                         ],
                         onChanged: (v) => tipoDocCtrl.value = v ?? 'CC',
                       );
@@ -241,30 +277,46 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: docCtrl,
-                    decoration: const InputDecoration(labelText: 'Número de Documento *'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Número de Documento *',
+                    ),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: nombreCtrl,
-                    decoration: const InputDecoration(labelText: 'Nombre Completo / Razón Social *'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre Completo / Razón Social *',
+                    ),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: telCtrl,
-                    decoration: const InputDecoration(labelText: 'Teléfono / Móvil *'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Teléfono / Móvil *',
+                    ),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: emailCtrl,
-                    decoration: const InputDecoration(labelText: 'Correo Electrónico (Opcional)'),
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Correo Electrónico (Opcional)',
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: dirCtrl,
-                    decoration: const InputDecoration(labelText: 'Dirección (Opcional)'),
+                    decoration: const InputDecoration(labelText: 'Dirección *'),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Ingrese la dirección'
+                        : null,
                   ),
                 ],
               ),
@@ -288,11 +340,25 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                   numeroDocumento: docCtrl.text.trim(),
                   nombreCompleto: nombreCtrl.text.trim(),
                   telefono: telCtrl.text.trim(),
-                  email: emailCtrl.text.trim().isEmpty ? null : emailCtrl.text.trim(),
+                  email: emailCtrl.text.trim().isEmpty
+                      ? null
+                      : emailCtrl.text.trim(),
                   direccion: dirCtrl.text.trim(),
                 );
                 final repo = ref.read(ordenesRepositoryProvider);
-                final saved = await repo.saveCliente(nuevoCliente);
+                Cliente saved;
+                try {
+                  saved = await repo.saveCliente(nuevoCliente);
+                } catch (error) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('No se pudo guardar el cliente: $error'),
+                      ),
+                    );
+                  }
+                  return;
+                }
                 if (!mounted) return;
                 if (ctx.mounted) {
                   Navigator.of(ctx).pop();
@@ -303,7 +369,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                 _buscarClientesRealtime('');
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Cliente ${saved.nombreCompleto} registrado y seleccionado.'),
+                    content: Text(
+                      'Cliente ${saved.nombreCompleto} registrado y seleccionado.',
+                    ),
                     backgroundColor: const Color(0xFF16A34A),
                   ),
                 );
@@ -332,7 +400,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Equipo seleccionado: ${equipo.marca} ${equipo.modelo} (${equipo.numeroSerie})'),
+        content: Text(
+          'Equipo seleccionado: ${equipo.marca} ${equipo.modelo} (${equipo.numeroSerie})',
+        ),
         backgroundColor: const Color(0xFF16A34A),
       ),
     );
@@ -342,7 +412,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     if (_clienteSeleccionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor busque y elija un cliente de la tabla antes de continuar.'),
+          content: Text(
+            'Por favor busque y elija un cliente de la tabla antes de continuar.',
+          ),
           backgroundColor: Color(0xFFEAB308),
         ),
       );
@@ -385,21 +457,30 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                 hintText: _tipoServicio == 'PREVENTIVO'
                     ? 'ej. Mantenimiento Preventivo de Servidor'
                     : 'ej. Corto en etapa de potencia / Mosfet quemado',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
             onPressed: () {
               final text = nuevoTipoCtrl.text.trim();
               if (text.isNotEmpty) {
                 if (_tipoServicio == 'PREVENTIVO') {
-                  ref.read(catalogoFallasProvider.notifier).addTipoPreventivo(text);
+                  ref
+                      .read(catalogoFallasProvider.notifier)
+                      .addTipoPreventivo(text);
                 } else {
-                  ref.read(catalogoFallasProvider.notifier).addTipoCorrectivo(text);
+                  ref
+                      .read(catalogoFallasProvider.notifier)
+                      .addTipoCorrectivo(text);
                 }
                 setState(() {
                   _categoriaFalla = text;
@@ -408,7 +489,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                 Navigator.of(ctx).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Tipo de falla "$text" guardado en el catálogo y seleccionado.'),
+                    content: Text(
+                      'Tipo de falla "$text" guardado en el catálogo y seleccionado.',
+                    ),
                     backgroundColor: const Color(0xFF16A34A),
                     duration: const Duration(seconds: 2),
                   ),
@@ -429,7 +512,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     if (catFinal.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Por favor indique o cree el tipo o categoría de falla.'),
+          content: Text(
+            'Por favor indique o cree el tipo o categoría de falla.',
+          ),
           backgroundColor: Color(0xFFEF4444),
         ),
       );
@@ -438,9 +523,11 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     if (_tituloCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tipoServicio == 'PREVENTIVO'
-              ? 'Por favor ingrese el motivo o alcance del mantenimiento preventivo.'
-              : 'Por favor ingrese el título o síntoma reportado.'),
+          content: Text(
+            _tipoServicio == 'PREVENTIVO'
+                ? 'Por favor ingrese el motivo o alcance del mantenimiento preventivo.'
+                : 'Por favor ingrese el título o síntoma reportado.',
+          ),
           backgroundColor: const Color(0xFFEF4444),
         ),
       );
@@ -449,9 +536,11 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     if (_descripcionCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_tipoServicio == 'PREVENTIVO'
-              ? 'Por favor describa el servicio preventivo requerido.'
-              : 'Por favor describa el comportamiento o falla detallada.'),
+          content: Text(
+            _tipoServicio == 'PREVENTIVO'
+                ? 'Por favor describa el servicio preventivo requerido.'
+                : 'Por favor describa el comportamiento o falla detallada.',
+          ),
           backgroundColor: const Color(0xFFEF4444),
         ),
       );
@@ -492,7 +581,9 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Por favor ingrese el número de serie o marque "Equipo sin número de serie visible".'),
+            content: Text(
+              'Por favor ingrese el número de serie o marque "Equipo sin número de serie visible".',
+            ),
             backgroundColor: Color(0xFFEF4444),
           ),
         );
@@ -526,10 +617,10 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
       final prioridadCorta = _prioridad.startsWith('Baja')
           ? 'BAJA'
           : _prioridad.startsWith('Alta')
-              ? 'ALTA'
-              : _prioridad.startsWith('Crítica')
-                  ? 'CRITICA'
-                  : 'MEDIA';
+          ? 'ALTA'
+          : _prioridad.startsWith('Crítica')
+          ? 'CRITICA'
+          : 'MEDIA';
 
       final orden = Orden(
         codigoOrden: '',
@@ -568,17 +659,21 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
               config.smtpUser!.trim().isNotEmpty &&
               config.smtpPass!.trim().isNotEmpty) {
             String baseUrl = 'https://ticket-desktop.vercel.app';
-            if (config.portalHostUrl != null && config.portalHostUrl!.trim().isNotEmpty) {
+            if (config.portalHostUrl != null &&
+                config.portalHostUrl!.trim().isNotEmpty) {
               baseUrl = config.portalHostUrl!.trim();
               if (baseUrl.endsWith('/')) {
                 baseUrl = baseUrl.substring(0, baseUrl.length - 1);
               }
-            } else if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+            } else if (kIsWeb &&
+                Uri.base.hasAuthority &&
+                Uri.base.host.isNotEmpty) {
               baseUrl = Uri.base.origin;
             }
             final trackingUrl = '$baseUrl/#/consulta';
 
-            final msg = '''Estimado(a) ${cliente.nombreCompleto},
+            final msg =
+                '''Estimado(a) ${cliente.nombreCompleto},
 
 Su orden de servicio técnico ha sido radicada exitosamente en ${config.nombreEmpresa}.
 
@@ -638,12 +733,22 @@ ${config.nombreEmpresa}
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            scrollable: true,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 30),
                 SizedBox(width: 10),
-                Text('¡Incidencia Radicada con Éxito!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Expanded(
+                  child: Text(
+                    '¡Incidencia Radicada con Éxito!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
               ],
             ),
             content: Container(
@@ -669,40 +774,86 @@ ${config.nombreEmpresa}
                       children: [
                         Row(
                           children: [
-                            const Text('CÓDIGO DE ORDEN / TICKET: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                            Text(
-                              codigo,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                            const Expanded(
+                              child: Text(
+                                'CÓDIGO DE ORDEN / TICKET',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E3A8A),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Copiar código',
+                              icon: const Icon(Icons.copy_outlined, size: 18),
+                              onPressed: () => Clipboard.setData(
+                                ClipboardData(text: codigo),
+                              ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        SelectableText(
+                          codigo,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
                         const Divider(height: 18),
-                        Text('• Cliente: ${cliente.nombreCompleto} (${cliente.numeroDocumento})', style: const TextStyle(fontSize: 12)),
-                        Text('• Equipo: $_tipoEquipo - ${_marcaCtrl.text} ${_modeloCtrl.text} [SN: ${_serialCtrl.text}]', style: const TextStyle(fontSize: 12)),
-                        Text('• Tipo de Servicio: $_tipoServicio | Falla: $_categoriaFalla', style: const TextStyle(fontSize: 12)),
+                        Text(
+                          '• Cliente: ${cliente.nombreCompleto} (${cliente.numeroDocumento})',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        Text(
+                          '• Equipo: $_tipoEquipo - ${_marcaCtrl.text} ${_modeloCtrl.text} [SN: ${_serialCtrl.text}]',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        Text(
+                          '• Tipo de Servicio: $_tipoServicio | Falla: $_categoriaFalla',
+                          style: const TextStyle(fontSize: 12),
+                        ),
                         Text(
                           '• Técnico Asignado: ${_tecnicoSeleccionado != null ? _tecnicoSeleccionado!.nombre : "Bolsa General (Sin Asignar)"}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: _tecnicoSeleccionado != null ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                            color: _tecnicoSeleccionado != null
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFD97706),
                           ),
                         ),
-                        if (cliente.email != null && cliente.email!.trim().isNotEmpty) ...[
+                        if (cliente.email != null &&
+                            cliente.email!.trim().isNotEmpty) ...[
                           const SizedBox(height: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: correoEnviado ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                              color: correoEnviado
+                                  ? const Color(0xFFF0FDF4)
+                                  : const Color(0xFFFFFBEB),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: correoEnviado ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A)),
+                              border: Border.all(
+                                color: correoEnviado
+                                    ? const Color(0xFFBBF7D0)
+                                    : const Color(0xFFFDE68A),
+                              ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
-                                  correoEnviado ? Icons.mark_email_read : Icons.mail_outline,
+                                  correoEnviado
+                                      ? Icons.mark_email_read
+                                      : Icons.mail_outline,
                                   size: 16,
-                                  color: correoEnviado ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                  color: correoEnviado
+                                      ? const Color(0xFF16A34A)
+                                      : const Color(0xFFD97706),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -710,11 +861,13 @@ ${config.nombreEmpresa}
                                     correoEnviado
                                         ? 'Notificación enviada con enlace de seguimiento a ${cliente.email}'
                                         : (errorCorreo != null
-                                            ? 'No se pudo enviar correo: $errorCorreo'
-                                            : 'Aviso: Configure el servidor SMTP para enviar enlaces automáticos.'),
+                                              ? 'No se pudo enviar correo: $errorCorreo'
+                                              : 'Aviso: Configure el servidor SMTP para enviar enlaces automáticos.'),
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: correoEnviado ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                      color: correoEnviado
+                                          ? const Color(0xFF15803D)
+                                          : const Color(0xFFB45309),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -739,7 +892,10 @@ ${config.nombreEmpresa}
                     Navigator.of(context).pop();
                   }
                 },
-                child: const Text('Aceptar y Finalizar', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Aceptar y Finalizar',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -749,7 +905,10 @@ ${config.nombreEmpresa}
       setState(() => _guardando = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al radicar incidencia: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error al radicar incidencia: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -770,20 +929,21 @@ ${config.nombreEmpresa}
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Radicando orden de trabajo y generando registro...', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Radicando orden de trabajo y generando registro...',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                      // Banner SMTP (Image 3)
-                      if (_mostrarAlertaSmtp) _buildSmtpBanner(),
-
-                      const SizedBox(height: 14),
-
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       // Título y Subtítulo
                       const Text(
                         'Abrir Nueva Orden de Mantenimiento',
@@ -836,116 +996,8 @@ ${config.nombreEmpresa}
                     ],
                   ),
                 ),
-        );
-  }
-
-  // ==================== ALERTA SMTP ====================
-  Widget _buildSmtpBanner() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 650;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEFCE8),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFFEF08A)),
-          ),
-          child: isNarrow
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.mail_outline, color: Color(0xFFD97706), size: 24),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'Servidor de Correo Electrónico (SMTP) no configurado',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 18, color: Color(0xFF92400E)),
-                          onPressed: () => setState(() => _mostrarAlertaSmtp = false),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Configure los datos de su correo saliente para que el sistema pueda enviar notificaciones automáticas a los clientes y al personal técnico.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFFB45309)),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Acceda al módulo de Configuración para configurar SMTP')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD97706),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      icon: const Icon(Icons.settings, size: 14),
-                      label: const Text('Configurar Ahora →'),
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    const Icon(Icons.mail_outline, color: Color(0xFFD97706), size: 24),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Servidor de Correo Electrónico (SMTP) no configurado',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
-                          ),
-                          Text(
-                            'Configure los datos de su correo saliente para que el sistema pueda enviar notificaciones automáticas a los clientes y al personal técnico.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFFB45309)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Acceda al módulo de Configuración para configurar SMTP')),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD97706),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.settings, size: 14),
-                          SizedBox(width: 6),
-                          Text('Configurar Ahora →'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18, color: Color(0xFF92400E)),
-                      onPressed: () => setState(() => _mostrarAlertaSmtp = false),
-                    ),
-                  ],
-                ),
-        );
-      },
+              ),
+            ),
     );
   }
 
@@ -1064,13 +1116,21 @@ ${config.nombreEmpresa}
       circleBg = activeColor;
       circleContent = Text(
         number,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
       );
     } else {
       circleBg = const Color(0xFFE2E8F0);
       circleContent = Text(
         number,
-        style: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 13),
+        style: const TextStyle(
+          color: Color(0xFF94A3B8),
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
       );
     }
 
@@ -1087,10 +1147,7 @@ ${config.nombreEmpresa}
           Container(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: circleBg,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: circleBg),
             child: Center(child: circleContent),
           ),
           const SizedBox(width: 8),
@@ -1105,14 +1162,18 @@ ${config.nombreEmpresa}
                   fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
                   color: isCurrent
                       ? const Color(0xFF0F172A)
-                      : (isDone ? const Color(0xFF16A34A) : const Color(0xFF94A3B8)),
+                      : (isDone
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF94A3B8)),
                 ),
               ),
               Text(
                 subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  color: isCurrent ? const Color(0xFF475569) : const Color(0xFF94A3B8),
+                  color: isCurrent
+                      ? const Color(0xFF475569)
+                      : const Color(0xFF94A3B8),
                 ),
               ),
             ],
@@ -1163,8 +1224,16 @@ ${config.nombreEmpresa}
             style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
             children: [
               TextSpan(text: 'Busque por '),
-              TextSpan(text: 'Cédula, NIT, Pasaporte o Nombre', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-              TextSpan(text: '. La tabla se actualiza en tiempo real con máximo 5 resultados.'),
+              TextSpan(
+                text: 'Cédula, NIT, Pasaporte o Nombre',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              TextSpan(
+                text: '. La tabla se actualiza en tiempo real con máximo 5 resultados.',
+              ),
             ],
           ),
         ),
@@ -1178,12 +1247,21 @@ ${config.nombreEmpresa}
                 controller: _searchClienteCtrl,
                 onChanged: _buscarClientesRealtime,
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8)),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF94A3B8),
+                  ),
                   hintText: 'Buscar por Cédula, NIT, Pasaporte o Nombre del cliente...',
-                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                  hintStyle: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF94A3B8),
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -1194,7 +1272,10 @@ ${config.nombreEmpresa}
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2563EB),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -1207,8 +1288,13 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF334155), // Slate oscuro
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -1219,7 +1305,11 @@ ${config.nombreEmpresa}
         // Tabla de clientes
         Text(
           'Clientes encontrados (${_clientesEncontrados.length} de máx. 5):',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 10),
 
@@ -1234,107 +1324,155 @@ ${config.nombreEmpresa}
                   child: Center(child: CircularProgressIndicator()),
                 )
               : _clientesEncontrados.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'No se encontraron clientes registrados con ese criterio. Puede crear uno nuevo con el botón "+ Nuevo Cliente".',
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              ? const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'No se encontraron clientes registrados con ese criterio. Puede crear uno nuevo con el botón "+ Nuevo Cliente".',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    ),
+                  ),
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
                         ),
-                      ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                            child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                              headingTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                              dataTextStyle: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                              columns: const [
-                                DataColumn(label: Text('TIPO DOC.')),
-                                DataColumn(label: Text('DOCUMENTO')),
-                                DataColumn(label: Text('NOMBRE / RAZÓN SOCIAL')),
-                                DataColumn(label: Text('TELÉFONO')),
-                                DataColumn(label: Text('SELECCIONAR')),
-                              ],
-                              rows: _clientesEncontrados.map((cli) {
-                                final isSelected = _clienteSeleccionado?.id == cli.id ||
-                                    (_clienteSeleccionado?.numeroDocumento == cli.numeroDocumento && cli.numeroDocumento.isNotEmpty);
+                        child: DataTable(
+                          headingRowColor: WidgetStateProperty.all(
+                            const Color(0xFFF8FAFC),
+                          ),
+                          headingTextStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                          dataTextStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF0F172A),
+                          ),
+                          columns: const [
+                            DataColumn(label: Text('TIPO DOC.')),
+                            DataColumn(label: Text('DOCUMENTO')),
+                            DataColumn(label: Text('NOMBRE / RAZÓN SOCIAL')),
+                            DataColumn(label: Text('TELÉFONO')),
+                            DataColumn(label: Text('SELECCIONAR')),
+                          ],
+                          rows: _clientesEncontrados.map((cli) {
+                            final isSelected =
+                                _clienteSeleccionado?.id == cli.id ||
+                                (_clienteSeleccionado?.numeroDocumento ==
+                                        cli.numeroDocumento &&
+                                    cli.numeroDocumento.isNotEmpty);
 
-                                return DataRow(
-                                  color: WidgetStateProperty.all(
-                                    isSelected ? const Color(0xFFEFF6FF) : Colors.white,
-                                  ),
-                                  cells: [
-                                    DataCell(
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(color: const Color(0xFFBFDBFE)),
-                                        ),
-                                        child: Text(
-                                          cli.tipoDocumento.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Color(0xFF2563EB),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 11,
-                                          ),
-                                        ),
+                            return DataRow(
+                              color: WidgetStateProperty.all(
+                                isSelected
+                                    ? const Color(0xFFEFF6FF)
+                                    : Colors.white,
+                              ),
+                              cells: [
+                                DataCell(
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: const Color(0xFFBFDBFE),
                                       ),
                                     ),
-                                    DataCell(Text(cli.numeroDocumento, style: const TextStyle(fontWeight: FontWeight.bold))),
-                                    DataCell(Text(cli.nombreCompleto)),
-                                    DataCell(Text(cli.telefono)),
-                                    DataCell(
-                                      isSelected
-                                          ? ElevatedButton(
-                                              onPressed: () {},
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF16A34A),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                elevation: 0,
-                                              ),
-                                              child: const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.check, size: 14),
-                                                  SizedBox(width: 4),
-                                                  Text('Seleccionado', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                                ],
-                                              ),
-                                            )
-                                          : ElevatedButton(
-                                              onPressed: () {
-                                                setState(() => _clienteSeleccionado = cli);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF2563EB),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                                elevation: 0,
-                                              ),
-                                              child: const Text('Elegir Cliente', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                            ),
+                                    child: Text(
+                                      cli.tipoDocumento.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Color(0xFF2563EB),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
                                     ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    cli.numeroDocumento,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                DataCell(Text(cli.nombreCompleto)),
+                                DataCell(Text(cli.telefono)),
+                                DataCell(
+                                  isSelected
+                                      ? ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF16A34A,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check, size: 14),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Seleccionado',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : ElevatedButton(
+                                          onPressed: () {
+                                            setState(
+                                              () => _clienteSeleccionado = cli,
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF2563EB,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 6,
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text(
+                                            'Elegir Cliente',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
 
         const SizedBox(height: 18),
@@ -1371,12 +1509,20 @@ ${config.nombreEmpresa}
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 20),
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Color(0xFF16A34A),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Cliente seleccionado: ${_clienteSeleccionado!.nombreCompleto} (${_clienteSeleccionado!.tipoDocumento}: ${_clienteSeleccionado!.numeroDocumento}) - Tel: ${_clienteSeleccionado!.telefono}',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF15803D),
+                    ),
                   ),
                 ),
               ],
@@ -1394,12 +1540,17 @@ ${config.nombreEmpresa}
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Siguiente: Tipo de Incidencia', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Siguiente: Tipo de Incidencia',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 SizedBox(width: 8),
                 Icon(Icons.arrow_forward, size: 16),
               ],
@@ -1422,7 +1573,11 @@ ${config.nombreEmpresa}
         // Encabezado
         const Row(
           children: [
-            Icon(Icons.build_circle_outlined, color: Color(0xFF2563EB), size: 24),
+            Icon(
+              Icons.build_circle_outlined,
+              color: Color(0xFF2563EB),
+              size: 24,
+            ),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1441,11 +1596,15 @@ ${config.nombreEmpresa}
         // Tipo de Mantenimiento *
         const Text(
           'Tipo de Mantenimiento *',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 10),
 
-        Row(
+        _ResponsiveFormRow(
           children: [
             Expanded(
               child: _buildSelectableCard(
@@ -1459,7 +1618,9 @@ ${config.nombreEmpresa}
                   setState(() {
                     _tipoServicio = 'CORRECTIVO';
                     if (!tiposCorrectivo.contains(_categoriaFalla)) {
-                      _categoriaFalla = tiposCorrectivo.isNotEmpty ? tiposCorrectivo.first : 'Hardware Físico';
+                      _categoriaFalla = tiposCorrectivo.isNotEmpty
+                          ? tiposCorrectivo.first
+                          : 'Hardware Físico';
                     }
                     _categoriaFallaCtrl.text = _categoriaFalla;
                   });
@@ -1479,7 +1640,9 @@ ${config.nombreEmpresa}
                   setState(() {
                     _tipoServicio = 'PREVENTIVO';
                     if (!tiposPreventivo.contains(_categoriaFalla)) {
-                      _categoriaFalla = tiposPreventivo.isNotEmpty ? tiposPreventivo.first : 'Preventivo General';
+                      _categoriaFalla = tiposPreventivo.isNotEmpty
+                          ? tiposPreventivo.first
+                          : 'Preventivo General';
                     }
                     _categoriaFallaCtrl.text = _categoriaFalla;
                   });
@@ -1492,84 +1655,65 @@ ${config.nombreEmpresa}
         const SizedBox(height: 22),
 
         // Categoría / Tipo de Falla Dinámica
-        Row(
+        _ResponsiveFormRow(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               _tipoServicio == 'PREVENTIVO'
                   ? 'Tipo / Alcance del Servicio Preventivo *'
                   : 'Tipo / Categoría de Falla Tecnológica *',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Color(0xFF1E293B),
+              ),
             ),
             TextButton.icon(
               onPressed: _dialogCrearTipoFalla,
-              icon: const Icon(Icons.add_circle_outline, size: 16, color: Color(0xFF2563EB)),
+              icon: const Icon(
+                Icons.add_circle_outline,
+                size: 16,
+                color: Color(0xFF2563EB),
+              ),
               label: const Text(
                 '+ Crear Nuevo Tipo de Falla',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
 
-        DropdownButtonFormField<String>(
-          value: (_tipoServicio == 'PREVENTIVO' ? tiposPreventivo : tiposCorrectivo).contains(_categoriaFalla)
-              ? _categoriaFalla
-              : null,
-          isExpanded: true,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            hintText: 'Seleccione un tipo existente o escriba uno nuevo...',
-            prefixIcon: Icon(
-              _tipoServicio == 'PREVENTIVO' ? Icons.cleaning_services_outlined : Icons.report_problem_outlined,
-              color: _tipoServicio == 'PREVENTIVO' ? const Color(0xFF2563EB) : const Color(0xFFEF4444),
-            ),
-          ),
-          items: [
-            ...(_tipoServicio == 'PREVENTIVO' ? tiposPreventivo : tiposCorrectivo).map((tipo) {
-              return DropdownMenuItem<String>(
-                value: tipo,
-                child: Text(tipo, style: const TextStyle(fontSize: 13)),
-              );
-            }),
-            const DropdownMenuItem<String>(
-              value: '__CREAR_NUEVO__',
-              child: Row(
-                children: [
-                  Icon(Icons.add, color: Color(0xFF2563EB), size: 16),
-                  SizedBox(width: 8),
-                  Text('+ Definir / Crear otro tipo...', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 13)),
-                ],
-              ),
-            ),
-          ],
-          onChanged: (val) {
-            if (val == '__CREAR_NUEVO__') {
-              _dialogCrearTipoFalla();
-            } else if (val != null) {
-              setState(() {
-                _categoriaFalla = val;
-                _categoriaFallaCtrl.text = val;
-              });
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-        // Campo editable directo para afinar o personalizar el tipo de falla
         TextField(
           controller: _categoriaFallaCtrl,
           decoration: InputDecoration(
-            labelText: 'Detalle o Nombre Específico de la Falla',
-            helperText: 'Puede editar o escribir libremente el tipo de falla detectado',
+            labelText: _tipoServicio == 'PREVENTIVO'
+                ? 'Alcance del servicio *'
+                : 'Categoría de falla *',
+            helperText: 'Escriba una categoría o elija una del catálogo.',
             prefixIcon: const Icon(Icons.edit_note, size: 20),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            suffixIcon: PopupMenuButton<String>(
+              tooltip: 'Elegir del catálogo',
+              icon: const Icon(Icons.expand_more),
+              itemBuilder: (_) =>
+                  (_tipoServicio == 'PREVENTIVO'
+                          ? tiposPreventivo
+                          : tiposCorrectivo)
+                      .map(
+                        (tipo) => PopupMenuItem(value: tipo, child: Text(tipo)),
+                      )
+                      .toList(),
+              onSelected: (tipo) => setState(() {
+                _categoriaFalla = tipo;
+                _categoriaFallaCtrl.text = tipo;
+              }),
+            ),
           ),
-          onChanged: (val) {
-            _categoriaFalla = val.trim();
-          },
+          onChanged: (value) => _categoriaFalla = value.trim(),
         ),
 
         const SizedBox(height: 22),
@@ -1579,7 +1723,11 @@ ${config.nombreEmpresa}
           _tipoServicio == 'PREVENTIVO'
               ? 'Motivo / Alcance del Servicio *'
               : 'Título / Síntoma Reportado *',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -1590,7 +1738,10 @@ ${config.nombreEmpresa}
                 : 'Ej. Pantalla con líneas verticales y artefactos visuales, no enciende',
             hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
           ),
         ),
 
@@ -1601,7 +1752,11 @@ ${config.nombreEmpresa}
           _tipoServicio == 'PREVENTIVO'
               ? 'Descripción del Servicio Preventivo Requerido *'
               : 'Descripción Detallada de la Falla *',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 8),
         TextField(
@@ -1622,31 +1777,46 @@ ${config.nombreEmpresa}
         // Nivel de Prioridad
         const Text(
           'Nivel de Prioridad',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _prioridad,
+          initialValue: _prioridad,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
           ),
           items: const [
             DropdownMenuItem(
               value: 'Baja - Mantenimiento preventivo o mejora no urgente',
-              child: Text('Baja - Mantenimiento preventivo o mejora no urgente'),
+              child: Text(
+                'Baja - Mantenimiento preventivo o mejora no urgente',
+              ),
             ),
             DropdownMenuItem(
               value: 'Media - Funcionamiento parcial / Falla no bloqueante',
-              child: Text('Media - Funcionamiento parcial / Falla no bloqueante'),
+              child: Text(
+                'Media - Funcionamiento parcial / Falla no bloqueante',
+              ),
             ),
             DropdownMenuItem(
               value: 'Alta - Equipo inoperativo / Bloquea trabajo crítico',
-              child: Text('Alta - Equipo inoperativo / Bloquea trabajo crítico'),
+              child: Text(
+                'Alta - Equipo inoperativo / Bloquea trabajo crítico',
+              ),
             ),
             DropdownMenuItem(
               value: 'Crítica - Emergencia operativa / Afecta servicio general',
-              child: Text('Crítica - Emergencia operativa / Afecta servicio general'),
+              child: Text(
+                'Crítica - Emergencia operativa / Afecta servicio general',
+              ),
             ),
           ],
           onChanged: (v) {
@@ -1657,7 +1827,7 @@ ${config.nombreEmpresa}
         const SizedBox(height: 28),
 
         // Botones Anterior / Siguiente
-        Row(
+        _ResponsiveFormRow(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ElevatedButton(
@@ -1665,8 +1835,13 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF475569), // Slate
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1682,13 +1857,21 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Siguiente: Datos del Equipo', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Siguiente: Datos del Equipo',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward, size: 16),
                 ],
@@ -1728,7 +1911,9 @@ ${config.nombreEmpresa}
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
                 size: 18,
                 color: selected ? activeBorderColor : const Color(0xFF94A3B8),
               ),
@@ -1749,7 +1934,10 @@ ${config.nombreEmpresa}
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
@@ -1787,26 +1975,34 @@ ${config.nombreEmpresa}
         // 1. Seleccione el Tipo de Equipo:
         const Text(
           '1. Seleccione el Tipo de Equipo:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Color(0xFF1E293B),
+          ),
         ),
         const SizedBox(height: 10),
 
-        Row(
+        _ResponsiveFormRow(
           children: [
             Expanded(
               child: _buildDeviceTypeCard(
                 icon: Icons.laptop_mac,
                 title: 'Portátil / Laptop',
-                subtitle: 'Dispositivo móvil con número de serie del fabricante',
+                subtitle:
+                    'Dispositivo móvil con número de serie del fabricante',
                 selected: _tipoEquipo == 'Portátil / Laptop',
                 onTap: () {
                   setState(() {
                     _tipoEquipo = 'Portátil / Laptop';
                     _sinSerialVisible = false;
-                    if (_serialCtrl.text.startsWith('MESA-') || _serialCtrl.text.startsWith('AIO-')) {
+                    if (_serialCtrl.text.startsWith('MESA-') ||
+                        _serialCtrl.text.startsWith('AIO-')) {
                       _serialCtrl.clear();
                     }
-                    if (_marcaCtrl.text == 'Clon / Ensamblado') _marcaCtrl.clear();
+                    if (_marcaCtrl.text == 'Clon / Ensamblado') {
+                      _marcaCtrl.clear();
+                    }
                     if (_modeloCtrl.text == 'Torre ATX') _modeloCtrl.clear();
                   });
                   _buscarEquipos('');
@@ -1823,9 +2019,15 @@ ${config.nombreEmpresa}
                 onTap: () {
                   setState(() {
                     _tipoEquipo = 'PC de Mesa';
-                    if (_marcaCtrl.text.isEmpty) _marcaCtrl.text = 'Clon / Ensamblado';
-                    if (_modeloCtrl.text.isEmpty) _modeloCtrl.text = 'Torre ATX';
-                    if (_serialCtrl.text.isEmpty || _serialCtrl.text.startsWith('LAP-') || _serialCtrl.text.startsWith('AIO-')) {
+                    if (_marcaCtrl.text.isEmpty) {
+                      _marcaCtrl.text = 'Clon / Ensamblado';
+                    }
+                    if (_modeloCtrl.text.isEmpty) {
+                      _modeloCtrl.text = 'Torre ATX';
+                    }
+                    if (_serialCtrl.text.isEmpty ||
+                        _serialCtrl.text.startsWith('LAP-') ||
+                        _serialCtrl.text.startsWith('AIO-')) {
                       _autogenerarSerialSegunTipo();
                     }
                   });
@@ -1844,10 +2046,13 @@ ${config.nombreEmpresa}
                   setState(() {
                     _tipoEquipo = 'All-in-One';
                     _sinSerialVisible = false;
-                    if (_serialCtrl.text.startsWith('MESA-') || _serialCtrl.text.startsWith('LAP-')) {
+                    if (_serialCtrl.text.startsWith('MESA-') ||
+                        _serialCtrl.text.startsWith('LAP-')) {
                       _serialCtrl.clear();
                     }
-                    if (_marcaCtrl.text == 'Clon / Ensamblado') _marcaCtrl.clear();
+                    if (_marcaCtrl.text == 'Clon / Ensamblado') {
+                      _marcaCtrl.clear();
+                    }
                     if (_modeloCtrl.text == 'Torre ATX') _modeloCtrl.clear();
                   });
                   _buscarEquipos('');
@@ -1871,22 +2076,34 @@ ${config.nombreEmpresa}
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Q 2. Buscar en equipos registrados ($_tipoEquipo):',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                'Buscar en equipos registrados ($_tipoEquipo):',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Color(0xFF1E293B),
+                ),
               ),
               const SizedBox(height: 10),
-              Row(
+              _ResponsiveFormRow(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _searchEquipoCtrl,
                       decoration: InputDecoration(
                         hintText: 'Escriba número de serie, modelo o marca (vacío muestra todos)...',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        hintStyle: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF94A3B8),
+                        ),
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
@@ -1898,14 +2115,19 @@ ${config.nombreEmpresa}
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              Row(
+              _ResponsiveFormRow(
                 children: [
                   Checkbox(
                     value: _sinSerialVisible,
@@ -1917,14 +2139,18 @@ ${config.nombreEmpresa}
                           _autogenerarSerialSegunTipo();
                         } else {
                           if (_tipoEquipo != 'PC de Mesa' &&
-                              (_serialCtrl.text.startsWith('LAP-') || _serialCtrl.text.startsWith('AIO-'))) {
+                              (_serialCtrl.text.startsWith('LAP-') ||
+                                  _serialCtrl.text.startsWith('AIO-'))) {
                             _serialCtrl.clear();
                           }
                         }
                       });
                     },
                   ),
-                  const Text('Equipo sin número de serie visible', style: TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                  const Text(
+                    'Equipo sin número de serie visible',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF334155)),
+                  ),
                 ],
               ),
 
@@ -1937,66 +2163,64 @@ ${config.nombreEmpresa}
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (_equiposEncontrados.isEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEFCE8),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFEF08A)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'No se encontró ningún equipo.',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF92400E)),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _mostrarFormularioEquipo = true;
-                            _equipoSeleccionado = null;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB45309), // Amber oscuro
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        ),
-                        child: const Text('+ Agregar y Llenar Datos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      ),
-                    ],
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'No hay coincidencias para este cliente. Complete los datos del equipo nuevo abajo.',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                   ),
                 )
               else
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Equipos encontrados:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text(
+                      'Equipos encontrados:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     ..._equiposEncontrados.map((eq) {
                       final isSel = _equipoSeleccionado?.id == eq.id;
                       return Container(
                         margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: isSel ? const Color(0xFFF0FDF4) : Colors.white,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: isSel ? const Color(0xFF22C55E) : const Color(0xFFE2E8F0)),
+                          border: Border.all(
+                            color: isSel
+                                ? const Color(0xFF22C55E)
+                                : const Color(0xFFE2E8F0),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('${eq.marca} ${eq.modelo} [SN: ${eq.numeroSerie}] - ${eq.sistemaOperativo}'),
+                            Text(
+                              '${eq.marca} ${eq.modelo} [SN: ${eq.numeroSerie}] - ${eq.sistemaOperativo}',
+                            ),
                             ElevatedButton(
                               onPressed: () => _seleccionarEquipoDeTabla(eq),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isSel ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                                backgroundColor: isSel
+                                    ? const Color(0xFF16A34A)
+                                    : const Color(0xFF2563EB),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                               ),
-                              child: Text(isSel ? '✓ Seleccionado' : 'Elegir Equipo', style: const TextStyle(fontSize: 11)),
+                              child: Text(
+                                isSel ? '✓ Seleccionado' : 'Elegir Equipo',
+                                style: const TextStyle(fontSize: 11),
+                              ),
                             ),
                           ],
                         ),
@@ -2010,40 +2234,29 @@ ${config.nombreEmpresa}
 
         const SizedBox(height: 14),
 
-        // Nota punteada
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFCBD5E1), style: BorderStyle.solid),
-          ),
-          child: const Center(
-            child: Text(
-              'Elija un equipo de la tabla anterior o presione el botón "+ Agregar y Llenar Datos" para ingresar sus especificaciones técnicas.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
         // Formulario de Especificaciones de Hardware
         if (_mostrarFormularioEquipo) ...[
           const Text(
-            'Ficha Técnica y Hardware del Dispositivo',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+            'Datos del equipo',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: Color(0xFF1E293B),
+            ),
           ),
           const SizedBox(height: 12),
-          Row(
+          _ResponsiveFormRow(
             children: [
               Expanded(
                 child: TextFormField(
                   controller: _marcaCtrl,
                   decoration: InputDecoration(
-                    labelText: _tipoEquipo == 'PC de Mesa' ? 'Marca / Ensamblador (Opcional)' : 'Marca *',
-                    hintText: _tipoEquipo == 'PC de Mesa' ? 'ej. Clon, Ensamblado, Asus' : 'ej. Lenovo, HP, Dell',
+                    labelText: _tipoEquipo == 'PC de Mesa'
+                        ? 'Marca / Ensamblador *'
+                        : 'Marca *',
+                    hintText: _tipoEquipo == 'PC de Mesa'
+                        ? 'ej. Clon, Ensamblado, Asus'
+                        : 'ej. Lenovo, HP, Dell',
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -2053,8 +2266,12 @@ ${config.nombreEmpresa}
                 child: TextFormField(
                   controller: _modeloCtrl,
                   decoration: InputDecoration(
-                    labelText: _tipoEquipo == 'PC de Mesa' ? 'Gabinete / Modelo (Opcional)' : 'Modelo *',
-                    hintText: _tipoEquipo == 'PC de Mesa' ? 'ej. Torre ATX, Personalizado' : 'ej. ThinkPad, Pavilion',
+                    labelText: _tipoEquipo == 'PC de Mesa'
+                        ? 'Gabinete / Modelo *'
+                        : 'Modelo *',
+                    hintText: _tipoEquipo == 'PC de Mesa'
+                        ? 'ej. Torre ATX, Personalizado'
+                        : 'ej. ThinkPad, Pavilion',
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -2064,14 +2281,19 @@ ${config.nombreEmpresa}
                 child: TextFormField(
                   controller: _serialCtrl,
                   decoration: InputDecoration(
-                    labelText: _tipoEquipo == 'PC de Mesa' ? 'Placa / Tag Interno (Automático)' : 'Número de Serie *',
+                    labelText: _tipoEquipo == 'PC de Mesa'
+                        ? 'Placa / Tag Interno (Automático)'
+                        : 'Número de Serie *',
                     hintText: _tipoEquipo == 'PC de Mesa'
                         ? 'ej. MESA-XXXX (Código interno taller)'
-                        : (_tipoEquipo == 'Portátil / Laptop' ? 'ej. LAP-XXXX o Serial Fabricante' : 'ej. AIO-XXXX o Serial'),
+                        : (_tipoEquipo == 'Portátil / Laptop'
+                              ? 'ej. LAP-XXXX o Serial Fabricante'
+                              : 'ej. AIO-XXXX o Serial'),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.refresh, size: 20),
-                      tooltip: 'Generar código ${_obtenerPrefijoSegunTipo()}-XXXX',
+                      tooltip:
+                          'Generar código ${_obtenerPrefijoSegunTipo()}-XXXX',
                       onPressed: _autogenerarSerialSegunTipo,
                     ),
                   ),
@@ -2080,7 +2302,7 @@ ${config.nombreEmpresa}
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          _ResponsiveFormRow(
             children: [
               Expanded(
                 child: TextFormField(
@@ -2106,7 +2328,7 @@ ${config.nombreEmpresa}
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          _ResponsiveFormRow(
             children: [
               Expanded(
                 child: TextFormField(
@@ -2157,26 +2379,44 @@ ${config.nombreEmpresa}
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              _ResponsiveFormRow(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.photo_camera_outlined, color: Color(0xFF2563EB), size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Evidencia Fotográfica de Ingreso (Opcional)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
-                      ),
-                    ],
+                  const Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.photo_camera_outlined,
+                          color: Color(0xFF2563EB),
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Evidencia Fotográfica de Ingreso (Opcional)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('Recepción física', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    child: const Text(
+                      'Recepción física',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
                   ),
                 ],
               ),
@@ -2202,12 +2442,26 @@ ${config.nombreEmpresa}
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Foto adjunta correctamente', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF16A34A))),
+                        const Text(
+                          'Foto adjunta correctamente',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
                         const SizedBox(height: 6),
                         OutlinedButton.icon(
                           onPressed: () => setState(() => _fotoBase64 = null),
-                          icon: const Icon(Icons.delete, size: 14, color: Colors.red),
-                          label: const Text('Eliminar Foto', style: TextStyle(color: Colors.red, fontSize: 12)),
+                          icon: const Icon(
+                            Icons.delete,
+                            size: 14,
+                            color: Colors.red,
+                          ),
+                          label: const Text(
+                            'Eliminar Foto',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -2219,7 +2473,10 @@ ${config.nombreEmpresa}
                   icon: const Icon(Icons.add_a_photo, size: 16),
                   label: const Text('Adjuntar Foto de Evidencia'),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                   ),
                 ),
             ],
@@ -2229,7 +2486,7 @@ ${config.nombreEmpresa}
         const SizedBox(height: 28),
 
         // Botones Anterior / Siguiente
-        Row(
+        _ResponsiveFormRow(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ElevatedButton(
@@ -2237,8 +2494,13 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF475569),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -2254,13 +2516,21 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Siguiente: Asignar Técnico', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Siguiente: Asignar Técnico',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward, size: 16),
                 ],
@@ -2296,7 +2566,13 @@ ${config.nombreEmpresa}
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 26, color: selected ? const Color(0xFF16A34A) : const Color(0xFF64748B)),
+            Icon(
+              icon,
+              size: 26,
+              color: selected
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF64748B),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -2308,7 +2584,9 @@ ${config.nombreEmpresa}
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: selected ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                      color: selected
+                          ? const Color(0xFF15803D)
+                          : const Color(0xFF0F172A),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2316,7 +2594,10 @@ ${config.nombreEmpresa}
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2337,7 +2618,11 @@ ${config.nombreEmpresa}
         // Encabezado
         const Row(
           children: [
-            Icon(Icons.engineering_outlined, color: Color(0xFF7C3AED), size: 24),
+            Icon(
+              Icons.engineering_outlined,
+              color: Color(0xFF7C3AED),
+              size: 24,
+            ),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -2368,7 +2653,10 @@ ${config.nombreEmpresa}
             hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
@@ -2387,117 +2675,181 @@ ${config.nombreEmpresa}
                   child: Center(child: CircularProgressIndicator()),
                 )
               : _tecnicosFiltrados.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'No hay técnicos disponibles o no se encontraron con ese filtro.',
-                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              ? const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(
+                    child: Text(
+                      'No hay técnicos disponibles o no se encontraron con ese filtro.',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    ),
+                  ),
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: constraints.maxWidth,
                         ),
-                      ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                            child: DataTable(
-                              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                              headingTextStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
+                        child: DataTable(
+                          headingRowColor: WidgetStateProperty.all(
+                            const Color(0xFFF8FAFC),
+                          ),
+                          headingTextStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                          columns: const [
+                            DataColumn(label: Text('TÉCNICO')),
+                            DataColumn(label: Text('DOCUMENTO')),
+                            DataColumn(label: Text('TELÉFONO')),
+                            DataColumn(label: Text('ESTADO')),
+                            DataColumn(label: Text('ACCIÓN')),
+                          ],
+                          rows: _tecnicosFiltrados.map((tec) {
+                            final isSelected =
+                                _tecnicoSeleccionado?.id == tec.id;
+                            return DataRow(
+                              color: WidgetStateProperty.all(
+                                isSelected
+                                    ? const Color(0xFFF5F3FF)
+                                    : Colors.white,
                               ),
-                              columns: const [
-                                DataColumn(label: Text('TÉCNICO')),
-                                DataColumn(label: Text('DOCUMENTO')),
-                                DataColumn(label: Text('TELÉFONO')),
-                                DataColumn(label: Text('ESTADO')),
-                                DataColumn(label: Text('ACCIÓN')),
-                              ],
-                              rows: _tecnicosFiltrados.map((tec) {
-                                final isSelected = _tecnicoSeleccionado?.id == tec.id;
-                                return DataRow(
-                                  color: WidgetStateProperty.all(
-                                    isSelected ? const Color(0xFFF5F3FF) : Colors.white,
-                                  ),
-                                  cells: [
-                                    DataCell(
-                                      Row(
+                              cells: [
+                                DataCell(
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: const Color(0xFF7C3AED)
+                                            .withValues(alpha: 0.15),
+                                        child: Text(
+                                          tec.nombre.isNotEmpty
+                                              ? tec.nombre[0].toUpperCase()
+                                              : 'T',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                            color: Color(0xFF7C3AED),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                          CircleAvatar(
-                                            radius: 14,
-                                            backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.15),
-                                            child: Text(
-                                              tec.nombre.isNotEmpty ? tec.nombre[0].toUpperCase() : 'T',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF7C3AED)),
+                                          Text(
+                                            tec.nombre,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(tec.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                              Text(tec.email, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                                            ],
+                                          Text(
+                                            tec.email,
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF64748B),
+                                            ),
                                           ),
                                         ],
                                       ),
+                                    ],
+                                  ),
+                                ),
+                                DataCell(Text(tec.documento)),
+                                DataCell(Text(tec.telefono)),
+                                DataCell(
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
                                     ),
-                                    DataCell(Text(tec.documento)),
-                                    DataCell(Text(tec.telefono)),
-                                    DataCell(
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF0FDF4),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFFBBF7D0)),
-                                        ),
-                                        child: const Text('Disponible', style: TextStyle(color: Color(0xFF15803D), fontSize: 10, fontWeight: FontWeight.bold)),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFFBBF7D0),
                                       ),
                                     ),
-                                    DataCell(
-                                      isSelected
-                                          ? ElevatedButton(
-                                              onPressed: () {},
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF16A34A),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                              ),
-                                              child: const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(Icons.check, size: 14),
-                                                  SizedBox(width: 4),
-                                                  Text('Asignado', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                                ],
-                                              ),
-                                            )
-                                          : ElevatedButton(
-                                              onPressed: () {
-                                                setState(() => _tecnicoSeleccionado = tec);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF7C3AED),
-                                                foregroundColor: Colors.white,
-                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                              ),
-                                              child: const Text('Asignar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                            ),
+                                    child: const Text(
+                                      'Disponible',
+                                      style: TextStyle(
+                                        color: Color(0xFF15803D),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  isSelected
+                                      ? ElevatedButton(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF16A34A,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 5,
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check, size: 14),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Asignado',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : ElevatedButton(
+                                          onPressed: () {
+                                            setState(
+                                              () => _tecnicoSeleccionado = tec,
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF7C3AED,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 5,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Asignar',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
 
         const SizedBox(height: 12),
@@ -2508,14 +2860,24 @@ ${config.nombreEmpresa}
             setState(() => _tecnicoSeleccionado = null);
           },
           icon: Icon(
-            _tecnicoSeleccionado == null ? Icons.check_circle : Icons.radio_button_unchecked,
+            _tecnicoSeleccionado == null
+                ? Icons.check_circle
+                : Icons.radio_button_unchecked,
             size: 16,
-            color: _tecnicoSeleccionado == null ? const Color(0xFFD97706) : const Color(0xFF64748B),
+            color: _tecnicoSeleccionado == null
+                ? const Color(0xFFD97706)
+                : const Color(0xFF64748B),
           ),
-          label: const Text('Dejar sin asignar directamente (Bolsa General del Taller)'),
+          label: const Text(
+            'Dejar sin asignar directamente (Bolsa General del Taller)',
+          ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: _tecnicoSeleccionado == null ? const Color(0xFF92400E) : const Color(0xFF475569),
-            backgroundColor: _tecnicoSeleccionado == null ? const Color(0xFFFEFCE8) : Colors.transparent,
+            foregroundColor: _tecnicoSeleccionado == null
+                ? const Color(0xFF92400E)
+                : const Color(0xFF475569),
+            backgroundColor: _tecnicoSeleccionado == null
+                ? const Color(0xFFFEFCE8)
+                : Colors.transparent,
           ),
         ),
 
@@ -2536,22 +2898,56 @@ ${config.nombreEmpresa}
                 children: [
                   Icon(Icons.receipt_long, color: Color(0xFF0F172A), size: 20),
                   SizedBox(width: 8),
-                  Text('Resumen de la Orden de Mantenimiento', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Expanded(
+                    child: Text(
+                      'Resumen de la Orden de Mantenimiento',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const Divider(height: 20),
-              _buildResumenItem('Cliente Receptor:', '${_clienteSeleccionado?.nombreCompleto} (${_clienteSeleccionado?.tipoDocumento}: ${_clienteSeleccionado?.numeroDocumento})'),
-              _buildResumenItem('Contacto:', 'Tel: ${_clienteSeleccionado?.telefono} | Email: ${_clienteSeleccionado?.email ?? "N/A"}'),
-              _buildResumenItem('Tipo de Servicio:', '$_tipoServicio - $_categoriaFalla ($_prioridad)'),
-              _buildResumenItem(_tipoServicio == 'PREVENTIVO' ? 'Motivo / Alcance:' : 'Síntoma / Falla:', _tituloCtrl.text),
-              _buildResumenItem('Equipo y Hardware:', '$_tipoEquipo - ${_marcaCtrl.text} ${_modeloCtrl.text} [SN: ${_serialCtrl.text}]'),
-              _buildResumenItem('Especificaciones:', '${_cpuCtrl.text} | ${_ramCtrl.text} | ${_discoCtrl.text} | ${_soCtrl.text}'),
+              _buildResumenItem(
+                'Cliente Receptor:',
+                '${_clienteSeleccionado?.nombreCompleto} (${_clienteSeleccionado?.tipoDocumento}: ${_clienteSeleccionado?.numeroDocumento})',
+              ),
+              _buildResumenItem(
+                'Contacto:',
+                'Tel: ${_clienteSeleccionado?.telefono} | Email: ${_clienteSeleccionado?.email ?? "N/A"}',
+              ),
+              _buildResumenItem(
+                'Tipo de Servicio:',
+                '$_tipoServicio - $_categoriaFalla ($_prioridad)',
+              ),
+              _buildResumenItem(
+                _tipoServicio == 'PREVENTIVO'
+                    ? 'Motivo / Alcance:'
+                    : 'Síntoma / Falla:',
+                _tituloCtrl.text,
+              ),
+              _buildResumenItem(
+                'Equipo y Hardware:',
+                '$_tipoEquipo - ${_marcaCtrl.text} ${_modeloCtrl.text} [SN: ${_serialCtrl.text}]',
+              ),
+              _buildResumenItem(
+                'Especificaciones:',
+                '${_cpuCtrl.text} | ${_ramCtrl.text} | ${_discoCtrl.text} | ${_soCtrl.text}',
+              ),
               _buildResumenItem(
                 'Técnico Asignado:',
-                _tecnicoSeleccionado != null ? '${_tecnicoSeleccionado!.nombre} (${_tecnicoSeleccionado!.email})' : 'Bolsa General (Pendiente de Asignación)',
+                _tecnicoSeleccionado != null
+                    ? '${_tecnicoSeleccionado!.nombre} (${_tecnicoSeleccionado!.email})'
+                    : 'Bolsa General (Pendiente de Asignación)',
                 isHighlight: true,
               ),
-              if (_fotoBase64 != null) _buildResumenItem('Evidencia Fotográfica:', '1 Fotografía capturada para recepción estética'),
+              if (_fotoBase64 != null)
+                _buildResumenItem(
+                  'Evidencia Fotográfica:',
+                  '1 Fotografía capturada para recepción estética',
+                ),
             ],
           ),
         ),
@@ -2559,7 +2955,7 @@ ${config.nombreEmpresa}
         const SizedBox(height: 28),
 
         // Botones Anterior / Radicar
-        Row(
+        _ResponsiveFormRow(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             ElevatedButton(
@@ -2567,8 +2963,13 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF475569),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -2584,15 +2985,28 @@ ${config.nombreEmpresa}
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF16A34A), // Verde radicar
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_circle_outline, size: 18),
                   SizedBox(width: 8),
-                  Text('Radicar Incidencia / Crear Orden de Servicio', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  Flexible(
+                    child: Text(
+                      'Radicar Incidencia / Crear Orden de Servicio',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2602,7 +3016,11 @@ ${config.nombreEmpresa}
     );
   }
 
-  Widget _buildResumenItem(String label, String value, {bool isHighlight = false}) {
+  Widget _buildResumenItem(
+    String label,
+    String value, {
+    bool isHighlight = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -2612,7 +3030,11 @@ ${config.nombreEmpresa}
             width: 170,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Color(0xFF475569),
+              ),
             ),
           ),
           Expanded(
@@ -2621,7 +3043,9 @@ ${config.nombreEmpresa}
               style: TextStyle(
                 fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
                 fontSize: 12,
-                color: isHighlight ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                color: isHighlight
+                    ? const Color(0xFF15803D)
+                    : const Color(0xFF0F172A),
               ),
             ),
           ),
@@ -2629,4 +3053,32 @@ ${config.nombreEmpresa}
       ),
     );
   }
+}
+
+// Apila los controles en ventanas estrechas sin conservar Expanded fuera de Row.
+class _ResponsiveFormRow extends StatelessWidget {
+  final List<Widget> children;
+  final MainAxisAlignment mainAxisAlignment;
+  const _ResponsiveFormRow({
+    required this.children,
+    this.mainAxisAlignment = MainAxisAlignment.start,
+  });
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth >= 640) {
+        return Row(mainAxisAlignment: mainAxisAlignment, children: children);
+      }
+      final fields = children.where((child) => child is! SizedBox).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < fields.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            fields[i] is Expanded ? (fields[i] as Expanded).child : fields[i],
+          ],
+        ],
+      );
+    },
+  );
 }

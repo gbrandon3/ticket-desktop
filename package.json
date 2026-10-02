@@ -1,15 +1,20 @@
 {
   "name": "tickets-app-backend",
   "version": "1.0.0",
-  "description": "Servicio Serverless de Notificaciones SMTP para Santi Inc",
-  "main": "api/send-email.js",
+  "description": "API central de órdenes de soporte técnico Santi Inc",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test server/tests/*.test.js",
+    "backup": "node server/backup.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nodemailer": "^6.9.15"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

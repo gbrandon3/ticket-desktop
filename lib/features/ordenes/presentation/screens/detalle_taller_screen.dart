@@ -1,9 +1,12 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/constants/santi_constants.dart';
 import '../../../../core/services/email_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -15,6 +18,7 @@ import '../../domain/entities/notificacion_auditoria.dart';
 import '../../domain/entities/orden.dart';
 import '../../domain/entities/repuesto.dart';
 import '../providers/ordenes_providers.dart';
+import '../widgets/evidencia_image.dart';
 import '../widgets/status_badge.dart';
 import 'documento_oficial_screen.dart';
 
@@ -24,10 +28,12 @@ class DetalleTallerScreen extends ConsumerStatefulWidget {
   const DetalleTallerScreen({super.key, required this.ordenId});
 
   @override
-  ConsumerState<DetalleTallerScreen> createState() => _DetalleTallerScreenState();
+  ConsumerState<DetalleTallerScreen> createState() =>
+      _DetalleTallerScreenState();
 }
 
-class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with SingleTickerProviderStateMixin {
+class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _loading = true;
 
@@ -63,17 +69,29 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
 
   // Protocolo y Certificación de Pruebas de Diagnóstico Pre-Entrega (CrystalDisk, HWMonitor, MemTest, etc.)
   bool _diagCrystalDisk = false;
-  final _resCrystalDiskCtrl = TextEditingController(text: 'Salud 100% Bueno. 0 Sectores Reasignados SMART');
+  final _resCrystalDiskCtrl = TextEditingController(
+    text: 'Salud 100% Bueno. 0 Sectores Reasignados SMART',
+  );
   bool _diagHwMonitor = false;
-  final _resHwMonitorCtrl = TextEditingController(text: 'Reposo: 38°C / Carga máx: 65°C. Disipación térmica nominal');
+  final _resHwMonitorCtrl = TextEditingController(
+    text: 'Reposo: 38°C / Carga máx: 65°C. Disipación térmica nominal',
+  );
   bool _diagMemTest = false;
-  final _resMemTestCtrl = TextEditingController(text: '0 Errores detectados. Memoria RAM íntegra');
+  final _resMemTestCtrl = TextEditingController(
+    text: '0 Errores detectados. Memoria RAM íntegra',
+  );
   bool _diagFurmark = false;
-  final _resFurmarkCtrl = TextEditingController(text: 'Test 3D estable sin artefactos ni cuelgues');
+  final _resFurmarkCtrl = TextEditingController(
+    text: 'Test 3D estable sin artefactos ni cuelgues',
+  );
   bool _diagBattery = false;
-  final _resBatteryCtrl = TextEditingController(text: 'Batería en estado normal, retiene carga y desconexión');
+  final _resBatteryCtrl = TextEditingController(
+    text: 'Batería en estado normal, retiene carga y desconexión',
+  );
   bool _diagPerifericos = false;
-  final _resPerifericosCtrl = TextEditingController(text: '100% teclas, touchpad, audio y puertos USB operativos');
+  final _resPerifericosCtrl = TextEditingController(
+    text: '100% teclas, touchpad, audio y puertos USB operativos',
+  );
 
   // Controllers Pestaña 3 (Acta)
   String _estadoOperatividad = 'OPERATIVO';
@@ -98,7 +116,9 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       if (!_otCompletada) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias" para avanzar.'),
+            content: Text(
+              'Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias" para avanzar.',
+            ),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 3),
           ),
@@ -111,7 +131,9 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       if (!_otCompletada) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias".'),
+            content: Text(
+              'Debe completar y guardar primero el paso "1. Orden de Trabajo & Evidencias".',
+            ),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 3),
           ),
@@ -121,7 +143,9 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       if (!_bitacoraCompletada) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Debe completar y guardar primero el paso "2. Bitácora & Insumos" antes de pasar al Acta de Entrega.'),
+            content: Text(
+              'Debe completar y guardar primero el paso "2. Bitácora & Insumos" antes de pasar al Acta de Entrega.',
+            ),
             backgroundColor: Colors.orange,
             duration: Duration(seconds: 3),
           ),
@@ -202,42 +226,64 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       // Cargar Pestaña 2
       if (act != null) {
         final rawLabores = act.procedimientosRealizados ?? '';
-        if (rawLabores.contains('--- [PRUEBAS DE DIAGNÓSTICO PRE-ENTREGA] ---')) {
-          final parts = rawLabores.split('--- [PRUEBAS DE DIAGNÓSTICO PRE-ENTREGA] ---');
+        if (rawLabores.contains(
+          '--- [PRUEBAS DE DIAGNÓSTICO PRE-ENTREGA] ---',
+        )) {
+          final parts = rawLabores.split(
+            '--- [PRUEBAS DE DIAGNÓSTICO PRE-ENTREGA] ---',
+          );
           _laboresController.text = parts[0].trim();
           final diagText = parts.length > 1 ? parts[1] : '';
 
-          final regCrystal = RegExp(r'CrystalDiskInfo:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regCrystal = RegExp(
+            r'CrystalDiskInfo:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regCrystal != null) {
             _resCrystalDiskCtrl.text = regCrystal.group(1)?.trim() ?? '';
             _diagCrystalDisk = true;
           }
 
-          final regHw = RegExp(r'HWMonitor:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regHw = RegExp(
+            r'HWMonitor:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regHw != null) {
             _resHwMonitorCtrl.text = regHw.group(1)?.trim() ?? '';
             _diagHwMonitor = true;
           }
 
-          final regMem = RegExp(r'MemTest86:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regMem = RegExp(
+            r'MemTest86:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regMem != null) {
             _resMemTestCtrl.text = regMem.group(1)?.trim() ?? '';
             _diagMemTest = true;
           }
 
-          final regFur = RegExp(r'FurMark:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regFur = RegExp(
+            r'FurMark:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regFur != null) {
             _resFurmarkCtrl.text = regFur.group(1)?.trim() ?? '';
             _diagFurmark = true;
           }
 
-          final regBat = RegExp(r'BatteryBar:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regBat = RegExp(
+            r'BatteryBar:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regBat != null) {
             _resBatteryCtrl.text = regBat.group(1)?.trim() ?? '';
             _diagBattery = true;
           }
 
-          final regPer = RegExp(r'Periféricos:\s*(.+)$', multiLine: true).firstMatch(diagText);
+          final regPer = RegExp(
+            r'Periféricos:\s*(.+)$',
+            multiLine: true,
+          ).firstMatch(diagText);
           if (regPer != null) {
             _resPerifericosCtrl.text = regPer.group(1)?.trim() ?? '';
             _diagPerifericos = true;
@@ -283,14 +329,23 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
         _docRecibeController.text = orden.cliente?.numeroDocumento ?? '';
       }
 
-      _otCompletada = ot != null && ((ot.diagnosticoPreliminar?.trim().isNotEmpty ?? false) || (ot.estadoCarcasa?.trim().isNotEmpty ?? false));
-      _bitacoraCompletada = act != null && (act.procedimientosRealizados?.trim().isNotEmpty ?? false);
+      _otCompletada =
+          ot != null &&
+          ((ot.diagnosticoPreliminar?.trim().isNotEmpty ?? false) ||
+              (ot.estadoCarcasa?.trim().isNotEmpty ?? false));
+      _bitacoraCompletada =
+          act != null &&
+          (act.procedimientosRealizados?.trim().isNotEmpty ?? false);
     }
 
     setState(() => _loading = false);
   }
 
   Future<void> _guardarPestana1() async {
+    if (_diagController.text.trim().isEmpty) {
+      _mostrarError('Escriba el diagnóstico antes de guardar la OT.');
+      return;
+    }
     final useCase = ref.read(manageTallerUseCaseProvider);
     final ot = FormatoOt(
       ordenId: widget.ordenId,
@@ -306,13 +361,22 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       pinContrasena: _pinController.text.trim(),
     );
 
-    await useCase.saveFormatoOt(ot);
+    try {
+      await useCase.saveFormatoOt(ot);
+      await _avanzarHasta('EN_TALLER');
+    } catch (error) {
+      _mostrarError(error.toString());
+      return;
+    }
+    if (!mounted) return;
     setState(() => _otCompletada = true);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Diagnóstico y Formato OT guardados correctamente. Pasando al siguiente paso...'),
+          content: Text(
+            'Diagnóstico y Formato OT guardados correctamente. Pasando al siguiente paso...',
+          ),
           backgroundColor: SantiConstants.successGreen,
           duration: Duration(seconds: 2),
         ),
@@ -323,18 +387,34 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
 
   Future<void> _guardarPestana2() async {
     final useCase = ref.read(manageTallerUseCaseProvider);
-    final manoObra = double.tryParse(_manoObraController.text.trim()) ?? 0.0;
+    final costoTexto = _manoObraController.text.trim();
+    final manoObra = costoTexto.isEmpty ? 0.0 : double.tryParse(costoTexto);
+    if (manoObra == null ||
+        !manoObra.isFinite ||
+        manoObra < 0 ||
+        _laboresController.text.trim().isEmpty) {
+      _mostrarError(
+        'Describa los procedimientos y escriba un costo de mano de obra válido, mayor o igual a cero.',
+      );
+      return;
+    }
 
     final sb = StringBuffer();
     sb.writeln(_laboresController.text.trim());
     sb.writeln();
     sb.writeln('--- [PRUEBAS DE DIAGNÓSTICO PRE-ENTREGA] ---');
-    if (_diagCrystalDisk) sb.writeln('CrystalDiskInfo: ${_resCrystalDiskCtrl.text.trim()}');
-    if (_diagHwMonitor) sb.writeln('HWMonitor: ${_resHwMonitorCtrl.text.trim()}');
+    if (_diagCrystalDisk) {
+      sb.writeln('CrystalDiskInfo: ${_resCrystalDiskCtrl.text.trim()}');
+    }
+    if (_diagHwMonitor) {
+      sb.writeln('HWMonitor: ${_resHwMonitorCtrl.text.trim()}');
+    }
     if (_diagMemTest) sb.writeln('MemTest86: ${_resMemTestCtrl.text.trim()}');
     if (_diagFurmark) sb.writeln('FurMark: ${_resFurmarkCtrl.text.trim()}');
     if (_diagBattery) sb.writeln('BatteryBar: ${_resBatteryCtrl.text.trim()}');
-    if (_diagPerifericos) sb.writeln('Periféricos: ${_resPerifericosCtrl.text.trim()}');
+    if (_diagPerifericos) {
+      sb.writeln('Periféricos: ${_resPerifericosCtrl.text.trim()}');
+    }
 
     final act = FormatoActividades(
       ordenId: widget.ordenId,
@@ -357,13 +437,22 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       costoManoObra: manoObra,
     );
 
-    await useCase.saveFormatoActividades(act);
+    try {
+      await useCase.saveFormatoActividades(act);
+      await _avanzarHasta('LISTO_ENTREGA');
+    } catch (error) {
+      _mostrarError(error.toString());
+      return;
+    }
+    if (!mounted) return;
     setState(() => _bitacoraCompletada = true);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bitácora, Insumos y Pruebas de Diagnóstico guardadas con éxito.'),
+          content: Text(
+            'Trabajo guardado. El equipo está listo para entregar; complete el acta.',
+          ),
           backgroundColor: SantiConstants.successGreen,
           duration: Duration(seconds: 2),
         ),
@@ -386,7 +475,10 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
           children: [
             TextField(
               controller: refController,
-              decoration: const InputDecoration(labelText: 'Referencia / Descripción', hintText: 'ej. Disco SSD 500GB Kingston'),
+              decoration: const InputDecoration(
+                labelText: 'Referencia / Descripción',
+                hintText: 'ej. Disco SSD 500GB Kingston',
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -398,17 +490,24 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
             TextField(
               controller: precioController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Precio Unitario (\$ COP)', prefixText: '\$ '),
+              decoration: const InputDecoration(
+                labelText: 'Precio Unitario (\$ COP)',
+                prefixText: '\$ ',
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final ref = refController.text.trim();
               final cant = int.tryParse(cantController.text.trim()) ?? 1;
-              final precio = double.tryParse(precioController.text.trim()) ?? 0.0;
+              final precio =
+                  double.tryParse(precioController.text.trim()) ?? 0.0;
 
               if (ref.isNotEmpty && precio > 0) {
                 final repuesto = Repuesto(
@@ -467,9 +566,11 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(defaultNota != null
-                  ? 'Captura de prueba técnica registrada con éxito.'
-                  : 'Evidencia fotográfica subida correctamente.'),
+              content: Text(
+                defaultNota != null
+                    ? 'Captura de prueba técnica registrada con éxito.'
+                    : 'Evidencia fotográfica subida correctamente.',
+              ),
               backgroundColor: SantiConstants.successGreen,
               duration: const Duration(seconds: 2),
             ),
@@ -478,7 +579,8 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al subir foto: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error al subir foto: $e')));
       }
     }
   }
@@ -488,11 +590,19 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Evidencia Fotográfica'),
-        content: const Text('¿Está seguro de eliminar esta fotografía de evidencia técnica? Esta acción no se puede deshacer.'),
+        content: const Text(
+          '¿Está seguro de eliminar esta fotografía de evidencia técnica? Esta acción no se puede deshacer.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Eliminar'),
           ),
@@ -517,10 +627,23 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
   }
 
   Future<void> _cerrarOrdenYGenerarActa() async {
+    if (_orden?.estado != 'LISTO_ENTREGA') {
+      await _prepararEntrega();
+      return;
+    }
+    if (_nombreRecibeController.text.trim().isEmpty ||
+        _docRecibeController.text.trim().isEmpty) {
+      _mostrarError(
+        'Complete el nombre y el documento de quien recibe el equipo.',
+      );
+      return;
+    }
     if (!_checkConformidad) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Debe marcar la casilla de verificación y conformidad del cliente.'),
+          content: Text(
+            'Debe marcar la casilla de verificación y conformidad del cliente.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -540,7 +663,13 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
       fechaEntrega: DateTime.now(),
     );
 
-    await useCase.cerrarOrdenConActa(acta);
+    try {
+      await useCase.cerrarOrdenConActa(acta);
+    } catch (error) {
+      _mostrarError(error.toString());
+      return;
+    }
+    if (!mounted) return;
     await _cargarDatos();
 
     bool? emailEnviado;
@@ -558,12 +687,15 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
             config.smtpUser!.trim().isNotEmpty &&
             config.smtpPass!.trim().isNotEmpty) {
           String baseUrl = 'https://ticket-desktop.vercel.app';
-          if (config.portalHostUrl != null && config.portalHostUrl!.trim().isNotEmpty) {
+          if (config.portalHostUrl != null &&
+              config.portalHostUrl!.trim().isNotEmpty) {
             baseUrl = config.portalHostUrl!.trim();
             if (baseUrl.endsWith('/')) {
               baseUrl = baseUrl.substring(0, baseUrl.length - 1);
             }
-          } else if (kIsWeb && Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
+          } else if (kIsWeb &&
+              Uri.base.hasAuthority &&
+              Uri.base.host.isNotEmpty) {
             baseUrl = Uri.base.origin;
           }
           final trackingUrl = '$baseUrl/#/consulta';
@@ -579,12 +711,15 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen> with 
           final equipoDesc = _orden?.equipo != null
               ? '${_orden!.equipo!.tipoEquipo} - ${_orden!.equipo!.marca} ${_orden!.equipo!.modelo}'
               : 'Equipo';
-          final serialText = (_orden?.equipo?.numeroSerie != null && _orden!.equipo!.numeroSerie.isNotEmpty)
+          final serialText =
+              (_orden?.equipo?.numeroSerie != null &&
+                  _orden!.equipo!.numeroSerie.isNotEmpty)
               ? _orden!.equipo!.numeroSerie
               : 'N/A';
           final codigo = _orden?.codigoOrden ?? widget.ordenId.toString();
 
-          final msg = '''Estimado(a) ${cliente.nombreCompleto},
+          final msg =
+              '''Estimado(a) ${cliente.nombreCompleto},
 
 Le informamos que el servicio técnico para su equipo ha sido FINALIZADO Y ENTREGADO exitosamente en ${config.nombreEmpresa}. A continuación encontrará el resumen del Acta Oficial de Entrega:
 
@@ -617,7 +752,8 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             user: config.smtpUser!,
             pass: config.smtpPass!,
             to: emailDestinatario,
-            subject: 'Servicio Finalizado y Entregado #$codigo - ${config.nombreEmpresa}',
+            subject:
+                'Servicio Finalizado y Entregado #$codigo - ${config.nombreEmpresa}',
             message: msg,
             trackingUrl: trackingUrl,
           );
@@ -643,9 +779,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
     if (mounted) {
       String emailMessage = '';
       if (emailEnviado == true) {
-        emailMessage = '\n\n📧 Se envió el comprobante y recomendaciones por correo al cliente ($emailDestinatario).';
+        emailMessage =
+            '\n\n📧 Se envió el comprobante y recomendaciones por correo al cliente ($emailDestinatario).';
       } else if (emailDestinatario != null && emailEnviado == false) {
-        emailMessage = '\n\n⚠️ No se pudo enviar el correo automático al cliente ($emailDestinatario). Verifique la configuración SMTP.';
+        emailMessage =
+            '\n\n⚠️ No se pudo enviar el correo automático al cliente ($emailDestinatario). Verifique la configuración SMTP.';
       }
 
       showDialog(
@@ -664,7 +802,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               onPressed: () {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: widget.ordenId)),
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        DocumentoOficialScreen(ordenId: widget.ordenId),
+                  ),
                 );
               },
               icon: const Icon(Icons.picture_as_pdf),
@@ -673,6 +814,41 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           ],
         ),
       );
+    }
+  }
+
+  void _mostrarError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message.replaceFirst('Exception: ', '')),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  Future<void> _avanzarHasta(String target) async {
+    const states = ['RECIBIDO', 'EN_DIAGNOSTICO', 'EN_TALLER', 'LISTO_ENTREGA'];
+    final current = states.indexOf(_orden!.estado);
+    final destination = states.indexOf(target);
+    if (current < 0 || destination <= current) return;
+    final useCase = ref.read(manageTallerUseCaseProvider);
+    for (var step = current + 1; step <= destination; step++) {
+      await useCase.updateEstado(widget.ordenId, states[step]);
+      if (!mounted) return;
+      setState(() => _orden = _orden!.copyWith(estado: states[step]));
+    }
+  }
+
+  Future<void> _prepararEntrega() async {
+    if (!_otCompletada || !_bitacoraCompletada) {
+      _mostrarError('Guarde primero el diagnóstico y la bitácora del trabajo realizado.');
+      return;
+    }
+    try {
+      await _avanzarHasta('LISTO_ENTREGA');
+    } catch (error) {
+      _mostrarError(error.toString());
     }
   }
 
@@ -686,56 +862,60 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
     final isCerrada = orden.estado == 'ENTREGADO_CERRADO';
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 76,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(orden.codigoOrden, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Expanded(
+                  child: Tooltip(
+                    message: orden.codigoOrden,
+                    child: Text(
+                      'Orden ${orden.codigoOrden.split('-').take(3).join('-')}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 10),
                 StatusBadge(status: orden.estado),
               ],
             ),
             Text(
               '${orden.cliente?.nombreCompleto ?? ''} • ${orden.equipo?.marca ?? ''} ${orden.equipo?.modelo ?? ''}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade300),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: const Color(0xFF64748B)),
             ),
           ],
         ),
         actions: [
-          // Selector de cambio rápido de estado (Deshabilitado si está cerrada)
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: DropdownButton<String>(
-              value: orden.estado,
-              dropdownColor: SantiConstants.primaryNavy,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-              underline: const SizedBox.shrink(),
-              items: const [
-                DropdownMenuItem(value: 'RECIBIDO', child: Text('Recibido')),
-                DropdownMenuItem(value: 'EN_DIAGNOSTICO', child: Text('En Diagnóstico')),
-                DropdownMenuItem(value: 'EN_TALLER', child: Text('En Taller')),
-                DropdownMenuItem(value: 'LISTO_ENTREGA', child: Text('Listo Entrega')),
-                DropdownMenuItem(value: 'ENTREGADO_CERRADO', child: Text('Entregado / Cerrado')),
-              ],
-              onChanged: isCerrada
-                  ? null
-                  : (newVal) async {
-                      if (newVal != null) {
-                        final useCase = ref.read(manageTallerUseCaseProvider);
-                        await useCase.updateEstado(orden.id!, newVal);
-                        _cargarDatos();
-                      }
-                    },
-            ),
+          IconButton(
+            tooltip: 'Copiar código completo',
+            icon: const Icon(Icons.copy_outlined, size: 20),
+            onPressed: () =>
+                Clipboard.setData(ClipboardData(text: orden.codigoOrden)),
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
             tooltip: 'Ver Documento Oficial',
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: widget.ordenId)),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      DocumentoOficialScreen(ordenId: widget.ordenId),
+                ),
               );
             },
           ),
@@ -743,22 +923,33 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          labelColor: Colors.cyanAccent,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.cyanAccent,
+          labelColor: SantiConstants.primaryBlue,
+          unselectedLabelColor: const Color(0xFF64748B),
+          indicatorColor: SantiConstants.primaryBlue,
           onTap: (index) {
             if (!_puedeAccederTab(index)) {
               _tabController.index = _tabController.previousIndex;
             }
           },
           tabs: [
-            const Tab(icon: Icon(Icons.assignment), text: '1. Orden de Trabajo & Evidencias'),
+            const Tab(
+              icon: Icon(Icons.assignment),
+              text: '1. Orden de Trabajo & Evidencias',
+            ),
             Tab(
-              icon: Icon((_otCompletada || isCerrada) ? Icons.handyman : Icons.lock_outline),
+              icon: Icon(
+                (_otCompletada || isCerrada)
+                    ? Icons.handyman
+                    : Icons.lock_outline,
+              ),
               text: '2. Bitácora & Insumos',
             ),
             Tab(
-              icon: Icon((_bitacoraCompletada || isCerrada) ? Icons.verified_outlined : Icons.lock_outline),
+              icon: Icon(
+                (_bitacoraCompletada || isCerrada)
+                    ? Icons.verified_outlined
+                    : Icons.lock_outline,
+              ),
               text: '3. Acta de Entrega',
             ),
           ],
@@ -807,12 +998,14 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
   // ===================== PESTAÑA 1 (OT & EVIDENCIAS) =====================
   Widget _buildTab1OrdenTrabajo(bool isCerrada) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Diagnóstico Técnico Preliminar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+    final left = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _workshopCard([
+          const Text(
+            'Diagnóstico Técnico Preliminar',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _diagController,
@@ -825,19 +1018,28 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             ),
           ),
           const SizedBox(height: 20),
-
-          // Herramientas dinámicas con chips
-          const Text('Herramientas Empleadas en Mesón de Trabajo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        ]),
+        const SizedBox(height: 20),
+        _workshopCard([
+          const Text(
+            'Herramientas Empleadas en Mesón de Trabajo',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             children: [
               if (_herramientas.isEmpty)
-                Text('Ninguna herramienta registrada.', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                Text(
+                  'Ninguna herramienta registrada.',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
               ..._herramientas.map(
                 (h) => Chip(
                   label: Text(h),
-                  deleteIcon: isCerrada ? null : const Icon(Icons.close, size: 16),
+                  deleteIcon: isCerrada
+                      ? null
+                      : const Icon(Icons.close, size: 16),
                   onDeleted: isCerrada
                       ? null
                       : () {
@@ -877,120 +1079,209 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             ),
           ],
           const SizedBox(height: 20),
-
-          // Accesorios y Estado inicial
-          const Text('Accesorios Recibidos e Inspección Física', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 16,
-            children: [
-              FilterChip(
-                label: const Text('Cargador / Adaptador'),
-                selected: _accCargador,
-                onSelected: isCerrada ? null : (v) => setState(() => _accCargador = v),
-              ),
-              FilterChip(
-                label: const Text('Cable de Poder'),
-                selected: _accCablePoder,
-                onSelected: isCerrada ? null : (v) => setState(() => _accCablePoder = v),
-              ),
-              FilterChip(
-                label: const Text('Mouse USB / Inalámbrico'),
-                selected: _accMouse,
-                onSelected: isCerrada ? null : (v) => setState(() => _accMouse = v),
-              ),
-              FilterChip(
-                label: const Text('Maletín / Funda'),
-                selected: _accMaletin,
-                onSelected: isCerrada ? null : (v) => setState(() => _accMaletin = v),
-              ),
-            ],
+        ]),
+      ],
+    );
+    final right = _workshopCard([
+      const Text(
+        'Accesorios Recibidos e Inspección Física',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 16,
+        children: [
+          FilterChip(
+            label: const Text('Cargador / Adaptador'),
+            selected: _accCargador,
+            onSelected: isCerrada
+                ? null
+                : (v) => setState(() => _accCargador = v),
           ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            title: const Text('¿El equipo enciende al momento de la recepción?'),
-            value: _encendido,
-            onChanged: isCerrada ? null : (v) => setState(() => _encendido = v),
+          FilterChip(
+            label: const Text('Cable de Poder'),
+            selected: _accCablePoder,
+            onSelected: isCerrada
+                ? null
+                : (v) => setState(() => _accCablePoder = v),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _carcasaController,
-            readOnly: isCerrada,
-            minLines: 3,
-            maxLines: 5,
-            decoration: InputDecoration(
-              labelText: 'Observaciones Físicas',
-              hintText: 'Detalle el estado estético, rayones, bisagras flojas, tornillos faltantes, golpes o fisuras observadas...',
-              filled: isCerrada,
-              fillColor: isCerrada ? Colors.grey.shade100 : null,
-              border: const OutlineInputBorder(),
+          FilterChip(
+            label: const Text('Mouse USB / Inalámbrico'),
+            selected: _accMouse,
+            onSelected: isCerrada ? null : (v) => setState(() => _accMouse = v),
+          ),
+          FilterChip(
+            label: const Text('Maletín / Funda'),
+            selected: _accMaletin,
+            onSelected: isCerrada
+                ? null
+                : (v) => setState(() => _accMaletin = v),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      SwitchListTile(
+        title: const Text('¿El equipo enciende al momento de la recepción?'),
+        value: _encendido,
+        onChanged: isCerrada ? null : (v) => setState(() => _encendido = v),
+      ),
+      const SizedBox(height: 12),
+      TextField(
+        controller: _carcasaController,
+        readOnly: isCerrada,
+        minLines: 2,
+        maxLines: 4,
+        decoration: InputDecoration(
+          labelText: 'Observaciones Físicas',
+          hintText: 'Detalle el estado estético, rayones, bisagras flojas, tornillos faltantes, golpes o fisuras observadas...',
+          filled: isCerrada,
+          fillColor: isCerrada ? Colors.grey.shade100 : null,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: 14),
+      TextField(
+        controller: _pinController,
+        readOnly: isCerrada,
+        decoration: InputDecoration(
+          labelText: 'Contraseña / PIN de Inicio de Sesión',
+          hintText: 'Sin contraseña o PIN de 4 dígitos',
+          filled: isCerrada,
+          fillColor: isCerrada ? Colors.grey.shade100 : null,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      const SizedBox(height: 24),
+    ]);
+    return _buildWorkshopPage(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Recepción y diagnóstico',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _pinController,
-            readOnly: isCerrada,
-            decoration: InputDecoration(
-              labelText: 'Contraseña / PIN de Inicio de Sesión',
-              hintText: 'Sin contraseña o PIN de 4 dígitos',
-              filled: isCerrada,
-              fillColor: isCerrada ? Colors.grey.shade100 : null,
-              border: const OutlineInputBorder(),
-            ),
+          const SizedBox(height: 6),
+          const Text(
+            'Registre el diagnóstico, los accesorios y el estado del equipo antes de comenzar el servicio.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 24),
-
-          // SECCIÓN DE EVIDENCIAS FOTOGRÁFICAS EN RECEPCIÓN (INTEGRADA EN OT)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 850) {
+                return Column(
+                  children: [left, const SizedBox(height: 20), right],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: left),
+                  const SizedBox(width: 20),
+                  Expanded(flex: 2, child: right),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
           _buildSeccionEvidenciasRecepcion(isCerrada),
-
           const SizedBox(height: 24),
-          if (!isCerrada)
-            ElevatedButton.icon(
-              onPressed: _guardarPestana1,
-              icon: const Icon(Icons.save),
-              label: const Text('Guardar Formato de Orden de Trabajo'),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: () => _tabController.animateTo(1),
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('Continuar a Bitácora & Insumos (Solo Lectura)'),
-              style: ElevatedButton.styleFrom(backgroundColor: SantiConstants.primaryNavy),
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: isCerrada
+                  ? () => _tabController.animateTo(1)
+                  : _guardarPestana1,
+              icon: Icon(isCerrada ? Icons.arrow_forward : Icons.save_outlined),
+              label: Text(
+                isCerrada
+                    ? 'Continuar a Bitácora & Insumos (Solo Lectura)'
+                    : 'Guardar Formato de Orden de Trabajo',
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+              ),
             ),
+          ),
         ],
       ),
     );
   }
 
+  Widget _workshopCard(List<Widget> children) => Material(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: Color(0xFFE2E8F0)),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    ),
+  );
+
+  Widget _buildWorkshopPage({required Widget child}) => SingleChildScrollView(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1120),
+        child: child,
+      ),
+    ),
+  );
+
   // ===================== SECCIÓN EVIDENCIAS RECEPCIÓN (DENTRO DE TAB 1) =====================
   Widget _buildSeccionEvidenciasRecepcion(bool isCerrada) {
-    final fotosRecepcion = _fotos.where((f) => f.etapa == 'RECEPCION' || f.etapa == 'PROCESO').toList();
+    final fotosRecepcion = _fotos
+        .where((f) => f.etapa == 'RECEPCION' || f.etapa == 'PROCESO')
+        .toList();
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.photo_camera, color: SantiConstants.primaryBlue),
                   SizedBox(width: 8),
-                  Text(
+                  Flexible(child: Text(
                     'Evidencias Fotográficas de Recepción',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
-                  ),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: SantiConstants.primaryNavy,
+                    ),
+                  )),
                 ],
               ),
               if (!isCerrada)
                 ElevatedButton.icon(
-                  onPressed: () => _subirFotoEvidencia('RECEPCION', defaultNota: 'Evidencia en recepción del equipo'),
+                  onPressed: () => _subirFotoEvidencia(
+                    'RECEPCION',
+                    defaultNota: 'Evidencia en recepción del equipo',
+                  ),
                   icon: const Icon(Icons.add_a_photo, size: 18),
                   label: const Text('Cargar Evidencia de Recepción'),
                   style: ElevatedButton.styleFrom(
@@ -1012,7 +1303,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               ),
               child: Column(
                 children: [
-                  Icon(Icons.photo_library_outlined, size: 40, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.photo_library_outlined,
+                    size: 40,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'No hay evidencias fotográficas de recepción registradas para esta orden.',
@@ -1052,8 +1347,8 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Image.memory(
-                      base64Decode(f.rutaOBytesBase64),
+                    child: EvidenciaImage(
+                      rutaOBytes: f.rutaOBytesBase64,
                       fit: BoxFit.cover,
                       width: double.infinity,
                     ),
@@ -1064,20 +1359,32 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: esEntrega ? const Color(0xFF16A34A) : SantiConstants.primaryBlue,
+                            color: esEntrega
+                                ? const Color(0xFF16A34A)
+                                : SantiConstants.primaryBlue,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             f.etapa,
-                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           DateFormat('dd/MM/yyyy HH:mm').format(f.fechaCaptura),
-                          style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                         if (f.notaTecnica != null)
                           Text(
@@ -1103,7 +1410,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                       onTap: () => _eliminarFoto(f.id!),
                       child: const Padding(
                         padding: EdgeInsets.all(6.0),
-                        child: Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                        child: Icon(
+                          Icons.delete_outline,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ),
@@ -1118,7 +1429,8 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
   FotoEvidencia? _buscarEvidenciaHerramienta(String toolKey) {
     try {
       return _fotos.firstWhere(
-        (f) => (f.notaTecnica ?? '').toLowerCase().contains(toolKey.toLowerCase()),
+        (f) =>
+            (f.notaTecnica ?? '').toLowerCase().contains(toolKey.toLowerCase()),
       );
     } catch (_) {
       return null;
@@ -1143,10 +1455,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: checked ? color.withOpacity(0.04) : Colors.white,
+        color: checked ? color.withValues(alpha: 0.04) : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: checked ? color.withOpacity(0.5) : Colors.grey.shade300,
+          color: checked ? color.withValues(alpha: 0.5) : Colors.grey.shade300,
           width: checked ? 1.5 : 1,
         ),
       ),
@@ -1165,7 +1477,7 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: color, size: 20),
@@ -1185,7 +1497,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                       ),
                       Text(
                         subtitulo,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -1193,17 +1508,31 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 if (!isCerrada)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: foto != null ? const Color(0xFF16A34A) : color,
+                      backgroundColor: foto != null
+                          ? const Color(0xFF16A34A)
+                          : color,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     onPressed: () => _subirFotoEvidencia(
                       'ENTREGA',
-                      defaultNota: 'Evidencia: $nombreHerramienta (${controller.text.trim()})',
+                      defaultNota:
+                          'Evidencia: $nombreHerramienta (${controller.text.trim()})',
                     ),
-                    icon: Icon(foto != null ? Icons.check_circle : Icons.camera_alt, size: 16),
-                    label: Text(foto != null ? 'Captura Lista' : 'Cargar Captura'),
+                    icon: Icon(
+                      foto != null ? Icons.check_circle : Icons.camera_alt,
+                      size: 16,
+                    ),
+                    label: Text(
+                      foto != null ? 'Captura Lista' : 'Cargar Captura',
+                    ),
                   ),
               ],
             ),
@@ -1214,18 +1543,27 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 readOnly: isCerrada,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  labelText: 'Resultado de Prueba / Métrica ($nombreHerramienta)',
+                  labelText:
+                      'Resultado de Prueba / Métrica ($nombreHerramienta)',
                   hintText: hintText,
                   filled: isCerrada,
                   fillColor: isCerrada ? Colors.grey.shade100 : Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
               ),
               if (foto != null) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFDCFCE7),
                     borderRadius: BorderRadius.circular(6),
@@ -1233,19 +1571,27 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified, color: Color(0xFF16A34A), size: 16),
+                      const Icon(
+                        Icons.verified,
+                        color: Color(0xFF16A34A),
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Captura técnica de comprobación adjunta (${foto.notaTecnica ?? ""})',
-                          style: const TextStyle(color: Color(0xFF166534), fontSize: 11, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Color(0xFF166534),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: Image.memory(
-                          base64Decode(foto.rutaOBytesBase64),
+                        child: EvidenciaImage(
+                          rutaOBytes: foto.rutaOBytesBase64,
                           width: 32,
                           height: 32,
                           fit: BoxFit.cover,
@@ -1266,9 +1612,9 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1278,7 +1624,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           Flexible(
             child: Text(
               text,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -1295,12 +1645,14 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
     final manoObra = double.tryParse(_manoObraController.text.trim()) ?? 0.0;
     final totalGeneral = totalRepuestos + manoObra;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+    return _buildWorkshopPage(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Procedimientos y Labores Realizadas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            'Procedimientos y Labores Realizadas',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _laboresController,
@@ -1333,40 +1685,64 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                       SizedBox(width: 8),
                       Text(
                         'Insumos Físicos y Químicos Aplicados (Sello Santi INC)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: SantiConstants.primaryNavy),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: SantiConstants.primaryNavy,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   CheckboxListTile(
-                    title: const Text('Pasta Térmica de Alto Rendimiento (Compuesto Plata/Carbono)'),
+                    title: const Text(
+                      'Pasta Térmica de Alto Rendimiento (Compuesto Plata/Carbono)',
+                    ),
                     value: _insumoPasta,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _insumoPasta = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _insumoPasta = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Limpieza con Alcohol Isopropílico de Alta Pureza (99.8%)'),
+                    title: const Text(
+                      'Limpieza con Alcohol Isopropílico de Alta Pureza (99.8%)',
+                    ),
                     value: _insumoAlcohol,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _insumoAlcohol = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _insumoAlcohol = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Sopleteado / Limpiador Dieléctrico de Contactos Electrónicos'),
+                    title: const Text(
+                      'Sopleteado / Limpiador Dieléctrico de Contactos Electrónicos',
+                    ),
                     value: _insumoSopleteado,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _insumoSopleteado = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _insumoSopleteado = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Desempolvado con Brocha Antiestática ESD'),
+                    title: const Text(
+                      'Desempolvado con Brocha Antiestática ESD',
+                    ),
                     value: _insumoBrocha,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _insumoBrocha = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _insumoBrocha = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Limpieza de Chasis y Pantalla con Paño de Microfibra'),
+                    title: const Text(
+                      'Limpieza de Chasis y Pantalla con Paño de Microfibra',
+                    ),
                     value: _insumoPano,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _insumoPano = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _insumoPano = v!),
                   ),
                 ],
               ),
@@ -1387,37 +1763,60 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Mantenimiento Lógico y Optimización', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Text(
+                    'Mantenimiento Lógico y Optimización',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                   const SizedBox(height: 8),
                   CheckboxListTile(
-                    title: const Text('Depuración de Archivos Temporales y Caché del Sistema'),
+                    title: const Text(
+                      'Depuración de Archivos Temporales y Caché del Sistema',
+                    ),
                     value: _logicaTemporales,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _logicaTemporales = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _logicaTemporales = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Optimización de Aplicaciones de Inicio y Servicios'),
+                    title: const Text(
+                      'Optimización de Aplicaciones de Inicio y Servicios',
+                    ),
                     value: _logicaInicio,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _logicaInicio = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _logicaInicio = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Escaneo y Eliminación de Malware / Spyware'),
+                    title: const Text(
+                      'Escaneo y Eliminación de Malware / Spyware',
+                    ),
                     value: _logicaMalware,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _logicaMalware = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _logicaMalware = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Actualización de Controladores Críticos'),
+                    title: const Text(
+                      'Actualización de Controladores Críticos',
+                    ),
                     value: _logicaDrivers,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _logicaDrivers = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _logicaDrivers = v!),
                   ),
                   CheckboxListTile(
-                    title: const Text('Comprobación de Salud de Disco (SMART / CrystalDiskInfo)'),
+                    title: const Text(
+                      'Comprobación de Salud de Disco (SMART / CrystalDiskInfo)',
+                    ),
                     value: _diagCrystalDisk,
                     dense: true,
-                    onChanged: isCerrada ? null : (v) => setState(() => _diagCrystalDisk = v!),
+                    onChanged: isCerrada
+                        ? null
+                        : (v) => setState(() => _diagCrystalDisk = v!),
                   ),
                 ],
               ),
@@ -1429,13 +1828,18 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Repuestos e Insumos Facturables', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const Text(
+                'Repuestos e Insumos Facturables',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               if (!isCerrada)
                 ElevatedButton.icon(
                   onPressed: _agregarRepuestoDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('Agregar Repuesto'),
-                  style: ElevatedButton.styleFrom(backgroundColor: SantiConstants.accentCyan),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SantiConstants.accentCyan,
+                  ),
                 ),
             ],
           ),
@@ -1449,7 +1853,9 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             child: _repuestos.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Center(child: Text('No hay repuestos adicionales facturados.')),
+                    child: Center(
+                      child: Text('No hay repuestos adicionales facturados.'),
+                    ),
                   )
                 : DataTable(
                     columns: [
@@ -1464,12 +1870,18 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                         cells: [
                           DataCell(Text(r.referencia)),
                           DataCell(Text('${r.cantidad}')),
-                          DataCell(Text(CurrencyFormatter.format(r.precioUnitario))),
+                          DataCell(
+                            Text(CurrencyFormatter.format(r.precioUnitario)),
+                          ),
                           DataCell(Text(CurrencyFormatter.format(r.subtotal))),
                           if (!isCerrada)
                             DataCell(
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
                                 onPressed: () => _eliminarRepuesto(r.id!),
                               ),
                             ),
@@ -1499,7 +1911,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               ),
               const SizedBox(width: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: SantiConstants.primaryNavy,
                   borderRadius: BorderRadius.circular(8),
@@ -1507,10 +1922,17 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('TOTAL GENERAL A LIQUIDAR', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    const Text(
+                      'TOTAL GENERAL A LIQUIDAR',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
                     Text(
                       CurrencyFormatter.format(totalGeneral),
-                      style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 20),
+                      style: const TextStyle(
+                        color: Colors.cyanAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                   ],
                 ),
@@ -1535,18 +1957,33 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.verified, color: Color(0xFF2563EB), size: 22),
-                        SizedBox(width: 8),
-                        Text(
-                          'Protocolo de Pruebas de Diagnóstico y Salud Pre-Entrega',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
-                        ),
-                      ],
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.verified,
+                            color: Color(0xFF2563EB),
+                            size: 22,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Protocolo de Pruebas de Diagnóstico y Salud Pre-Entrega',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(6),
@@ -1554,7 +1991,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                       ),
                       child: const Text(
                         'Comprobación por Software',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1D4ED8),
+                        ),
                       ),
                     ),
                   ],
@@ -1568,13 +2009,15 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
                 // 1. CrystalDiskInfo (Salud del Disco Duro / SSD SMART)
                 _buildCardPruebaDiagnostico(
-                  titulo: 'CrystalDiskInfo (Salud y Estado SMART de Disco SSD/HDD)',
+                  titulo:
+                      'CrystalDiskInfo (Salud y Estado SMART de Disco SSD/HDD)',
                   nombreHerramienta: 'CrystalDiskInfo',
                   subtitulo: 'Prueba de sectores defectuosos, % de vida restante, temperatura y horas de uso.',
                   icon: Icons.storage,
                   color: const Color(0xFF2563EB),
                   checked: _diagCrystalDisk,
-                  onChecked: (v) => setState(() => _diagCrystalDisk = v ?? false),
+                  onChecked: (v) =>
+                      setState(() => _diagCrystalDisk = v ?? false),
                   controller: _resCrystalDiskCtrl,
                   hintText: 'ej. 100% Salud, SSD NVMe 512GB, 0 sectores reasignados, Temp 35°C',
                   isCerrada: isCerrada,
@@ -1598,7 +2041,8 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
                 // 3. MemTest86 / Diagnóstico de Memoria RAM
                 _buildCardPruebaDiagnostico(
-                  titulo: 'MemTest86 / Test de Memoria (Integridad de Memoria RAM)',
+                  titulo:
+                      'MemTest86 / Test de Memoria (Integridad de Memoria RAM)',
                   nombreHerramienta: 'MemTest86',
                   subtitulo: 'Pases de prueba para asegurar 0 fallos de dirección y estabilidad en RAM.',
                   icon: Icons.memory,
@@ -1613,7 +2057,8 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
                 // 4. FurMark / Test 3D (GPU y Video)
                 _buildCardPruebaDiagnostico(
-                  titulo: 'FurMark / Render 3D (Estabilidad Gráfica y Pantalla)',
+                  titulo:
+                      'FurMark / Render 3D (Estabilidad Gráfica y Pantalla)',
                   nombreHerramienta: 'FurMark',
                   subtitulo: 'Prueba de estabilidad bajo renderizado 3D para descartar artefactos o congelamientos.',
                   icon: Icons.speed,
@@ -1643,13 +2088,15 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
                 // 6. Test Integral de Periféricos y Puertos
                 _buildCardPruebaDiagnostico(
-                  titulo: 'Prueba de Teclado, Touchpad, Puertos USB, Sonido y WiFi',
+                  titulo:
+                      'Prueba de Teclado, Touchpad, Puertos USB, Sonido y WiFi',
                   nombreHerramienta: 'Periféricos',
                   subtitulo: 'Comprobación física de todas las teclas, puertos USB/HDMI, audio y navegación.',
                   icon: Icons.keyboard,
                   color: const Color(0xFF0284C7),
                   checked: _diagPerifericos,
-                  onChecked: (v) => setState(() => _diagPerifericos = v ?? false),
+                  onChecked: (v) =>
+                      setState(() => _diagPerifericos = v ?? false),
                   controller: _resPerifericosCtrl,
                   hintText: 'ej. 100% teclas operativas, puertos USB 3.0 OK, WiFi 5GHz y sonido claros',
                   isCerrada: isCerrada,
@@ -1663,14 +2110,18 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             ElevatedButton.icon(
               onPressed: _guardarPestana2,
               icon: const Icon(Icons.save),
-              label: const Text('Guardar Bitácora, Pruebas de Diagnóstico y Liquidación'),
+              label: const Text(
+                'Guardar trabajo y preparar entrega',
+              ),
             )
           else
             ElevatedButton.icon(
               onPressed: () => _tabController.animateTo(2),
               icon: const Icon(Icons.arrow_forward),
               label: const Text('Continuar al Acta de Entrega (Solo Lectura)'),
-              style: ElevatedButton.styleFrom(backgroundColor: SantiConstants.primaryNavy),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SantiConstants.primaryNavy,
+              ),
             ),
         ],
       ),
@@ -1679,8 +2130,7 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
 
   // ===================== PESTAÑA 3 (ACTA DE ENTREGA) =====================
   Widget _buildTab3ActaEntrega(bool isCerrada) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+    return _buildWorkshopPage(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1697,11 +2147,19 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.verified_user, color: Color(0xFF16A34A), size: 20),
+                    Icon(
+                      Icons.verified_user,
+                      color: Color(0xFF16A34A),
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Certificación de Pruebas de Diagnóstico y Funcionamiento Pre-Entrega',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF166534)),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF166534),
+                      ),
                     ),
                   ],
                 ),
@@ -1716,17 +2174,35 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                   runSpacing: 8,
                   children: [
                     if (_diagCrystalDisk)
-                      _buildBadgePrueba('CrystalDiskInfo: ${_resCrystalDiskCtrl.text}', const Color(0xFF2563EB)),
+                      _buildBadgePrueba(
+                        'CrystalDiskInfo: ${_resCrystalDiskCtrl.text}',
+                        const Color(0xFF2563EB),
+                      ),
                     if (_diagHwMonitor)
-                      _buildBadgePrueba('HWMonitor: ${_resHwMonitorCtrl.text}', const Color(0xFFD97706)),
+                      _buildBadgePrueba(
+                        'HWMonitor: ${_resHwMonitorCtrl.text}',
+                        const Color(0xFFD97706),
+                      ),
                     if (_diagMemTest)
-                      _buildBadgePrueba('MemTest86: ${_resMemTestCtrl.text}', const Color(0xFF7C3AED)),
+                      _buildBadgePrueba(
+                        'MemTest86: ${_resMemTestCtrl.text}',
+                        const Color(0xFF7C3AED),
+                      ),
                     if (_diagFurmark)
-                      _buildBadgePrueba('FurMark: ${_resFurmarkCtrl.text}', const Color(0xFFDC2626)),
+                      _buildBadgePrueba(
+                        'FurMark: ${_resFurmarkCtrl.text}',
+                        const Color(0xFFDC2626),
+                      ),
                     if (_diagBattery)
-                      _buildBadgePrueba('Batería: ${_resBatteryCtrl.text}', const Color(0xFF059669)),
+                      _buildBadgePrueba(
+                        'Batería: ${_resBatteryCtrl.text}',
+                        const Color(0xFF059669),
+                      ),
                     if (_diagPerifericos)
-                      _buildBadgePrueba('Periféricos: ${_resPerifericosCtrl.text}', const Color(0xFF0284C7)),
+                      _buildBadgePrueba(
+                        'Periféricos: ${_resPerifericosCtrl.text}',
+                        const Color(0xFF0284C7),
+                      ),
                   ],
                 ),
               ],
@@ -1734,27 +2210,36 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           ),
           const SizedBox(height: 20),
 
-          const Text('Dictamen Final de Operatividad', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            'Dictamen Final de Operatividad',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<String>(
-                  title: const Text('Operativo y Conforme a Satisfacción'),
-                  value: 'OPERATIVO',
-                  groupValue: _estadoOperatividad,
-                  onChanged: isCerrada ? null : (v) => setState(() => _estadoOperatividad = v!),
+          RadioGroup<String>(
+            groupValue: _estadoOperatividad,
+            onChanged: (value) {
+              if (!isCerrada && value != null) {
+                setState(() => _estadoOperatividad = value);
+              }
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text('Operativo y Conforme a Satisfacción'),
+                    value: 'OPERATIVO',
+                    enabled: !isCerrada,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: RadioListTile<String>(
-                  title: const Text('Sin Solución Técnica / Rechazado'),
-                  value: 'SIN_SOLUCION',
-                  groupValue: _estadoOperatividad,
-                  onChanged: isCerrada ? null : (v) => setState(() => _estadoOperatividad = v!),
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text('Sin Solución Técnica / Rechazado'),
+                    value: 'SIN_SOLUCION',
+                    enabled: !isCerrada,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -1781,19 +2266,35 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
           ),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: _garantiaDias,
+            initialValue: _garantiaDias,
             decoration: InputDecoration(
               labelText: 'Garantía Otorgada',
               filled: isCerrada,
               fillColor: isCerrada ? Colors.grey.shade100 : null,
             ),
             items: const [
-              DropdownMenuItem(value: '30_DIAS', child: Text('30 Días de Garantía')),
-              DropdownMenuItem(value: '60_DIAS', child: Text('60 Días de Garantía')),
-              DropdownMenuItem(value: '90_DIAS', child: Text('90 Días de Garantía')),
-              DropdownMenuItem(value: 'SIN_GARANTIA', child: Text('Sin Garantía (Daño por líquidos / Fuera de cobertura)')),
+              DropdownMenuItem(
+                value: '30_DIAS',
+                child: Text('30 Días de Garantía'),
+              ),
+              DropdownMenuItem(
+                value: '60_DIAS',
+                child: Text('60 Días de Garantía'),
+              ),
+              DropdownMenuItem(
+                value: '90_DIAS',
+                child: Text('90 Días de Garantía'),
+              ),
+              DropdownMenuItem(
+                value: 'SIN_GARANTIA',
+                child: Text(
+                  'Sin Garantía (Daño por líquidos / Fuera de cobertura)',
+                ),
+              ),
             ],
-            onChanged: isCerrada ? null : (v) => setState(() => _garantiaDias = v!),
+            onChanged: isCerrada
+                ? null
+                : (v) => setState(() => _garantiaDias = v!),
           ),
           const SizedBox(height: 14),
           Row(
@@ -1830,7 +2331,9 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             value: _checkConformidad,
-            onChanged: isCerrada ? null : (v) => setState(() => _checkConformidad = v!),
+            onChanged: isCerrada
+                ? null
+                : (v) => setState(() => _checkConformidad = v!),
           ),
           const SizedBox(height: 20),
 
@@ -1843,11 +2346,14 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             ElevatedButton.icon(
               onPressed: _cerrarOrdenYGenerarActa,
               icon: const Icon(Icons.check_circle),
-              label: const Text('Finalizar Servicio y Emitir Acta Oficial'),
+              label: Text(_orden?.estado == 'LISTO_ENTREGA' ? 'Finalizar Servicio y Emitir Acta Oficial' : 'Marcar trabajo terminado y preparar entrega'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SantiConstants.successGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
               ),
             )
           else
@@ -1855,20 +2361,30 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: SantiConstants.primaryNavy.withOpacity(0.06),
+                color: SantiConstants.primaryNavy.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: SantiConstants.primaryNavy.withOpacity(0.2)),
+                border: Border.all(
+                  color: SantiConstants.primaryNavy.withValues(alpha: 0.2),
+                ),
               ),
               child: Column(
                 children: [
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.verified, color: SantiConstants.successGreen, size: 26),
+                      Icon(
+                        Icons.verified,
+                        color: SantiConstants.successGreen,
+                        size: 26,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Servicio Finalizado y Acta Oficial Registrada',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SantiConstants.primaryNavy),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: SantiConstants.primaryNavy,
+                        ),
                       ),
                     ],
                   ),
@@ -1882,7 +2398,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: widget.ordenId)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              DocumentoOficialScreen(ordenId: widget.ordenId),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.picture_as_pdf),
@@ -1890,7 +2409,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SantiConstants.primaryNavy,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -1914,22 +2436,32 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 16,
+            runSpacing: 12,
             children: [
               const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.camera_alt_outlined, color: Color(0xFF16A34A)),
                   SizedBox(width: 8),
-                  Text(
+                  Flexible(child: Text(
                     'Evidencias Fotográficas de la Entrega',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF166534)),
-                  ),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF166534),
+                    ),
+                  )),
                 ],
               ),
               if (!isCerrada)
                 ElevatedButton.icon(
-                  onPressed: () => _subirFotoEvidencia('ENTREGA', defaultNota: 'Evidencia en entrega/finalización del equipo'),
+                  onPressed: () => _subirFotoEvidencia(
+                    'ENTREGA',
+                    defaultNota: 'Evidencia en entrega/finalización del equipo',
+                  ),
                   icon: const Icon(Icons.add_a_photo, size: 18),
                   label: const Text('Añadir Evidencia de Entrega'),
                   style: ElevatedButton.styleFrom(
@@ -1951,7 +2483,11 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
               ),
               child: Column(
                 children: [
-                  Icon(Icons.photo_library_outlined, size: 40, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.photo_library_outlined,
+                    size: 40,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'No hay evidencias fotográficas registradas para la entrega. Presione "Añadir Evidencia de Entrega" para adjuntar fotos del equipo finalizado.',

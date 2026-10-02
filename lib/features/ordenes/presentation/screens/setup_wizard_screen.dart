@@ -126,7 +126,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
         operador = Usuario(
           nombre: _opNombreCtrl.text.trim(),
           email: _opEmailCtrl.text.trim().toLowerCase(),
-          password: _opPassCtrl.text.trim().isEmpty ? '123456' : _opPassCtrl.text.trim(),
+          password: _opPassCtrl.text,
           documento: _opDocCtrl.text.trim().isEmpty ? '0' : _opDocCtrl.text.trim(),
           telefono: _opTelCtrl.text.trim().isEmpty ? '0' : _opTelCtrl.text.trim(),
           rol: 'operador',
@@ -138,7 +138,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
         tecnico = Usuario(
           nombre: _tecNombreCtrl.text.trim(),
           email: _tecEmailCtrl.text.trim().toLowerCase(),
-          password: _tecPassCtrl.text.trim().isEmpty ? '123456' : _tecPassCtrl.text.trim(),
+          password: _tecPassCtrl.text,
           documento: _tecDocCtrl.text.trim().isEmpty ? '0' : _tecDocCtrl.text.trim(),
           telefono: _tecTelCtrl.text.trim().isEmpty ? '0' : _tecTelCtrl.text.trim(),
           rol: 'tecnico',
@@ -519,7 +519,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                 onPressed: () => setState(() => _obscurePass = !_obscurePass),
               ),
             ),
-            validator: (v) => v == null || v.length < 4 ? 'Mínimo 4 caracteres' : null,
+            validator: (v) => v == null || v.length < 8 ? 'Mínimo 8 caracteres' : null,
           ),
         ],
       ),
@@ -570,7 +570,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _opPassCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña inicial: 123456'))),
+                    Expanded(child: TextFormField(controller: _opPassCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña (mínimo 8 caracteres)'), validator: (v) => _opEmailCtrl.text.trim().isNotEmpty && (v == null || v.length < 8) ? 'Mínimo 8 caracteres' : null)),
                     const SizedBox(width: 12),
                     Expanded(child: TextFormField(controller: _opTelCtrl, decoration: const InputDecoration(labelText: 'Teléfono Móvil'))),
                   ],
@@ -609,7 +609,7 @@ class _SetupWizardScreenState extends ConsumerState<SetupWizardScreen> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(child: TextFormField(controller: _tecPassCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña inicial: 123456'))),
+                    Expanded(child: TextFormField(controller: _tecPassCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Contraseña (mínimo 8 caracteres)'), validator: (v) => _tecEmailCtrl.text.trim().isNotEmpty && (v == null || v.length < 8) ? 'Mínimo 8 caracteres' : null)),
                     const SizedBox(width: 12),
                     Expanded(child: TextFormField(controller: _tecTelCtrl, decoration: const InputDecoration(labelText: 'Teléfono Móvil'))),
                   ],

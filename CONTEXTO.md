@@ -1,191 +1,94 @@
-# CONTEXTO TÉCNICO Y ARQUITECTURA DEL SISTEMA — SANTI INC
+# Contexto técnico — Santi Inc
 
-**Sistema Integral de Gestión de Mantenimiento y Soporte Técnico de Equipos de Cómputo**  
-*Versión:* 1.0.0 (Release)  
-*Plataformas:* Windows Desktop (x64) y Web SPA (HTML5/CanvasKit/WASM)
+## Propósito y plataformas
 
----
+Sistema de órdenes de mantenimiento y soporte de equipos: ingreso, diagnóstico, bitácora, repuestos, evidencias, pruebas de calidad, entrega, PDF y consulta pública. Frontend Flutter para Windows y web; servidor central HTTP en el puerto 3000 por defecto.
 
-## 1. Visión General del Proyecto
+## Stack real
 
-**Santi Inc — Tickets App** es una solución informática integral diseñada para laboratorios de soporte técnico, talleres de reparación y departamentos de TI. Permite gestionar el ciclo de vida completo de órdenes de servicio técnico: desde la radicación de la incidencia, diagnóstico inicial y control de evidencias fotográficas, hasta la ejecución de bitácoras de trabajo, pruebas de control de calidad (QA/diagnóstico pre-entrega), emisión de actas de entrega con garantía y consulta pública en vivo para los clientes.
+- Flutter 3.47.5 y Dart 3.13.4 verificados localmente.
+- Riverpod ^3.4.3, go_router ^18.0.1, drift ^2.35.0, pdf ^3.13.1, printing ^5.15.1 e image_picker ^1.2.3.
+- Express ^5.2.1, cors ^2.8.6 y Nodemailer ^6.9.15.
+- SQLite mediante node:sqlite / DatabaseSync; no utiliza better-sqlite3. Node.js mínimo 22.13; recomendado 24.
 
-### Actores del Sistema
-- **Administrador:** Acceso completo al sistema, configuración corporativa, gestión de credenciales SMTP, catálogo de fallas, usuarios y métricas de rendimiento/SLA.
-- **Operador / Trabajador de Recepción:** Radicación de incidencias, alta de clientes y equipos, consulta de órdenes y emisión de actas de entrega.
-- **Técnico de Laboratorio:** Diagnóstico de equipos (OT), registro de actividades y bitácoras, consumo de insumos y repuestos, pruebas de estrés y calidad, registro de evidencias fotográficas y cierre técnico.
-- **Cliente / Solicitante:** Acceso sin necesidad de autenticación a través del portal de **Consulta Pública** (`/#/consulta`) mediante su código de orden para ver el progreso, procedimientos, pruebas de diagnóstico y fotografías en tiempo real.
+## Arquitectura y archivos
 
----
+server.js inicia el proceso. server/app.js configura Express y monta módulos legibles en server/routes/. server/db.js crea el esquema y habilita claves foráneas y WAL. La base es data/tickets.sqlite.
 
-## 2. Arquitectura y Stack Tecnológico
+server/security.js aplica sesiones Bearer de ocho horas, permisos y limitación de intentos. server/validation.js valida entradas, transiciones y órdenes cerradas; las escrituras síncronas usan transacciones con rollback ante error. server/secrets.js cifra SMTP con AES-256-GCM. server/change-audit.js registra usuario, operación y fecha de cambios exitosos sin almacenar contraseñas ni cuerpos de solicitudes. Flutter centraliza el token en lib/core/services/api_session.dart.
 
-```
-                  +----------------------------------------------+
-                  |               CLIENTES / USUARIOS            |
-                  +----------------------+-----------------------+
-                                         |
-            +----------------------------+----------------------------+
-            |                                                         |
-  [Windows Desktop (x64)]                                    [Navegador Web (SPA)]
-  Flutter Desktop Runner                                     Flutter Web (HTML5/WASM)
-  - Portable EXE + DLLs                                      - Compatible PC / Móviles
-  - Soporte Impresión Térmica / PDF                          - Rutas limpias GoRouter
-            |                                                         |
-            +----------------------------+----------------------------+
-                                         |
-                                   HTTP / REST JSON
-                                         |
-                                         v
-                  +----------------------------------------------+
-                  |         SERVIDOR CENTRAL (server.js)         |
-                  |             Node.js + Express 5              |
-                  +----------------------+-----------------------+
-                  | - Servidor Web Estático (SPA Flutter Web)     |
-                  | - API REST Unificada (/api/*)                 |
-                  | - Motor de Notificaciones SMTP (Nodemailer)   |
-                  +----------------------+-----------------------+
-                                         |
-                                         v
-                  +----------------------------------------------+
-                  |         BASE DE DATOS RELACIONAL             |
-                  |             SQLite (better-sqlite3)          |
-                  |           data/tickets.sqlite                |
-                  +----------------------------------------------+
-```
+Tablas: usuarios, clientes, equipos, ordenes, formato_ot, formato_actividades, repuestos_orden, formato_acta_entrega, fotos_evidencia, configuracion_empresa, notificaciones_auditoria, tipos_falla y auditoria_cambios.
 
-### Componentes Técnicos
-1. **Frontend (Flutter / Dart ^3.13.4):**
-   - **Gestión de Estado:** `flutter_riverpod: ^3.4.3` (Inyección de dependencias modular y reactiva).
-   - **Enrutamiento:** `go_router: ^14.8.1` con soporte SPA Hash/Path (`/#/login`, `/#/consulta`, `/#/home`).
-   - **Impresión y Documentos Oficiales:** `pdf: ^3.13.1` y `printing: ^5.15.1` para generación de comprobantes y actas oficiales en PDF de alta fidelidad.
-   - **Persistencia Local y Caché:** `drift: ^2.35.0` con compatibilidad multiplataforma SQLite/WASM.
-   - **Manejo de Imágenes:** `image_picker: ^1.2.3` con soporte Web y Desktop.
-2. **Backend (Node.js & Express 5):**
-   - **Motor de Base de Datos:** `better-sqlite3` (síncrono, de alto rendimiento y cero dependencias externas de bases de datos pesadas).
-   - **Servidor Web Híbrido:** Si existe la carpeta `build/web`, `server.js` entrega automáticamente el frontend Flutter y las APIs REST en el mismo puerto (`3000`).
-   - **Servicio de Correo Transaccional:** `nodemailer` con conexión segura SSL/TLS (Gmail / SMTP institucional) para confirmaciones de ingreso y actas de entrega.
+## Roles y acceso
 
----
+- admin: administración y operación completa.
+- solicitante: operador de recepción; registra clientes y órdenes, consulta el taller y actualiza su perfil.
+- tecnico: trabaja sobre órdenes asignadas; no registra ingresos ni administra configuración o cuentas.
+- público: consulta mediante código exacto de orden, sin sesión.
 
-## 3. Estructura de la Base de Datos (`data/tickets.sqlite`)
+El setup se cierra después de completarlo. Las contraseñas se almacenan con scrypt y sal; las existentes se migran al arrancar. Las respuestas no contienen contraseñas. El cliente recibe ******** como marcador de SMTP configurado; el envío usa la credencial real exclusivamente en el servidor. La clave de cifrado es data/smtp.key o TICKETS_SECRET_KEY_FILE.
 
-La base de datos se almacena en el archivo local `data/tickets.sqlite`. Se inicializa automáticamente con tablas, índices e información por defecto si no existe.
+## Flujo
 
-| Tabla | Propósito |
-|---|---|
-| `usuarios` | Cuentas del sistema con contraseñas encriptadas SHA-256 (`ADMIN`, `OPERADOR`, `TECNICO`). |
-| `clientes` | Directorio de clientes (nombre, documento, teléfono, dirección, email). |
-| `equipos` | Equipos registrados (tipo, marca, modelo, número de serie, procesador, RAM, disco, etc.). |
-| `ordenes` | Tickets de servicio técnico (código, cliente, equipo, técnico asignado, SLA, estado). |
-| `formato_ot` | Diagnóstico inicial, motivo de ingreso, accesorios recibidos, estado de encendido. |
-| `formato_actividades` | Bitácora técnica, insumos aplicados, optimizaciones lógicas y valor de mano de obra. |
-| `formato_acta_entrega` | Acta formal de entrega, operatividad final, recomendaciones, observaciones y garantía. |
-| `repuestos` | Piezas y repuestos asociados a la orden con costos y cantidades. |
-| `fotos_evidencia` | Registro de fotografías en Base64 o URLs asociadas a cada orden y etapa. |
-| `notificaciones_auditoria` | Historial de auditoría de correos electrónicos enviados y su estado (ENVIADO / FALLIDO). |
-| `empresa_config` | Parámetros de la empresa (nombre, NIT, teléfono, credenciales SMTP, URL del portal). |
-| `catalogo_fallas` | Catálogo de tipos de fallas y diagnósticos predefinidos para agilizar la radicación. |
+RECIBIDO → EN_DIAGNOSTICO → EN_TALLER → LISTO_ENTREGA → ENTREGADO_CERRADO.
 
-### Ciclo de Estados de una Orden
-```
-[ RECIBIDO ] ---> [ EN_DIAGNOSTICO ] ---> [ EN_TALLER ] ---> [ LISTO_ENTREGA ] ---> [ ENTREGADO_CERRADO ]
-```
+El servidor exige avance secuencial. Para cerrar debe existir estado LISTO_ENTREGA, receptor identificado y conformidad en el acta. Las órdenes entregadas quedan bloqueadas en la API y la interfaz.
 
----
+El taller contiene tres pestañas: OT y evidencias; bitácora e insumos (incluye pruebas); acta de entrega. Las pruebas de hardware se registran como checklist, no se ejecutan automáticamente desde la aplicación.
 
-## 4. Módulos y Funcionalidades Principales
+## API principal
 
-### 4.1. Radicación de Incidencias (`CrearIncidenciaScreen`)
-- Selección o creación rápida de cliente y equipo.
-- Especificaciones técnicas completas (procesador, memoria RAM, almacenamiento, tarjeta gráfica, serial).
-- Cálculo automático de SLA según prioridad (`BAJA`: 72h, `MEDIA`: 48h, `ALTA`: 24h, `CRITICA`: 8h).
-- Envío automático de correo al cliente con el código radicado y enlace limpio de seguimiento (`$baseUrl/#/consulta`).
-
-### 4.2. Taller de Servicio Técnico (`DetalleTallerScreen`)
-- **Pestaña 1 (OT & Evidencias):** Diagnóstico preliminar, checklist de accesorios (cargador, cable de poder, mouse, maletín), estado de encendido y galería de fotos de evidencia del estado físico de recepción.
-- **Pestaña 2 (Bitácora & Procedimientos):** Labores realizadas, insumos de laboratorio utilizados (pasta térmica, alcohol isopropílico, sopleteado, brocha antiestática, paño microfibra), procedimientos de mantenimiento lógico (limpieza de temporales, optimización de inicio, análisis de malware, actualización de controladores), repuestos instalados y cotización de mano de obra.
-- **Pestaña 3 (Control de Calidad & Diagnóstico Pre-entrega):**
-  - Protocolo de pruebas de estrés térmico (HWMonitor / AIDA64).
-  - Estado de salud de discos SMART (CrystalDiskInfo).
-  - Verificación de memoria RAM (MemTest86).
-  - Comprobación de puertos USB / HDMI / conectores de video.
-  - Conectividad de red Wi-Fi y Ethernet.
-  - Estado de batería y teclado / touchpad.
-- **Cierre y Acta Oficial de Entrega:**
-  - Registro de persona que retira (nombre y documento) y verificación de conformidad.
-  - Configuración de garantía (ej. 30 días, 60 días, 90 días).
-  - Recomendaciones de cuidado personalizadas.
-  - Bloqueo de la orden a modo solo lectura (`ENTREGADO_CERRADO`).
-  - **Notificación por correo al cliente:** Despacha automáticamente un correo formal con el resumen técnico, garantía, recomendaciones y enlace de consulta.
-
-### 4.3. Portal de Consulta Pública (`ConsultaPublicaScreen` - `/#/consulta`)
-- Permite a los clientes consultar en cualquier momento su equipo mediante el código de orden o ticket.
-- Muestra el diagnóstico inicial, bitácora de labores, insumos y repuestos aplicados, resultados de las pruebas de control de calidad, observaciones y recomendaciones de cuidado, además de la galería fotográfica de evidencias.
-
-### 4.4. Generación de Documentos Oficiales en PDF (`DocumentoOficialScreen`)
-- Generación de Actas de Entrega y Comprobantes de Servicio con membrete corporativo, datos del cliente, especificaciones del equipo, desglose económico, firmas de conformidad y términos legales.
-- Soporte para previsualización e impresión directa en papel o guardado en PDF.
-
----
-
-## 5. API REST — Endpoints Principales (`server.js`)
-
-| Método | Endpoint | Descripción |
+| Método | Ruta | Acceso |
 |---|---|---|
-| `POST` | `/api/auth/login` | Autenticación de usuarios por usuario y contraseña. |
-| `GET` | `/api/ordenes` | Listado general de órdenes con filtros de estado y búsqueda. |
-| `POST` | `/api/ordenes` | Creación de una nueva orden de servicio técnico. |
-| `GET` | `/api/ordenes/:id` | Detalle completo de una orden con sus relaciones. |
-| `PUT` | `/api/ordenes/:id/estado` | Actualización de estado en el flujo de trabajo. |
-| `POST` | `/api/ordenes/:id/acta-entrega`| Cierre de orden con acta de entrega oficial. |
-| `GET` | `/api/consulta-publica` | Consulta pública de tickets (incluye OT, bitácora, pruebas QA y fotos). |
-| `POST` | `/api/send-email` | Despacho de correos transaccionales vía Nodemailer/SMTP. |
-| `GET` | `/api/configuracion` | Obtención de parámetros de la empresa y portal. |
-| `PUT` | `/api/configuracion` | Actualización de datos de empresa y credenciales SMTP. |
-| `GET` | `/api/catalogo-fallas` | Catálogo de tipos de fallas y diagnósticos frecuentes. |
+| POST | /api/auth/login | Público, limitado |
+| POST | /api/auth/logout | Sesión |
+| GET | /api/setup/status | Público |
+| POST | /api/setup | Solo antes del primer setup |
+| GET | /api/config | Público con datos SMTP limitados; admin con configuración sin secreto |
+| POST | /api/config | Admin |
+| GET / POST / PUT / DELETE | /api/usuarios y subrutas | Admin; excepciones de perfil y listado de técnicos |
+| GET / POST | /api/clientes | Sesión y permisos |
+| GET | /api/equipos | Sesión |
+| GET / POST | /api/ordenes | Sesión y permisos |
+| GET | /api/ordenes/:id | Sesión; técnico asignado |
+| PUT | /api/ordenes/:id/estado | Transición validada |
+| PUT | /api/ordenes/:id/tecnico | Sesión y permisos |
+| GET / POST | /api/ordenes/:id/ot | Sesión y permisos |
+| GET / POST | /api/ordenes/:id/actividades | Sesión y permisos |
+| GET / POST | /api/ordenes/:id/repuestos | Sesión y permisos |
+| GET / POST | /api/ordenes/:id/fotos | Sesión y permisos |
+| GET / POST | /api/ordenes/:id/acta | Sesión; cierre validado |
+| GET | /api/consulta-publica?q=CODIGO | Público; código exacto |
+| GET | /api/historial-cambios | Admin |
+| GET | /api/backups/status | Admin |
+| POST | /api/backups | Admin; descarga SQLite |
+| POST | /api/send-email | Sesión; SMTP del servidor |
+| GET / POST / DELETE | /api/tipos-falla y subrutas | Lectura con sesión; cambios admin |
+| GET | /api/metrics/dashboard | Sesión |
+| GET | /api/metrics/admin | Admin |
+| GET / POST | /api/auditoria | Lectura admin; registro con sesión |
 
----
+La consulta pública omite identidad de cliente, técnico y PIN; ya no busca por documento, serial ni fragmentos. Las órdenes nuevas incluyen un sufijo aleatorio de 128 bits en su código. Las órdenes antiguas conservan su código; estos códigos previos pueden ser consecutivos.
 
-## 6. Distribución y Paquetes Release
+## Operación y verificación
 
-Los ejecutables y compilaciones de producción se encuentran empaquetados en la carpeta **`releases/`**:
+README.md contiene instalación, variables de entorno, compilación y respaldo/restauración. La entrega escolar usa HTTP local; HTTPS se excluyó por solicitud del usuario. node server/backup.js genera una copia consistente mediante VACUUM INTO; hay respaldos automáticos al iniciar y cada 24 horas mientras el servidor está encendido. BACKUP_INTERVAL_HOURS=0 los desactiva. Conservar la clave SMTP separadamente.
 
-1. **Aplicación de Escritorio Windows (x64):**
-   - **Ruta:** `releases/tickets_app_windows_x64.zip`
-   - **Ejecutable principal:** `tickets_app.exe`
-   - **Características:** Aplicación nativa portable con todas las DLLs requeridas (`sqlite3.dll`, `flutter_windows.dll`, `pdfium.dll`, `printing_plugin.dll`, etc.). No requiere instalación de Flutter ni herramientas de desarrollo.
-2. **Aplicación Web (SPA):**
-   - **Ruta:** `releases/tickets_app_web_release.zip`
-   - **Directorio compilado:** `build/web/`
-   - **Características:** Aplicación web optimizada para producción con WebAssembly, CanvasKit e index.html listo para despliegue.
+Hay 18 pruebas de widgets y flujos, dos pruebas de generación de PDF y siete pruebas del backend (API, cifrado, copia/restauración, programación de copias, correo simulado y descarga/restauración por API). scripts/validar.ps1 ejecuta la verificación local completa. .github/workflows/pruebas.yml prepara CI para GitHub; no se ejecutó remotamente en esta revisión.
 
----
+Los PDF usan fuentes Roboto incorporadas con licencia Apache 2.0 para evitar símbolos faltantes y no requieren descargas de fuentes. El encabezado limita nombres y códigos largos; se añadió numeración de páginas. La exportación web usa package:web y dart:js_interop.
 
-## 7. Guía de Ejecución y Puesta en Marcha
+Los paquetes recompilados se guardan en releases/. El backend distribuido incluye build/web y node_modules; excluye data/, respaldos y credenciales. Windows se conecta al servidor local por defecto.
 
-### Requisitos Previos
-- **Node.js:** Versión 18 o superior instalada.
-- **Flutter SDK:** Versión ^3.13 (solo requerido si se desea compilar o desarrollar; no es necesario para ejecutar los releases).
+## Límites de la verificación
 
-### Ejecutar el Sistema Completo (Servidor Unificado: Backend + Web)
-En la carpeta raíz del proyecto, ejecutar:
-```bash
-node server.js
-```
-El servidor realizará lo siguiente:
-- Conectará o inicializará la base de datos `data/tickets.sqlite`.
-- Iniciará la API REST y el servicio de correos en el puerto `3000`.
-- Servirá automáticamente la aplicación web Flutter en **`http://localhost:3000`**.
+Correo SMTP real e impresión física dependen de una cuenta y una impresora disponibles; se verificaron preparación de correo sin envíos reales y generación/renderizado de PDF. Las sesiones en memoria se pierden al reiniciar. Las órdenes antiguas conservan sus códigos previos; no se alteraron datos históricos. No se desplegó el proyecto en internet ni se habilitó HTTPS.
 
-### Ejecutar la Aplicación de Escritorio Windows
-1. Descomprimir el archivo `releases/tickets_app_windows_x64.zip`.
-2. Ejecutar `tickets_app.exe`.
-3. La aplicación se comunicará directamente con el servidor `http://localhost:3000` (o la IP configurada en la red local).
+Verificación local final: 20 pruebas de Flutter (incluye 2 PDF), 7 de backend y análisis sin avisos ni errores. Los PDF de demostración se revisaron en todas sus páginas.
 
-### Ejecución de Pruebas Automatizadas
-Para verificar la integridad del código y todas las suites de prueba:
-```bash
-flutter test
-```
-*Todas las 15 suites de pruebas funcionales y de componentes pasan satisfactoriamente.*
+## Correcciones de flujo e interfaz
+
+La caída del backend muestra un error de conexión con reintento y no redirige al setup. Las órdenes no admiten equipos con otra orden abierta ni el cambio implícito de propietario por serial. La OT exige diagnóstico, la bitácora exige procedimientos y costo no negativo, y el cierre exige ambos formatos, receptor, conformidad y estado LISTO_ENTREGA. La entrega sincroniza el inventario: OPERATIVO o DE_BAJA según el acta. Los botones de taller explican los rechazos sin avanzar falsamente.
+
+Crear incidencia conserva un único aviso SMTP en AppShell. El formulario tiene ancho máximo de 1120 px, filas adaptables, una sola entrada de categoría con catálogo y mensajes neutrales en la búsqueda de equipos. El diálogo de éxito permite seleccionar/copiar códigos largos sin desbordarse. test/ui_flow_test.dart verifica el registro completo y ventanas estrechas; GENERATE_UI_EVIDENCE=1 genera capturas en output/ui/ sin tocar la base real. Las últimas correcciones están en el código fuente; los ZIP de releases/ requieren recompilación para incorporarlas.
+El taller usa un encabezado blanco con el consecutivo visible y acceso para copiar el código completo. La recepción se organiza en tarjetas de diagnóstico/herramientas e inspección; cambia de dos columnas a una en ventanas estrechas. Las tres pestañas tienen ancho máximo de 1120 px. Las pruebas verifican escritorio, ventana estrecha y bloqueo de órdenes cerradas.

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'api_session.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -28,15 +29,12 @@ class EmailService {
     if (trimmedUrl.isNotEmpty) {
       endpoint = Uri.parse(trimmedUrl);
     } else if (kIsWeb) {
-      if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
-        endpoint = Uri.parse('http://localhost:3000/api/send-email');
-      } else {
-        endpoint = Uri.base.resolve('/api/send-email');
-      }
+      endpoint = (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1')
+          ? Uri.parse('http://localhost:3000/api/send-email')
+          : Uri.base.resolve('/api/send-email');
     } else {
       endpoint = Uri.parse('http://localhost:3000/api/send-email');
     }
-
     try {
       final response = await http
           .post(
@@ -44,6 +42,8 @@ class EmailService {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
+              if (ApiSession.token != null && endpoint.origin == ApiSession.origin)
+                'Authorization': 'Bearer ${ApiSession.token}',
             },
             body: jsonEncode({
               'host': host.trim(),

@@ -143,14 +143,14 @@ class SolicitanteDashboardScreen extends ConsumerWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: misOrdenes.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final o = misOrdenes[index];
                           return ListTile(
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: SantiConstants.primaryBlue.withOpacity(0.1),
+                                color: SantiConstants.primaryBlue.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(Icons.computer, color: SantiConstants.primaryBlue),

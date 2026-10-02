@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../../../../core/services/api_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -20,6 +21,7 @@ import '../../domain/repositories/i_ordenes_repository.dart';
 
 class ApiOrdenesRepository implements IOrdenesRepository {
   final String baseUrl;
+  final http.Client _client = SessionClient();
   final StreamController<void> _refreshStream = StreamController<void>.broadcast();
 
   ApiOrdenesRepository({String? baseUrl})
@@ -27,13 +29,9 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   static String resolveDefaultBaseUrl() {
     if (kIsWeb) {
-      final host = Uri.base.host.toLowerCase();
-      // Si estamos en localhost / 127.0.0.1 (puerto de desarrollo de Flutter ej. 58619, 52762):
-      // El backend central de SQLite SIEMPRE está en el puerto 3000:
-      if (host == 'localhost' || host == '127.0.0.1' || host.isEmpty) {
+      if (Uri.base.host == 'localhost' || Uri.base.host == '127.0.0.1') {
         return 'http://localhost:3000';
       }
-      // En despliegues web remotos (ej. https://mitaller.com):
       if (Uri.base.hasAuthority && Uri.base.host.isNotEmpty) {
         return Uri.base.origin;
       }
@@ -68,7 +66,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<Usuario?> login(String email, String password) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/auth/login')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
@@ -76,6 +74,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       final data = jsonDecode(res.body);
       if (data['success'] == true && data['usuario'] != null) {
+        ApiSession.token = data['token'] as String?;
         return _mapUsuario(data['usuario']);
       }
     }
@@ -84,7 +83,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<List<Usuario>> getUsuarios({String? rol}) async {
-    final res = await http.get(Uri.parse(_buildUrl('/api/usuarios', {'rol': rol})));
+    final res = await _client.get(Uri.parse(_buildUrl('/api/usuarios', {'rol': rol})));
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       if (data['success'] == true && data['data'] is List) {
@@ -96,13 +95,14 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<Usuario> createUsuario(Usuario usuario) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/usuarios')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'nombre': usuario.nombre,
         'email': usuario.email,
         'password': usuario.password,
+        if (usuario.id != null) 'currentPassword': ApiSession.currentPassword,
         'documento': usuario.documento,
         'telefono': usuario.telefono,
         'rol': usuario.rol,
@@ -122,7 +122,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<void> updateUsuario(Usuario usuario) async {
     if (usuario.id == null) return;
-    await http.put(
+    await _client.put(
       Uri.parse(_buildUrl('/api/usuarios/${usuario.id}')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -140,7 +140,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> toggleUsuarioActivo(int id, bool activo) async {
-    await http.put(
+    await _client.put(
       Uri.parse(_buildUrl('/api/usuarios/$id/toggle-activo')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'activo': activo}),
@@ -150,7 +150,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> deleteUsuario(int id) async {
-    await http.delete(Uri.parse(_buildUrl('/api/usuarios/$id')));
+    await _client.delete(Uri.parse(_buildUrl('/api/usuarios/$id')));
     _notifyChange();
   }
 
@@ -162,13 +162,15 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<bool> isSetupCompleted() async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/setup/status'))).timeout(const Duration(seconds: 4));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/setup/status'))).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         return data['isSetupCompleted'] == true;
       }
-    } catch (_) {}
-    return false;
+    } catch (_) {
+      throw Exception('No se pudo conectar al backend. Inicie el servidor y vuelva a intentar.');
+    }
+    throw Exception('No se pudo comprobar la configuración del servidor.');
   }
 
   @override
@@ -178,7 +180,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     Usuario? operador,
     Usuario? tecnico,
   }) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/setup')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -226,7 +228,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<DashboardMetrics> getDashboardMetrics() async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/metrics/dashboard')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/metrics/dashboard')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -246,7 +248,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<Map<String, dynamic>> getAdminMetrics() async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/metrics/admin')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/metrics/admin')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -292,7 +294,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Orden>> getOrdenes({String? busqueda, String? estado, String? tipo, int? tecnicoId, int? solicitanteId}) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes', {
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes', {
         'busqueda': busqueda,
         'estado': estado,
         'tipo': tipo,
@@ -312,7 +314,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<Orden?> getOrdenById(int id) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$id')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$id')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -325,7 +327,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> asignarTecnico(int ordenId, int tecnicoId) async {
-    await http.put(
+    await _client.put(
       Uri.parse(_buildUrl('/api/ordenes/$ordenId/tecnico')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'tecnicoId': tecnicoId}),
@@ -338,7 +340,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<Cliente?> findClienteByDocumento(String documento) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/clientes/documento/$documento')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/clientes/documento/$documento')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -352,7 +354,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Cliente>> searchClientes(String query) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/clientes', {'q': query})));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/clientes', {'q': query})));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -365,7 +367,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<Cliente> saveCliente(Cliente cliente) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/clientes')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -399,7 +401,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<Map<String, dynamic>> consultarPublico(String query) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/consulta-publica', {'q': query})));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/consulta-publica', {'q': query})));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -532,7 +534,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Equipo>> getEquiposByClienteId(int clienteId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/clientes/$clienteId/equipos')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/clientes/$clienteId/equipos')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -546,7 +548,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Equipo>> searchEquipos({int? clienteId, String? tipo, String? query}) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/equipos', {
+      final res = await _client.get(Uri.parse(_buildUrl('/api/equipos', {
         'clienteId': clienteId,
         'tipo': tipo,
         'busqueda': query,
@@ -564,7 +566,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Orden>> getOrdenesByClienteId(int clienteId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/clientes/$clienteId/ordenes')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/clientes/$clienteId/ordenes')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -584,7 +586,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     required Orden orden,
     String? fotoIngresoBase64,
   }) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/ordenes')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -640,7 +642,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<FormatoOt?> getFormatoOt(int ordenId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/ot')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/ot')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -667,7 +669,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> saveFormatoOt(FormatoOt ot) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/ordenes/${ot.ordenId}/ot')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -689,7 +691,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<FormatoActividades?> getFormatoActividades(int ordenId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/actividades')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/actividades')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -723,7 +725,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> saveFormatoActividades(FormatoActividades act) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/ordenes/${act.ordenId}/actividades')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -752,7 +754,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Repuesto>> getRepuestos(int ordenId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/repuestos')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/repuestos')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -772,7 +774,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> addRepuesto(Repuesto repuesto) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/ordenes/${repuesto.ordenId}/repuestos')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -786,14 +788,14 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> deleteRepuesto(int repuestoId) async {
-    await http.delete(Uri.parse(_buildUrl('/api/repuestos/$repuestoId')));
+    await _client.delete(Uri.parse(_buildUrl('/api/repuestos/$repuestoId')));
     _notifyChange();
   }
 
   @override
   Future<List<FotoEvidencia>> getFotosEvidencia(int ordenId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/fotos')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/fotos')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -813,7 +815,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> addFotoEvidencia(FotoEvidencia foto) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/ordenes/${foto.ordenId}/fotos')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -828,14 +830,14 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> deleteFotoEvidencia(int fotoId) async {
-    await http.delete(Uri.parse(_buildUrl('/api/fotos/$fotoId')));
+    await _client.delete(Uri.parse(_buildUrl('/api/fotos/$fotoId')));
     _notifyChange();
   }
 
   @override
   Future<FormatoActaEntrega?> getActaEntrega(int ordenId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/acta')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/ordenes/$ordenId/acta')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -860,7 +862,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> cerrarOrdenConActa(FormatoActaEntrega acta) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/ordenes/${acta.ordenId}/acta')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -878,7 +880,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> updateEstadoOrden(int ordenId, String nuevoEstado) async {
-    await http.put(
+    await _client.put(
       Uri.parse(_buildUrl('/api/ordenes/$ordenId/estado')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'nuevoEstado': nuevoEstado}),
@@ -896,7 +898,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<Orden>> getHistorialEquipo(int equipoId) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/equipos/$equipoId/historial')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/equipos/$equipoId/historial')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -909,7 +911,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> updateEstadoEquipo(int equipoId, String nuevoEstado) async {
-    await http.put(
+    await _client.put(
       Uri.parse(_buildUrl('/api/equipos/$equipoId/estado')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'nuevoEstado': nuevoEstado}),
@@ -922,7 +924,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<EmpresaConfig> getEmpresaConfig() async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/config'))).timeout(const Duration(seconds: 4));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/config'))).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
@@ -935,7 +937,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> saveEmpresaConfig(EmpresaConfig config) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/config')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -974,7 +976,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<NotificacionAuditoria>> getAuditoriaNotificaciones() async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/auditoria')));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/auditoria')));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -994,7 +996,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> registrarNotificacion(NotificacionAuditoria notif) async {
-    await http.post(
+    await _client.post(
       Uri.parse(_buildUrl('/api/auditoria')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -1013,7 +1015,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   @override
   Future<List<TipoFalla>> getTiposFalla({String? tipoServicio}) async {
     try {
-      final res = await http.get(Uri.parse(_buildUrl('/api/tipos-falla', {'tipoServicio': tipoServicio})));
+      final res = await _client.get(Uri.parse(_buildUrl('/api/tipos-falla', {'tipoServicio': tipoServicio})));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] is List) {
@@ -1032,7 +1034,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<TipoFalla> addTipoFalla(TipoFalla tipoFalla) async {
-    final res = await http.post(
+    final res = await _client.post(
       Uri.parse(_buildUrl('/api/tipos-falla')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -1054,7 +1056,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
 
   @override
   Future<void> deleteTipoFalla(int id) async {
-    await http.delete(Uri.parse(_buildUrl('/api/tipos-falla/$id')));
+    await _client.delete(Uri.parse(_buildUrl('/api/tipos-falla/$id')));
     _notifyChange();
   }
 

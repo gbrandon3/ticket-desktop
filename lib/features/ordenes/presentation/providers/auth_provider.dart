@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/usuario.dart';
 import 'ordenes_providers.dart';
+import '../../../../core/services/api_session.dart';
 
 class AuthNotifier extends Notifier<Usuario?> {
   @override
@@ -13,6 +14,7 @@ class AuthNotifier extends Notifier<Usuario?> {
   }
 
   void logout() {
+    ApiSession.clear();
     state = null;
   }
 

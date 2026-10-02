@@ -1,6 +1,7 @@
 import 'dart:convert';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'dart:typed_data';
+import 'package:web/web.dart' as web;
 
 Future<String?> exportFilePlatform({
   required String fileName,
@@ -16,16 +17,19 @@ Future<String?> exportBytesPlatform({
   required List<int> bytes,
   String mimeType = 'application/octet-stream',
 }) async {
-  final blob = html.Blob([bytes], mimeType);
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  final anchor = html.AnchorElement(href: url)
-    ..setAttribute('download', fileName)
+  final blob = web.Blob([Uint8List.fromList(bytes).toJS].toJS,
+      web.BlobPropertyBag(type: mimeType));
+  final url = web.URL.createObjectURL(blob);
+  final anchor = web.HTMLAnchorElement()
+    ..href = url
+    ..download = fileName
     ..style.display = 'none';
 
-  html.document.body?.children.add(anchor);
+  web.document.body?.append(anchor);
   anchor.click();
-  html.document.body?.children.remove(anchor);
-  html.Url.revokeObjectUrl(url);
+  anchor.remove();
+  await Future<void>.delayed(const Duration(milliseconds: 100));
+  web.URL.revokeObjectURL(url);
 
   return 'Archivo descargado en el navegador: $fileName';
 }

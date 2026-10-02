@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -41,7 +41,11 @@ class PdfGenerator {
     FormatoActaEntrega? acta,
     EmpresaConfig empresa = const EmpresaConfig.defaultConfig(),
   }) async {
-    final pdf = pw.Document();
+    final pdf = pw.Document(theme: pw.ThemeData.withFont(
+      base: pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Regular.ttf')),
+      bold: pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Bold.ttf')),
+      italic: pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Italic.ttf')),
+    ));
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
     final primaryPdf = _parsePdfColor(empresa.colorPrimario);
     final mediumPdf = _lightenColor(primaryPdf, 0.30);
@@ -66,118 +70,49 @@ class PdfGenerator {
       pw.MultiPage(
         pageFormat: PdfPageFormat.letter,
         margin: const pw.EdgeInsets.all(32),
+        footer: (context) => pw.Padding(
+          padding: const pw.EdgeInsets.only(top: 8),
+          child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+            pw.Text(orden.codigoOrden, style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
+            pw.Text('Página ${context.pageNumber} de ${context.pagesCount}', style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
+          ]),
+        ),
         build: (context) => [
-          // 1. Membrete Institucional Dinámico de la Empresa
+          // Membrete con ancho limitado para nombres y códigos largos.
           pw.Container(
             padding: const pw.EdgeInsets.only(bottom: 12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(
-                bottom: pw.BorderSide(color: primaryPdf, width: 2),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: primaryPdf, width: 2))),
+            child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+              pw.Expanded(child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                if (logoImage != null) pw.Padding(padding: const pw.EdgeInsets.only(right: 10),
+                    child: pw.Image(logoImage, width: 42, height: 42, fit: pw.BoxFit.contain)),
+                pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Text(empresa.nombreEmpresa.toUpperCase(), style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold, color: primaryPdf)),
+                  pw.Text('SERVICIO TÉCNICO & MANTENIMIENTO ESPECIALIZADO', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: mediumPdf)),
+                  pw.SizedBox(height: 3),
+                  if (empresa.slogan.isNotEmpty) pw.Text(empresa.slogan, style: pw.TextStyle(fontSize: 8, fontStyle: pw.FontStyle.italic)),
+                  pw.Text('NIT: ${empresa.nit} | Tel: ${empresa.telefono}', style: const pw.TextStyle(fontSize: 8)),
+                  pw.Text('${empresa.direccion} - ${empresa.ciudad} | ${empresa.email}', style: const pw.TextStyle(fontSize: 8)),
+                ])),
+              ])),
+              pw.SizedBox(width: 12),
+              pw.Container(width: 190, padding: const pw.EdgeInsets.all(8),
+                decoration: pw.BoxDecoration(border: pw.Border.all(color: primaryPdf, width: 1.5),
+                    borderRadius: pw.BorderRadius.circular(6), color: lightPdf),
+                child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+                  pw.Text('ORDEN DE SERVICIO', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: primaryPdf)),
+                  pw.SizedBox(height: 4),
+                  pw.SizedBox(width: 174, height: 16, child: pw.FittedBox(
+                    fit: pw.BoxFit.scaleDown, alignment: pw.Alignment.centerRight,
+                    child: pw.Text(orden.codigoOrden,
+                      style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.red900)),
+                  )),
+                  pw.SizedBox(height: 4),
+                  pw.Text('Fecha: ${dateFormat.format(orden.fechaIngreso)}', style: const pw.TextStyle(fontSize: 7.5)),
+                  pw.Text('Estado: ${_estadoLabel(orden.estado)}', style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: primaryPdf)),
+                ]),
               ),
-            ),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    if (logoImage != null) ...[
-                      pw.Container(
-                        width: 48,
-                        height: 48,
-                        margin: const pw.EdgeInsets.only(right: 12),
-                        child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                      ),
-                    ],
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          empresa.nombreEmpresa.toUpperCase(),
-                          style: pw.TextStyle(
-                            fontSize: 18,
-                            fontWeight: pw.FontWeight.bold,
-                            color: primaryPdf,
-                          ),
-                        ),
-                        pw.Text(
-                          'SERVICIO TÉCNICO & MANTENIMIENTO ESPECIALIZADO',
-                          style: pw.TextStyle(
-                            fontSize: 8.5,
-                            fontWeight: pw.FontWeight.bold,
-                            color: mediumPdf,
-                          ),
-                        ),
-                        pw.SizedBox(height: 3),
-                        if (empresa.slogan.isNotEmpty) ...[
-                          pw.Text(
-                            '"${empresa.slogan}"',
-                            style: pw.TextStyle(
-                              fontSize: 8,
-                              fontStyle: pw.FontStyle.italic,
-                              color: PdfColors.grey700,
-                            ),
-                          ),
-                          pw.SizedBox(height: 2),
-                        ],
-                        pw.Text(
-                          'NIT: ${empresa.nit} | Tel: ${empresa.telefono}',
-                          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800),
-                        ),
-                        pw.Text(
-                          '${empresa.direccion} - ${empresa.ciudad} | ${empresa.email}',
-                          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey800),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: primaryPdf, width: 1.5),
-                    borderRadius: pw.BorderRadius.circular(6),
-                    color: lightPdf,
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'ORDEN DE SERVICIO',
-                        style: pw.TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: pw.FontWeight.bold,
-                          color: primaryPdf,
-                        ),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        orden.codigoOrden,
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.red900,
-                        ),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        'Fecha: ${dateFormat.format(orden.fechaIngreso)}',
-                        style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey800),
-                      ),
-                      pw.Text(
-                        'Estado: ${orden.estado.replaceAll('_', ' ')}',
-                        style: pw.TextStyle(
-                          fontSize: 7.5,
-                          fontWeight: pw.FontWeight.bold,
-                          color: primaryPdf,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            ]),
           ),
           pw.SizedBox(height: 12),
 
@@ -521,6 +456,11 @@ class PdfGenerator {
 
     return pdf.save();
   }
+
+  static String _estadoLabel(String state) => const {
+    'RECIBIDO': 'Recibido', 'EN_DIAGNOSTICO': 'En diagnóstico', 'EN_TALLER': 'En taller',
+    'LISTO_ENTREGA': 'Listo para entrega', 'ENTREGADO_CERRADO': 'Entregado / Cerrado',
+  }[state] ?? state;
 
   static pw.Widget _textRow(String label, String value) {
     return pw.Padding(

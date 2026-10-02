@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../features/ordenes/domain/entities/usuario.dart';
 import '../../features/ordenes/presentation/providers/auth_provider.dart';
 import '../../features/ordenes/presentation/screens/admin_dashboard_screen.dart';
@@ -23,10 +24,10 @@ class AppRouterNotifier extends ChangeNotifier {
   final Ref _ref;
 
   AppRouterNotifier(this._ref) {
-    _ref.listen<Usuario?>(authProvider, (_, __) {
+    _ref.listen<Usuario?>(authProvider, (_, _) {
       notifyListeners();
     });
-    _ref.listen<AsyncValue<bool>>(setupCompletedProvider, (_, __) {
+    _ref.listen<AsyncValue<bool>>(setupCompletedProvider, (_, _) {
       notifyListeners();
     });
   }
@@ -54,6 +55,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
+      if (setupAsync.isLoading || setupAsync.hasError) {
+        return loc == '/conexion' ? null : '/conexion';
+      }
+      if (loc == '/conexion') {
+        if (!isSetup) return '/setup';
+        return user == null
+            ? '/login'
+            : ((user.rol == 'solicitante' || user.rol == 'cliente')
+                  ? '/solicitante'
+                  : '/dashboard');
+      }
+
       // 2. Si no se ha completado el setup inicial, redirigir a /setup
       if (!isSetup) {
         if (loc != '/setup') {
@@ -64,7 +77,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Si el setup ya está listo y el usuario intenta entrar a /setup
       if (isSetup && loc == '/setup') {
-        return user == null ? '/login' : ((user.rol == 'solicitante' || user.rol == 'cliente') ? '/solicitante' : '/dashboard');
+        return user == null
+            ? '/login'
+            : ((user.rol == 'solicitante' || user.rol == 'cliente')
+                  ? '/solicitante'
+                  : '/dashboard');
       }
 
       // 3. Usuario no autenticado: restringir a /login
@@ -77,7 +94,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 4. Usuario autenticado intentando ir a /login o raíz /
       if (loc == '/login' || loc == '/') {
-        return (user.rol == 'solicitante' || user.rol == 'cliente') ? '/solicitante' : '/dashboard';
+        return (user.rol == 'solicitante' || user.rol == 'cliente')
+            ? '/solicitante'
+            : '/dashboard';
       }
 
       // 5. Restricción por rol de solicitante
@@ -93,6 +112,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/conexion',
+        builder: (context, state) => Consumer(
+          builder: (context, ref, _) {
+            final status = ref.watch(setupCompletedProvider);
+            return Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (status.isLoading)
+                        const CircularProgressIndicator()
+                      else ...[
+                        const Text(
+                          'No se pudo conectar al backend. Inicie el servidor y vuelva a intentar.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () =>
+                              ref.invalidate(setupCompletedProvider),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
       // Rutas superiores fuera del Shell
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
@@ -130,10 +183,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           if (user == null) {
             return child;
           }
-          return AppShell(
-            usuario: user,
-            child: child,
-          );
+          return AppShell(usuario: user, child: child);
         },
         routes: [
           GoRoute(
@@ -148,7 +198,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/crear-incidencia',
             builder: (context, state) {
               final user = ref.watch(authProvider);
-              if (user != null && (user.rol == 'tecnico' || user.rol == 'cliente')) {
+              if (user != null &&
+                  (user.rol == 'tecnico' || user.rol == 'cliente')) {
                 return const HomeScreen();
               }
               return CrearIncidenciaScreen(

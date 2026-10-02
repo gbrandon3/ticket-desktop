@@ -1,20 +1,14 @@
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
 const nodemailer = require('nodemailer');
 
-module.exports = async (req, res) => {
-  // Configuración de cabeceras CORS para permitir peticiones desde cualquier origen (Web / Desktop / Localhost)
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  // Manejo de petición preflight CORS
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+function createEmailHandler(createTransport = nodemailer.createTransport) {
+  return async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, error: 'Inicie sesión para enviar correo' });
   }
-
+  // This handler is mounted behind authentication in server/app.js.
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Método no permitido. Utilice POST.' });
   }
@@ -37,6 +31,8 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (trackingUrl && !/^https?:\/\//i.test(trackingUrl)) return res.status(400).json({ success: false, error: 'Enlace de seguimiento inválido' });
+
     const smtpHost = (host && host.trim()) || 'smtp.gmail.com';
     const smtpPort = Number(port) || 465;
     const smtpUser = (user && user.trim()) || process.env.SMTP_USER;
@@ -50,7 +46,7 @@ module.exports = async (req, res) => {
     }
 
     // Configurar transporte con Nodemailer usando SSL/TLS
-    const transporter = nodemailer.createTransport({
+    const transporter = createTransport({
       host: smtpHost,
       port: smtpPort,
       secure: smtpPort === 465,
@@ -59,7 +55,7 @@ module.exports = async (req, res) => {
         pass: smtpPass.replace(/\s+/g, '') // Eliminar espacios si vienen de Google
       },
       tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: true
       }
     });
 
@@ -79,18 +75,18 @@ module.exports = async (req, res) => {
             <small style="color: #64748b;">Laboratorio de Mantenimiento y Soporte Técnico</small>
           </div>
           <div style="font-size: 15px; color: #1e293b; line-height: 1.6; margin-bottom: 24px;">
-            ${message.replace(/\n/g, '<br/>')}
+            ${escapeHtml(message).replace(/\n/g, '<br/>')}
           </div>
           ${trackingUrl ? `
             <div style="text-align: center; margin: 28px 0; padding: 18px; background-color: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
               <p style="margin: 0 0 12px 0; font-size: 13px; color: #475569; font-weight: 500;">
                 Haga clic para ver el estado, procedimientos y evidencias en vivo:
               </p>
-              <a href="${trackingUrl}" target="_blank" style="background-color: #2563eb; color: #ffffff; padding: 13px 26px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+              <a href="${escapeHtml(trackingUrl)}" target="_blank" style="background-color: #2563eb; color: #ffffff; padding: 13px 26px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
                 🔍 Consultar Estado de mi Incidencia en Vivo
               </a>
               <div style="margin-top: 10px; font-size: 11px; color: #94a3b8;">
-                Enlace directo: <a href="${trackingUrl}" style="color: #2563eb; word-break: break-all;">${trackingUrl}</a>
+                Enlace directo: <a href="${escapeHtml(trackingUrl)}" style="color: #2563eb; word-break: break-all;">${escapeHtml(trackingUrl)}</a>
               </div>
             </div>
           ` : ''}
@@ -123,3 +119,7 @@ module.exports = async (req, res) => {
     });
   }
 };
+}
+
+module.exports = createEmailHandler();
+module.exports.createEmailHandler = createEmailHandler;

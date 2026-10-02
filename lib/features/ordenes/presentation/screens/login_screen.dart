@@ -5,7 +5,6 @@ import '../../../../core/constants/santi_constants.dart';
 import '../../domain/entities/empresa_config.dart';
 import '../providers/auth_provider.dart';
 import '../providers/ordenes_providers.dart';
-import 'consulta_publica_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

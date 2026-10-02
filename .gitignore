@@ -81,3 +81,13 @@ node_modules/
 *.so
 *.dylib
 *.zip
+
+# Backups and local secrets
+/backups/
+*.key
+.env
+
+# Generated validation artifacts
+/tmp/pdfs/
+/output/pdf/
+/output/ui/

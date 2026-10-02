@@ -131,7 +131,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
                           Expanded(
                             flex: 1,
                             child: DropdownButtonFormField<String>(
-                              value: _filtroTipo,
+                              initialValue: _filtroTipo,
                               decoration: InputDecoration(
                                 labelText: 'Tipo de Equipo',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -157,7 +157,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
                           Expanded(
                             flex: 1,
                             child: DropdownButtonFormField<String>(
-                              value: _filtroEstado,
+                              initialValue: _filtroEstado,
                               decoration: InputDecoration(
                                 labelText: 'Estado Operativo',
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -247,7 +247,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _equipos.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, index) {
                             final eq = _equipos[index];
                             return Padding(
@@ -345,7 +345,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -419,7 +419,7 @@ class _InventarioEquiposScreenState extends ConsumerState<InventarioEquiposScree
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: fg.withOpacity(0.3)),
+        border: Border.all(color: fg.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,

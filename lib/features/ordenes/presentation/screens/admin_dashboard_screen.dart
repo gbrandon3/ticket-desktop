@@ -715,7 +715,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _auditoria.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final a = _auditoria[index];
                       return ListTile(

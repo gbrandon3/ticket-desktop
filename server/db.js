@@ -7,7 +7,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = path.join(dataDir, 'tickets.sqlite');
+const dbPath = process.env.TICKETS_DB_PATH || path.join(dataDir, 'tickets.sqlite');
 const db = new DatabaseSync(dbPath);
 
 // Habilitar claves foráneas y WAL para alta concurrencia
