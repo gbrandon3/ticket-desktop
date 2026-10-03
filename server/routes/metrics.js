@@ -1,4 +1,9 @@
 const db = require('../db');
+function cumplimientoSla() {
+  return db.prepare(`SELECT COALESCE(
+    100.0 * SUM(CASE WHEN julianday(fecha_cierre) <= julianday(fecha_limite_sla) THEN 1 ELSE 0 END) / COUNT(*), 100.0) AS porcentaje
+    FROM ordenes WHERE estado = 'ENTREGADO_CERRADO' AND fecha_cierre IS NOT NULL AND fecha_limite_sla IS NOT NULL`).get().porcentaje;
+}
 
 module.exports = app => {
   app.get('/api/metrics/dashboard', (req, res) => {
@@ -15,7 +20,7 @@ module.exports = app => {
           ticketsEnTaller: enTaller,
           ticketsListos: listos,
           ticketsEntregados: cerrados,
-          cumplimientoSlaPorcentaje: 100.0,
+          cumplimientoSlaPorcentaje: cumplimientoSla(),
         },
       });
     } catch (err) {
@@ -29,7 +34,7 @@ module.exports = app => {
       const sinAsignar = db.prepare('SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id IS NULL AND estado != \'ENTREGADO_CERRADO\'').get().c;
       const preventivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'PREVENTIVO'").get().c;
       const correctivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'CORRECTIVO'").get().c;
-      const vencidos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE fecha_limite_sla IS NOT NULL AND fecha_limite_sla < datetime('now') AND estado != 'ENTREGADO_CERRADO'").get().c;
+      const vencidos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE fecha_limite_sla IS NOT NULL AND julianday(fecha_limite_sla) < julianday('now') AND estado NOT IN ('ENTREGADO_CERRADO', 'LISTO_ENTREGA')").get().c;
 
       const tecnicos = db.prepare("SELECT id, nombre FROM usuarios WHERE rol = 'tecnico'").all();
       const cargaTecnicos = tecnicos.map(t => {
@@ -54,7 +59,10 @@ module.exports = app => {
           sinAsignar,
           preventivos,
           correctivos,
-          tiempoPromedioHoras: 0.0,
+          cumplimientoSlaPorcentaje: cumplimientoSla(),
+          tiempoPromedioHoras: db.prepare(`SELECT COALESCE(AVG((julianday(fecha_cierre) - julianday(fecha_ingreso)) * 24), 0.0) AS horas
+            FROM ordenes WHERE estado = 'ENTREGADO_CERRADO' AND fecha_cierre IS NOT NULL
+            AND julianday(fecha_cierre) >= julianday(fecha_ingreso)`).get().horas,
           cargaTecnicos,
         },
       });

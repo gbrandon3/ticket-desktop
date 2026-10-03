@@ -633,8 +633,7 @@ class ApiOrdenesRepository implements IOrdenesRepository {
         return data['codigoOrden'];
       }
     }
-    _notifyChange();
-    return orden.codigoOrden;
+    throw StateError('No se pudo registrar la orden (HTTP ${res.statusCode}).');
   }
 
   // ===================== FORMATOS SENA =====================
@@ -845,12 +844,12 @@ class ApiOrdenesRepository implements IOrdenesRepository {
           return FormatoActaEntrega(
             id: a['id'],
             ordenId: a['ordenId'],
-            estadoOperatividad: a['estadoOperatividad'],
+            estadoOperatividad: a['estadoOperatividad'] ?? 'OPERATIVO',
             observaciones: a['observaciones'],
             recomendacionesCuidado: a['recomendacionesCuidado'],
             garantiaDias: a['garantiaDias']?.toString() ?? '30_DIAS',
-            personaRecibeNombre: a['personaRecibeNombre'],
-            personaRecibeDocumento: a['personaRecibeDocumento'],
+            personaRecibeNombre: a['personaRecibeNombre'] ?? '',
+            personaRecibeDocumento: a['personaRecibeDocumento'] ?? '',
             checkConformidad: a['checkConformidad'] == true,
             fechaEntrega: DateTime.tryParse(a['fechaEntrega'] ?? '') ?? DateTime.now(),
           );
@@ -1140,12 +1139,12 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     return EmpresaConfig(
       id: e['id'],
       nombreEmpresa: e['nombreEmpresa'] ?? 'Santi Inc',
-      slogan: e['slogan'],
-      nit: e['nit'],
-      telefono: e['telefono'],
-      email: e['email'],
-      direccion: e['direccion'],
-      ciudad: e['ciudad'],
+      slogan: e['slogan'] ?? '',
+      nit: e['nit'] ?? '',
+      telefono: e['telefono'] ?? '',
+      email: e['email'] ?? '',
+      direccion: e['direccion'] ?? '',
+      ciudad: e['ciudad'] ?? '',
       logoBase64: e['logoBase64'],
       smtpHost: e['smtpHost'],
       smtpPort: e['smtpPort'],

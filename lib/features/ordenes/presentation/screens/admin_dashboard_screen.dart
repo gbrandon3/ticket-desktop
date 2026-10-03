@@ -45,12 +45,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Future<void> _cargarDatos() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     final repo = ref.read(ordenesRepositoryProvider);
     final metrics = await repo.getAdminMetrics();
     final tecnicos = await repo.getUsuarios(rol: 'tecnico');
     final audit = await repo.getAuditoriaNotificaciones();
-
+    if (!mounted) return;
     setState(() {
       _metrics = metrics;
       _tecnicos = tecnicos;
@@ -231,9 +232,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final correctivos = esTecnico
         ? ordenesTecnico.where((o) => o.tipoServicio == 'CORRECTIVO').length
         : ((_metrics!['correctivos'] as num?)?.toInt() ?? 0);
-    final double porcentajeSla = total > 0
-        ? (((total - vencidos) / total) * 100).clamp(0, 100)
-        : 100.0;
+    final cerradasConSla = ordenesTecnico.where((o) =>
+        o.estado == 'ENTREGADO_CERRADO' && o.fechaCierre != null && o.fechaLimiteSla != null).toList();
+    final cumplidas = cerradasConSla.where((o) => !o.fechaCierre!.isAfter(o.fechaLimiteSla!)).length;
+    final double porcentajeSla = esTecnico
+        ? (cerradasConSla.isEmpty ? 100.0 : cumplidas * 100.0 / cerradasConSla.length)
+        : (_metrics!['cumplimientoSlaPorcentaje'] as num?)?.toDouble() ?? 100.0;
     final tiempoPromedio = (_metrics!['tiempoPromedioHoras'] as num?)?.toDouble() ?? 0.0;
     final cargaTecnicos = (_metrics!['cargaTecnicos'] as List? ?? [])
         .whereType<Map>()
