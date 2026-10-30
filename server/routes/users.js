@@ -44,6 +44,14 @@ module.exports = app => {
     }
   });
 
+  app.get('/api/auth/me', (req, res) => {
+    try {
+      res.json({ success: true, usuario: formatUsuario(req.user) });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'No se pudo obtener la sesión actual' });
+    }
+  });
+
   app.get('/api/usuarios', (req, res) => {
     try {
       const rol = req.user.rol === 'admin' ? req.query.rol : 'tecnico';

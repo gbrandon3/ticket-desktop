@@ -1,8 +1,10 @@
-import 'package:web/web.dart' as web;
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 String? getStorageItemPlatform(String key) {
   try {
-    return web.window.localStorage.getItem(key);
+    final val = html.window.localStorage[key];
+    return (val != null && val.isNotEmpty) ? val : null;
   } catch (_) {
     return null;
   }
@@ -10,12 +12,12 @@ String? getStorageItemPlatform(String key) {
 
 void setStorageItemPlatform(String key, String value) {
   try {
-    web.window.localStorage.setItem(key, value);
+    html.window.localStorage[key] = value;
   } catch (_) {}
 }
 
 void removeStorageItemPlatform(String key) {
   try {
-    web.window.localStorage.removeItem(key);
+    html.window.localStorage.remove(key);
   } catch (_) {}
 }
