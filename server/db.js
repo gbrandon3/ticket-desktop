@@ -186,14 +186,55 @@ db.exec(`
   );
 `);
 
-// Garantizar fila única en configuracion_empresa
+const shouldSeed = isVercel || !process.env.TICKETS_DB_PATH;
+
+// Garantizar configuracion inicial de empresa
 const configRow = db.prepare('SELECT id FROM configuracion_empresa LIMIT 1').get();
 if (!configRow) {
   db.prepare(`
     INSERT INTO configuracion_empresa (
-      nombre_empresa, portal_host_url, is_setup_completed
-    ) VALUES ('Santi Inc', 'http://localhost:3000', 0)
-  `).run();
+      nombre_empresa, nit, telefono, email, ciudad, direccion, portal_host_url, is_setup_completed
+    ) VALUES (
+      'SANTI INC', '922348710', '+57 3053633737', 'SantiINC@gmail.com', 'Monteria, Cordoba', 'Dg. 23, Montería, Córdoba', 'https://ticket-desktop.vercel.app', ?
+    )
+  `).run(shouldSeed ? 1 : 0);
+} else if (shouldSeed) {
+  db.prepare(`
+    UPDATE configuracion_empresa
+    SET nombre_empresa = 'SANTI INC',
+        nit = '922348710',
+        telefono = '+57 3053633737',
+        email = 'SantiINC@gmail.com',
+        ciudad = 'Monteria, Cordoba',
+        direccion = 'Dg. 23, Montería, Córdoba',
+        is_setup_completed = 1
+    WHERE id = ?
+  `).run(configRow.id);
+}
+
+// Garantizar cuentas base de usuarios iniciales con contraseña admin123
+if (shouldSeed) {
+  const defaultHash = 'scrypt:1efda6a42658955088bea609c3348a9a:8c16f449609946d81ca35cf1c36f50d13f3a8bd102a945b2b2eee91709a8bcb278de8aba24ee09c83495b4d5a61f8a981fb75f929d3e8d0d2bbb2a5b272aee0c';
+  const baseUsers = [
+    ['Santiago Matias Ojeda Cuadrado', 'matiasojeda1803@gmail.com', '1068423488', '3053633737', 'admin'],
+    ['Celeste Azul Luna Palmera', 'lunapalmera@gmail.com', '1068423489', '3124698356', 'solicitante'],
+    ['Santiago Andres Quintana Martinez', 'quitana16@gmail.com', '1068423490', '3244275335', 'tecnico'],
+    ['Administrador', 'admin@admin.com', '1423512', '543215', 'admin']
+  ];
+
+  for (const [nombre, email, doc, tel, rol] of baseUsers) {
+    db.prepare(`
+      INSERT INTO usuarios (nombre, email, password, documento, telefono, rol, activo)
+      VALUES (?, ?, ?, ?, ?, ?, 1)
+      ON CONFLICT (email) DO UPDATE SET
+        nombre = excluded.nombre,
+        password = excluded.password,
+        documento = excluded.documento,
+        telefono = excluded.telefono,
+        rol = excluded.rol,
+        activo = 1
+    `).run(nombre, email, defaultHash, doc, tel, rol);
+  }
 }
 
 module.exports = db;
