@@ -7,13 +7,17 @@ const { orm, schema } = require('./orm');
 let key;
 function getKey() {
   if (key) return key;
-  if (process.env.TICKETS_DB_PATH === ':memory:') return key = crypto.randomBytes(32);
+  if (process.env.TICKETS_DB_PATH === ':memory:' || process.env.VERCEL) return key = crypto.randomBytes(32);
   const location = process.env.TICKETS_SECRET_KEY_FILE || path.join(__dirname, '..', 'data', 'smtp.key');
-  if (!fs.existsSync(location)) {
-    fs.mkdirSync(path.dirname(location), { recursive: true });
-    fs.writeFileSync(location, crypto.randomBytes(32), { flag: 'wx', mode: 0o600 });
+  try {
+    if (!fs.existsSync(location)) {
+      fs.mkdirSync(path.dirname(location), { recursive: true });
+      fs.writeFileSync(location, crypto.randomBytes(32), { flag: 'wx', mode: 0o600 });
+    }
+    key = fs.readFileSync(location);
+  } catch (_) {
+    key = crypto.randomBytes(32);
   }
-  key = fs.readFileSync(location);
   if (key.length !== 32) throw new Error('La clave SMTP debe contener 32 bytes');
   return key;
 }

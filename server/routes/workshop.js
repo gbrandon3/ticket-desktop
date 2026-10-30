@@ -4,10 +4,12 @@ const { eq, asc } = require('drizzle-orm');
 const { orm, schema } = require('../orm');
 const { toBool } = require('../serializers');
 
-const uploadsDir = path.join(__dirname, '..', '..', 'data', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const uploadsDir = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', '..', 'data', 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (_) {}
 
 function saveUploadFile(ordenId, rutaOBytesBase64) {
   if (!rutaOBytesBase64 || typeof rutaOBytesBase64 !== 'string') return null;
