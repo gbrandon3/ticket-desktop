@@ -235,6 +235,13 @@ if (shouldSeed) {
         activo = 1
     `).run(nombre, email, defaultHash, doc, tel, rol);
   }
+
+  // Garantizar únicamente el cliente oficial del usuario (Santiago Matias Ojeda Cuadrado)
+  db.prepare(`
+    INSERT INTO clientes (tipo_documento, numero_documento, nombre_completo, telefono, email, direccion)
+    VALUES ('CC', '1068423488', 'Santiago Matias Ojeda Cuadrado', '3053633737', 'matiasojeda1803@gmail.com', 'Dg. 23, Montería, Córdoba')
+    ON CONFLICT (numero_documento) DO NOTHING
+  `).run();
 }
 
 module.exports = db;
