@@ -238,7 +238,7 @@ module.exports = app => {
   app.put('/api/ordenes/:id/estado', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const { nuevoEstado } = req.body;
+      const nuevoEstado = req.body.nuevoEstado || req.body.estado;
       const updateValues =
         nuevoEstado === 'ENTREGADO_CERRADO'
           ? { estado: nuevoEstado, fechaCierre: new Date().toISOString() }

@@ -51,10 +51,11 @@ function securityMiddleware(req, res, next) {
   for (const [key, entry] of attempts) if (entry.until <= now) attempts.delete(key);
   const fail = (status, error) => res.status(status).json({ success: false, error });
   if (['/auth/login', '/auth/recover-password', '/setup', '/consulta-publica'].includes(req.path)) {
-    const key = `${req.ip}:${req.path}`;
+    const clientIp = (req.headers['x-forwarded-for'] || req.ip || '127.0.0.1').toString().split(',')[0].trim();
+    const key = `${clientIp}:${req.path}`;
     const entry = attempts.get(key) || { count: 0, until: now + 15 * 60 * 1000 };
     attempts.set(key, entry);
-    if (++entry.count > (req.path === '/consulta-publica' ? 100 : 20)) return fail(429, 'Demasiados intentos; intente más tarde');
+    if (++entry.count > 100) return fail(429, 'Demasiados intentos; intente más tarde');
   }
   if (req.path === '/setup' && req.method === 'POST') {
     const config = orm.select({ completed: schema.configuracionEmpresa.isSetupCompleted })
