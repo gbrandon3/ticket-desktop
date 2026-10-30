@@ -91,8 +91,16 @@ function atomicRoute(handler) {
     let finished = false;
     res.json = payload => {
       if (res.statusCode < 400) require('./change-audit').recordChange(req);
-      db.exec(res.statusCode >= 400 ? 'ROLLBACK' : 'COMMIT');
+      const ok = res.statusCode < 400;
+      db.exec(ok ? 'COMMIT' : 'ROLLBACK');
       finished = true;
+      const { isSyncEnabled, pushToSupabase } = require('./supabase-sync');
+      if (ok && isSyncEnabled()) {
+        pushToSupabase()
+          .then(() => json(payload))
+          .catch(() => json(payload));
+        return res;
+      }
       return json(payload);
     };
     try { handler(req, res, next); }

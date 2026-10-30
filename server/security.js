@@ -3,8 +3,11 @@ const { eq, and } = require('drizzle-orm');
 const { orm, schema } = require('./orm');
 
 const sessions = new Map();
+const revokedTokens = new Set();
+const revokedUsersBefore = new Map();
 const attempts = new Map();
-const SESSION_MS = 8 * 60 * 60 * 1000;
+const SESSION_MS = 24 * 60 * 60 * 1000;
+const SESSION_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_ANON_KEY || 'santi-inc-session-hmac-secret-2026';
 
 function hashPassword(password) {
   if (typeof password !== 'string' || password.length < 8 || password.length > 256) {
@@ -35,14 +38,60 @@ function migratePasswords() {
 }
 
 function createSession(userId) {
-  const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { userId, expires: Date.now() + SESSION_MS });
+  const issuedAt = Date.now();
+  const expires = issuedAt + SESSION_MS;
+  const nonce = crypto.randomBytes(8).toString('hex');
+  const payload = Buffer.from(JSON.stringify({ u: Number(userId), i: issuedAt, e: expires, n: nonce })).toString('base64url');
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+  const token = `${payload}.${sig}`;
+  sessions.set(token, { userId: Number(userId), expires });
   return token;
 }
 
-function revokeSession(token) { sessions.delete(token); }
+function parseSessionToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  if (revokedTokens.has(token)) return null;
+  const existing = sessions.get(token);
+  if (existing) {
+    if (existing.expires <= Date.now()) {
+      sessions.delete(token);
+      return null;
+    }
+    return existing;
+  }
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [payload, sig] = parts;
+  const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+  const sigBuf = Buffer.from(sig);
+  const expBuf = Buffer.from(expectedSig);
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (!data.u || !data.e || data.e <= Date.now()) return null;
+    const minIssued = revokedUsersBefore.get(Number(data.u));
+    if (minIssued && (!data.i || data.i <= minIssued)) return null;
+    return { userId: Number(data.u), expires: Number(data.e) };
+  } catch (_) {
+    return null;
+  }
+}
+
+function revokeSession(token) {
+  if (token) {
+    sessions.delete(token);
+    revokedTokens.add(token);
+  }
+}
+
 function revokeUserSessions(id, keepToken) {
-  for (const [token, session] of sessions) if (session.userId === id && token !== keepToken) sessions.delete(token);
+  revokedUsersBefore.set(Number(id), Date.now());
+  for (const [token, session] of sessions) {
+    if (session.userId === id && token !== keepToken) {
+      sessions.delete(token);
+      revokedTokens.add(token);
+    }
+  }
 }
 
 function securityMiddleware(req, res, next) {
@@ -66,7 +115,7 @@ function securityMiddleware(req, res, next) {
   if ((['/auth/login', '/auth/recover-password'].includes(req.path) && req.method === 'POST') ||
       (['/setup/status', '/consulta-publica', '/config'].includes(req.path) && req.method === 'GET')) return next();
   const token = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null;
-  const session = sessions.get(token);
+  const session = parseSessionToken(token);
   if (!session) return fail(401, 'Inicie sesión para continuar');
   req.user = orm.select({ id: schema.usuarios.id, rol: schema.usuarios.rol, activo: schema.usuarios.activo })
     .from(schema.usuarios).where(eq(schema.usuarios.id, session.userId)).get();
@@ -106,7 +155,7 @@ function securityMiddleware(req, res, next) {
 }
 
 function sessionUser(token) {
-  const session = sessions.get(token);
+  const session = parseSessionToken(token);
   if (!session || session.expires <= Date.now()) return null;
   return orm.select({ id: schema.usuarios.id, rol: schema.usuarios.rol }).from(schema.usuarios)
     .where(and(eq(schema.usuarios.id, session.userId), eq(schema.usuarios.activo, true))).get();

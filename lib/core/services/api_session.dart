@@ -1,16 +1,35 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'session_storage.dart';
 
 class ApiSession {
-  static String? token;
+  static const _tokenKey = 'santi_auth_token';
+  static const _userKey = 'santi_auth_user';
+  static String? _token;
   static String? origin;
   static String? currentPassword;
+
+  static String? get token {
+    _token ??= SessionStorage.getItem(_tokenKey);
+    return _token;
+  }
+
+  static set token(String? value) {
+    _token = value;
+    if (value != null && value.isNotEmpty) {
+      SessionStorage.setItem(_tokenKey, value);
+    } else {
+      SessionStorage.removeItem(_tokenKey);
+    }
+  }
 
   static void clear() {
     final previousToken = token;
     final previousOrigin = origin;
-    token = null;
+    _token = null;
     currentPassword = null;
+    SessionStorage.removeItem(_tokenKey);
+    SessionStorage.removeItem(_userKey);
     if (previousToken != null && previousOrigin != null) {
       http.post(Uri.parse('$previousOrigin/api/auth/logout'), headers: {
         'Authorization': 'Bearer $previousToken',
@@ -26,8 +45,9 @@ class SessionClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     ApiSession.origin = request.url.origin;
-    if (ApiSession.token != null) {
-      request.headers['Authorization'] = 'Bearer ${ApiSession.token}';
+    final currentToken = ApiSession.token;
+    if (currentToken != null && currentToken.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $currentToken';
     }
     final response = await _inner.send(request).timeout(const Duration(seconds: 20));
     if (response.statusCode >= 400 && request.method != 'GET' && request.url.path != '/api/auth/login') {

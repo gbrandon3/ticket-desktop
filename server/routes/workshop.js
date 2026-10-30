@@ -14,7 +14,7 @@ try {
 function saveUploadFile(ordenId, rutaOBytesBase64) {
   if (!rutaOBytesBase64 || typeof rutaOBytesBase64 !== 'string') return null;
   const trimmed = rutaOBytesBase64.trim();
-  if (trimmed.startsWith('/uploads/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+  if (process.env.VERCEL || trimmed.startsWith('/uploads/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
   try {

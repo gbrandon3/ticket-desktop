@@ -7,7 +7,10 @@ const { orm, schema } = require('./orm');
 let key;
 function getKey() {
   if (key) return key;
-  if (process.env.TICKETS_DB_PATH === ':memory:' || process.env.VERCEL) return key = crypto.randomBytes(32);
+  if (process.env.TICKETS_DB_PATH === ':memory:' && !process.env.VERCEL) return key = crypto.randomBytes(32);
+  if (process.env.VERCEL) {
+    return key = crypto.createHash('sha256').update(process.env.SUPABASE_ANON_KEY || 'santi-inc-master-key-2026').digest();
+  }
   const location = process.env.TICKETS_SECRET_KEY_FILE || path.join(__dirname, '..', 'data', 'smtp.key');
   try {
     if (!fs.existsSync(location)) {

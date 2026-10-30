@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { securityMiddleware, migratePasswords } = require('./security');
 const { validationMiddleware, atomicRoute } = require('./validation');
+const { supabaseSyncMiddleware } = require('./supabase-sync');
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
@@ -24,7 +25,7 @@ try {
   }
 } catch (_) {}
 app.use('/uploads', express.static(uploadsDir));
-app.use('/api', securityMiddleware, validationMiddleware);
+app.use('/api', supabaseSyncMiddleware, securityMiddleware, validationMiddleware);
 // SQLite writes inside each synchronous route either all commit or all roll back.
 for (const method of ['post', 'put', 'delete']) {
   const register = app[method].bind(app);

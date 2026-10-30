@@ -1,0 +1,52 @@
+{
+  "empresa": {
+    "nombre": "SANTI INC",
+    "nit": "922348710",
+    "email": "SantiINC@gmail.com",
+    "telefono": "+57 3053633737",
+    "direccion": "Dg. 23, Montería, Córdoba",
+    "portalUrl": "https://ticket-desktop.vercel.app"
+  },
+  "usuarios": [
+    {
+      "nombre": "Santiago Matias Ojeda Cuadrado",
+      "email": "matiasojeda1803@gmail.com",
+      "password": "admin123",
+      "rol": "admin",
+      "cargo": "Administrador Principal",
+      "documento": "1068423488",
+      "telefono": "3053633737",
+      "activo": true
+    },
+    {
+      "nombre": "Celeste Azul Luna Palmera",
+      "email": "lunapalmera@gmail.com",
+      "password": "admin123",
+      "rol": "solicitante",
+      "cargo": "Operadora / Recepción de Tickets",
+      "documento": "1068423489",
+      "telefono": "3124698356",
+      "activo": true
+    },
+    {
+      "nombre": "Santiago Andres Quintana Martinez",
+      "email": "quitana16@gmail.com",
+      "password": "admin123",
+      "rol": "tecnico",
+      "cargo": "Técnico de Soporte y Taller",
+      "documento": "1068423490",
+      "telefono": "3244275335",
+      "activo": true
+    },
+    {
+      "nombre": "Administrador",
+      "email": "admin@admin.com",
+      "password": "admin123",
+      "rol": "admin",
+      "cargo": "Administrador de Respaldo",
+      "documento": "1423512",
+      "telefono": "543215",
+      "activo": true
+    }
+  ]
+}
