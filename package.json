@@ -15,7 +15,8 @@
     "cors": "^2.8.6",
     "drizzle-orm": "^1.0.0-rc.5",
     "express": "^5.2.1",
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^6.9.15",
+    "pg": "^8.23.1"
   },
   "engines": {
     "node": ">=22.13.0"
