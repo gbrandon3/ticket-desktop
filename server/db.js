@@ -2,12 +2,15 @@ const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+const isVercel = !!process.env.VERCEL;
+const dataDir = isVercel ? path.join('/tmp', 'data') : path.join(__dirname, '..', 'data');
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+} catch (_) {}
 
-const dbPath = process.env.TICKETS_DB_PATH || path.join(dataDir, 'tickets.sqlite');
+const dbPath = process.env.TICKETS_DB_PATH || (isVercel ? ':memory:' : path.join(dataDir, 'tickets.sqlite'));
 const db = new DatabaseSync(dbPath);
 
 // Habilitar claves foráneas y WAL para alta concurrencia
