@@ -1,4 +1,6 @@
-const db = require('../db');
+const crypto = require('node:crypto');
+const { eq, ne, and, or, like, desc, count } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
 const { formatOrden } = require('../serializers');
 
 module.exports = app => {
@@ -6,33 +8,36 @@ module.exports = app => {
     try {
       const { busqueda, estado, tipo, solicitanteId } = req.query;
       const tecnicoId = req.user.rol === 'tecnico' ? req.user.id : req.query.tecnicoId;
-      let sql = 'SELECT * FROM ordenes WHERE 1=1';
-      const params = [];
+      const conditions = [];
 
       if (estado && estado !== 'TODOS') {
-        sql += ' AND estado = ?';
-        params.push(estado);
+        conditions.push(eq(schema.ordenes.estado, estado));
       }
       if (tipo && tipo !== 'TODOS') {
-        sql += ' AND tipo_servicio = ?';
-        params.push(tipo);
+        conditions.push(eq(schema.ordenes.tipoServicio, tipo));
       }
       if (tecnicoId) {
-        sql += ' AND tecnico_id = ?';
-        params.push(parseInt(tecnicoId, 10));
+        conditions.push(eq(schema.ordenes.tecnicoId, parseInt(tecnicoId, 10)));
       }
       if (solicitanteId) {
-        sql += ' AND solicitante_id = ?';
-        params.push(parseInt(solicitanteId, 10));
+        conditions.push(eq(schema.ordenes.solicitanteId, parseInt(solicitanteId, 10)));
       }
       if (busqueda && busqueda.trim().length > 0) {
         const term = `%${busqueda.trim()}%`;
-        sql += ' AND (codigo_orden LIKE ? OR titulo LIKE ? OR descripcion LIKE ?)';
-        params.push(term, term, term);
+        conditions.push(
+          or(
+            like(schema.ordenes.codigoOrden, term),
+            like(schema.ordenes.titulo, term),
+            like(schema.ordenes.descripcion, term)
+          )
+        );
       }
-      sql += ' ORDER BY id DESC';
 
-      const rows = db.prepare(sql).all(...params);
+      const query = orm.select().from(schema.ordenes);
+      const rows = (conditions.length > 0 ? query.where(and(...conditions)) : query)
+        .orderBy(desc(schema.ordenes.id))
+        .all();
+
       res.json({ success: true, data: rows.map(formatOrden) });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -42,7 +47,7 @@ module.exports = app => {
   app.get('/api/ordenes/:id', (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const row = db.prepare('SELECT * FROM ordenes WHERE id = ?').get(id);
+      const row = orm.select().from(schema.ordenes).where(eq(schema.ordenes.id, id)).get();
       if (!row) {
         return res.status(404).json({ success: false, error: 'Orden no encontrada' });
       }
@@ -56,103 +61,172 @@ module.exports = app => {
     try {
       const { cliente, equipo, orden, fotoIngresoBase64 } = req.body;
 
-      const existingEquipment = db.prepare('SELECT * FROM equipos WHERE numero_serie = ?').get(equipo.numeroSerie.trim());
+      const existingEquipment = orm
+        .select()
+        .from(schema.equipos)
+        .where(eq(schema.equipos.numeroSerie, equipo.numeroSerie.trim()))
+        .get();
+
       if (existingEquipment) {
-        const owner = db.prepare('SELECT numero_documento FROM clientes WHERE id = ?').get(existingEquipment.cliente_id);
-        if (owner.numero_documento !== cliente.numeroDocumento.trim()) {
-          return res.status(409).json({ success: false, error: 'Este serial pertenece a otro cliente; revise los datos del equipo' });
+        const owner = orm
+          .select({ numeroDocumento: schema.clientes.numeroDocumento })
+          .from(schema.clientes)
+          .where(eq(schema.clientes.id, existingEquipment.clienteId))
+          .get();
+        if (owner.numeroDocumento !== cliente.numeroDocumento.trim()) {
+          return res.status(409).json({
+            success: false,
+            error: 'Este serial pertenece a otro cliente; revise los datos del equipo',
+          });
         }
-        const openOrder = db.prepare("SELECT codigo_orden FROM ordenes WHERE equipo_id = ? AND estado <> 'ENTREGADO_CERRADO' LIMIT 1").get(existingEquipment.id);
+        const openOrder = orm
+          .select({ codigoOrden: schema.ordenes.codigoOrden })
+          .from(schema.ordenes)
+          .where(
+            and(
+              eq(schema.ordenes.equipoId, existingEquipment.id),
+              ne(schema.ordenes.estado, 'ENTREGADO_CERRADO')
+            )
+          )
+          .limit(1)
+          .get();
         if (openOrder) {
-          return res.status(409).json({ success: false, error: `El equipo ya tiene una orden abierta: ${openOrder.codigo_orden}` });
+          return res.status(409).json({
+            success: false,
+            error: `El equipo ya tiene una orden abierta: ${openOrder.codigoOrden}`,
+          });
         }
       }
 
       // 1. Guardar o actualizar Cliente
-      let cRow = db.prepare('SELECT * FROM clientes WHERE numero_documento = ?').get(cliente.numeroDocumento.trim());
+      let cRow = orm
+        .select()
+        .from(schema.clientes)
+        .where(eq(schema.clientes.numeroDocumento, cliente.numeroDocumento.trim()))
+        .get();
       let clienteId;
       if (cRow) {
         clienteId = cRow.id;
-        db.prepare(`
-          UPDATE clientes SET
-            tipo_documento = ?, nombre_completo = ?, telefono = ?, email = ?, direccion = ?
-          WHERE id = ?
-        `).run(cliente.tipoDocumento, cliente.nombreCompleto, cliente.telefono, cliente.email || null, cliente.direccion, clienteId);
+        orm
+          .update(schema.clientes)
+          .set({
+            tipoDocumento: cliente.tipoDocumento,
+            nombreCompleto: cliente.nombreCompleto,
+            telefono: cliente.telefono,
+            email: cliente.email || null,
+            direccion: cliente.direccion,
+          })
+          .where(eq(schema.clientes.id, clienteId))
+          .run();
       } else {
-        const infoC = db.prepare(`
-          INSERT INTO clientes (tipo_documento, numero_documento, nombre_completo, telefono, email, direccion)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).run(cliente.tipoDocumento, cliente.numeroDocumento.trim(), cliente.nombreCompleto, cliente.telefono, cliente.email || null, cliente.direccion);
-        clienteId = infoC.lastInsertRowid;
+        const insertedC = orm
+          .insert(schema.clientes)
+          .values({
+            tipoDocumento: cliente.tipoDocumento,
+            numeroDocumento: cliente.numeroDocumento.trim(),
+            nombreCompleto: cliente.nombreCompleto,
+            telefono: cliente.telefono,
+            email: cliente.email || null,
+            direccion: cliente.direccion,
+          })
+          .returning({ id: schema.clientes.id })
+          .get();
+        clienteId = insertedC.id;
       }
 
       // 2. Guardar o actualizar Equipo
       let eRow = null;
       if (equipo.numeroSerie && equipo.numeroSerie.trim().length > 0) {
-        eRow = db.prepare('SELECT * FROM equipos WHERE numero_serie = ?').get(equipo.numeroSerie.trim());
+        eRow = orm
+          .select()
+          .from(schema.equipos)
+          .where(eq(schema.equipos.numeroSerie, equipo.numeroSerie.trim()))
+          .get();
       }
       let equipoId;
       if (eRow) {
         equipoId = eRow.id;
-        db.prepare(`
-          UPDATE equipos SET
-            cliente_id = ?, tipo_equipo = ?, marca = ?, modelo = ?,
-            sistema_operativo = ?, procesador = ?, memoria_ram = ?, almacenamiento = ?,
-            tarjeta_grafica = ?, estado_equipo = 'EN_TALLER'
-          WHERE id = ?
-        `).run(
-          clienteId, equipo.tipoEquipo, equipo.marca, equipo.modelo,
-          equipo.sistemaOperativo || null, equipo.procesador || null,
-          equipo.memoriaRam || null, equipo.almacenamiento || null,
-          equipo.tarjetaGrafica || null, equipoId
-        );
+        orm
+          .update(schema.equipos)
+          .set({
+            clienteId,
+            tipoEquipo: equipo.tipoEquipo,
+            marca: equipo.marca,
+            modelo: equipo.modelo,
+            sistemaOperativo: equipo.sistemaOperativo || null,
+            procesador: equipo.procesador || null,
+            memoriaRam: equipo.memoriaRam || null,
+            almacenamiento: equipo.almacenamiento || null,
+            tarjetaGrafica: equipo.tarjetaGrafica || null,
+            estadoEquipo: 'EN_TALLER',
+          })
+          .where(eq(schema.equipos.id, equipoId))
+          .run();
       } else {
-        const infoE = db.prepare(`
-          INSERT INTO equipos (
-            cliente_id, tipo_equipo, marca, modelo, numero_serie,
-            sistema_operativo, procesador, memoria_ram, almacenamiento,
-            tarjeta_grafica, estado_equipo
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'EN_TALLER')
-        `).run(
-          clienteId, equipo.tipoEquipo, equipo.marca, equipo.modelo,
-          equipo.numeroSerie.trim(),
-          equipo.sistemaOperativo || null, equipo.procesador || null,
-          equipo.memoriaRam || null, equipo.almacenamiento || null,
-          equipo.tarjetaGrafica || null
-        );
-        equipoId = infoE.lastInsertRowid;
+        const insertedE = orm
+          .insert(schema.equipos)
+          .values({
+            clienteId,
+            tipoEquipo: equipo.tipoEquipo,
+            marca: equipo.marca,
+            modelo: equipo.modelo,
+            numeroSerie: equipo.numeroSerie.trim(),
+            sistemaOperativo: equipo.sistemaOperativo || null,
+            procesador: equipo.procesador || null,
+            memoriaRam: equipo.memoriaRam || null,
+            almacenamiento: equipo.almacenamiento || null,
+            tarjetaGrafica: equipo.tarjetaGrafica || null,
+            estadoEquipo: 'EN_TALLER',
+          })
+          .returning({ id: schema.equipos.id })
+          .get();
+        equipoId = insertedE.id;
       }
 
       // 3. Generar código consecutivo de orden
       const year = new Date().getFullYear();
-      const countRow = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE codigo_orden LIKE ?").get(`ORD-${year}-%`);
-      const nextNum = (countRow.c + 1).toString().padStart(4, '0');
-      const codigoOrden = `ORD-${year}-${nextNum}-${require('node:crypto').randomBytes(16).toString('hex').toUpperCase()}`;
+      const countRow = orm
+        .select({ c: count() })
+        .from(schema.ordenes)
+        .where(like(schema.ordenes.codigoOrden, `ORD-${year}-%`))
+        .get();
+      const nextNum = ((countRow?.c || 0) + 1).toString().padStart(4, '0');
+      const codigoOrden = `ORD-${year}-${nextNum}-${crypto.randomBytes(16).toString('hex').toUpperCase()}`;
 
       // 4. Insertar Orden
-      const infoO = db.prepare(`
-        INSERT INTO ordenes (
-          codigo_orden, cliente_id, equipo_id, tecnico_id, solicitante_id,
-          tipo_servicio, categoria_falla, prioridad, titulo, descripcion,
-          estado, fecha_ingreso, fecha_limite_sla
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        codigoOrden, clienteId, equipoId,
-        orden.tecnicoId || null, orden.solicitanteId || null,
-        orden.tipoServicio, orden.categoriaFalla, orden.prioridad,
-        orden.titulo, orden.descripcion,
-        orden.estado || 'RECIBIDO',
-        orden.fechaIngreso || new Date().toISOString(),
-        orden.fechaLimiteSla || null
-      );
-      const ordenId = infoO.lastInsertRowid;
+      const insertedO = orm
+        .insert(schema.ordenes)
+        .values({
+          codigoOrden,
+          clienteId,
+          equipoId,
+          tecnicoId: orden.tecnicoId || null,
+          solicitanteId: orden.solicitanteId || null,
+          tipoServicio: orden.tipoServicio,
+          categoriaFalla: orden.categoriaFalla,
+          prioridad: orden.prioridad,
+          titulo: orden.titulo,
+          descripcion: orden.descripcion,
+          estado: orden.estado || 'RECIBIDO',
+          fechaIngreso: orden.fechaIngreso || new Date().toISOString(),
+          fechaLimiteSla: orden.fechaLimiteSla || null,
+        })
+        .returning({ id: schema.ordenes.id })
+        .get();
+      const ordenId = insertedO.id;
 
       // 5. Foto de ingreso opcional
       if (fotoIngresoBase64) {
-        db.prepare(`
-          INSERT INTO fotos_evidencia (orden_id, etapa, ruta_o_bytes_base64, nota_tecnica, fecha_captura)
-          VALUES (?, 'RECEPCION', ?, 'Foto de ingreso al radicar orden', datetime('now'))
-        `).run(ordenId, fotoIngresoBase64);
+        orm
+          .insert(schema.fotosEvidencia)
+          .values({
+            ordenId,
+            etapa: 'RECEPCION',
+            rutaOBytesBase64: fotoIngresoBase64,
+            notaTecnica: 'Foto de ingreso al radicar orden',
+            fechaCaptura: new Date().toISOString(),
+          })
+          .run();
       }
 
       res.json({ success: true, codigoOrden, ordenId });
@@ -165,11 +239,15 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const { nuevoEstado } = req.body;
-      if (nuevoEstado === 'ENTREGADO_CERRADO') {
-        db.prepare("UPDATE ordenes SET estado = ?, fecha_cierre = datetime('now') WHERE id = ?").run(nuevoEstado, ordenId);
-      } else {
-        db.prepare('UPDATE ordenes SET estado = ? WHERE id = ?').run(nuevoEstado, ordenId);
-      }
+      const updateValues =
+        nuevoEstado === 'ENTREGADO_CERRADO'
+          ? { estado: nuevoEstado, fechaCierre: new Date().toISOString() }
+          : { estado: nuevoEstado };
+      orm
+        .update(schema.ordenes)
+        .set(updateValues)
+        .where(eq(schema.ordenes.id, ordenId))
+        .run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -180,7 +258,11 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const { tecnicoId } = req.body;
-      db.prepare('UPDATE ordenes SET tecnico_id = ? WHERE id = ?').run(tecnicoId ? parseInt(tecnicoId, 10) : null, ordenId);
+      orm
+        .update(schema.ordenes)
+        .set({ tecnicoId: tecnicoId ? parseInt(tecnicoId, 10) : null })
+        .where(eq(schema.ordenes.id, ordenId))
+        .run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });

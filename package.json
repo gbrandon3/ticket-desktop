@@ -7,14 +7,21 @@
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node --test server/tests/*.test.js",
-    "backup": "node server/backup.js"
+    "backup": "node server/backup.js",
+    "recovery-code": "node server/show-recovery-code.js",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "cors": "^2.8.6",
+    "drizzle-orm": "^1.0.0-rc.5",
     "express": "^5.2.1",
     "nodemailer": "^6.9.15"
   },
   "engines": {
     "node": ">=22.13.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^1.0.0-rc.5"
   }
 }

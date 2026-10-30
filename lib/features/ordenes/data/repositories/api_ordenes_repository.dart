@@ -82,6 +82,22 @@ class ApiOrdenesRepository implements IOrdenesRepository {
   }
 
   @override
+  Future<void> recoverPassword(String email, String recoveryCode, String newPassword) async {
+    final res = await _client.post(
+      Uri.parse(_buildUrl('/api/auth/recover-password')),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email.trim(),
+        'recoveryCode': recoveryCode.trim(),
+        'newPassword': newPassword,
+      }),
+    );
+    if (res.statusCode != 200) {
+      throw StateError('No se pudo restablecer la contraseña.');
+    }
+  }
+
+  @override
   Future<List<Usuario>> getUsuarios({String? rol}) async {
     final res = await _client.get(Uri.parse(_buildUrl('/api/usuarios', {'rol': rol})));
     if (res.statusCode == 200) {

@@ -1,0 +1,1775 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "d276929b-1609-4e26-8d9f-e0f9f5d9f7d1",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "auditoria_cambios",
+      "entityType": "tables"
+    },
+    {
+      "name": "clientes",
+      "entityType": "tables"
+    },
+    {
+      "name": "configuracion_empresa",
+      "entityType": "tables"
+    },
+    {
+      "name": "equipos",
+      "entityType": "tables"
+    },
+    {
+      "name": "formato_acta_entrega",
+      "entityType": "tables"
+    },
+    {
+      "name": "formato_actividades",
+      "entityType": "tables"
+    },
+    {
+      "name": "formato_ot",
+      "entityType": "tables"
+    },
+    {
+      "name": "fotos_evidencia",
+      "entityType": "tables"
+    },
+    {
+      "name": "notificaciones_auditoria",
+      "entityType": "tables"
+    },
+    {
+      "name": "ordenes",
+      "entityType": "tables"
+    },
+    {
+      "name": "repuestos_orden",
+      "entityType": "tables"
+    },
+    {
+      "name": "tipos_falla",
+      "entityType": "tables"
+    },
+    {
+      "name": "usuarios",
+      "entityType": "tables"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "usuario_id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "usuario_nombre",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "metodo",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "ruta",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "fecha",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "tipo_documento",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "numero_documento",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "nombre_completo",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "telefono",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "email",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "direccion",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "clientes",
+      "name": "created_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "nombre_empresa",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'Santi Inc'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "slogan",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "nit",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "telefono",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "email",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "direccion",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "ciudad",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "logo_base64",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "smtp_host",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'smtp.gmail.com'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "smtp_port",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "465",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "smtp_user",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "smtp_pass",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "smtp_api_url",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "portal_host_url",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'http://localhost:3000'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "color_primario",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'#0F172A'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "color_secundario",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'#0284C7'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "is_setup_completed",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "cliente_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "tipo_equipo",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "marca",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "modelo",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "numero_serie",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "sistema_operativo",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "procesador",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "memoria_ram",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "almacenamiento",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "tarjeta_grafica",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "estado_equipo",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'OPERATIVO'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "equipos",
+      "name": "created_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "orden_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "estado_operatividad",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "'OPERATIVO'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "observaciones",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "recomendaciones_cuidado",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "garantia_dias",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "30",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "persona_recibe_nombre",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "persona_recibe_documento",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "check_conformidad",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "firma_digital_base64",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "fecha_entrega",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "orden_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "procedimientos_realizados",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "pasta_termica",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "alcohol_isopropilico",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "sopleteado_contactos",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "brocha_antiestatica",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "pano_microfibra",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "depuracion_temporales",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "optimizacion_inicio",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "escaneo_malware",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "actualizacion_drivers",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "comprobacion_disco",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "qa_estres_termico",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "qa_puertos",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "qa_conectividad",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "qa_bateria",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "qa_teclado_touchpad",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "costo_mano_obra",
+      "type": "real",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "fecha_actividad",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "orden_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "diagnostico_preliminar",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "herramientas_chips",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'[]'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "tiempo_estimado_entrega",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "accesorio_cargador",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "accesorio_cable_poder",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "accesorio_mouse",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "accesorio_maletin",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "false",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "encendido_inicial",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "estado_carcasa",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "formato_ot",
+      "name": "pin_contrasena",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "orden_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "etapa",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "ruta_o_bytes_base64",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "nota_tecnica",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "fecha_captura",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "destinatario",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "asunto",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "evento",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "estado",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "fecha_envio",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "codigo_orden",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "cliente_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "equipo_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "tecnico_id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "solicitante_id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "tipo_servicio",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "categoria_falla",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "prioridad",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "titulo",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "descripcion",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "estado",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "'RECIBIDO'",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "fecha_ingreso",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "fecha_limite_sla",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "ordenes",
+      "name": "fecha_cierre",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "orden_id",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "referencia",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "cantidad",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "1",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "precio_unitario",
+      "type": "real",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "0",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "created_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "tipo_servicio",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "nombre",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "descripcion",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "activo",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "created_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "id",
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": true,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "nombre",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "email",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "password",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "documento",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "telefono",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "rol",
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "activo",
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": "true",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "usuarios",
+      "name": "created_at",
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": "(datetime('now'))",
+      "generated": null,
+      "entityType": "columns"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "idx_auditoria_fecha",
+      "columns": [
+        {
+          "value": "fecha",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "clientes",
+      "name": "clientes_documento_unique",
+      "columns": [
+        {
+          "value": "numero_documento",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "ordenes",
+      "name": "ordenes_codigo_unique",
+      "columns": [
+        {
+          "value": "codigo_orden",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "tipos_falla_nombre_unique",
+      "columns": [
+        {
+          "value": "nombre",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "usuarios",
+      "name": "usuarios_email_unique",
+      "columns": [
+        {
+          "value": "email",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "origin": "manual",
+      "entityType": "indexes"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "fk_auditoria_cambios_usuario_id_usuarios_id_fk",
+      "columns": [
+        "usuario_id"
+      ],
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "equipos",
+      "name": "fk_equipos_cliente_id_clientes_id_fk",
+      "columns": [
+        "cliente_id"
+      ],
+      "tableTo": "clientes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "fk_formato_acta_entrega_orden_id_ordenes_id_fk",
+      "columns": [
+        "orden_id"
+      ],
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "fk_formato_actividades_orden_id_ordenes_id_fk",
+      "columns": [
+        "orden_id"
+      ],
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "formato_ot",
+      "name": "fk_formato_ot_orden_id_ordenes_id_fk",
+      "columns": [
+        "orden_id"
+      ],
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "fk_fotos_evidencia_orden_id_ordenes_id_fk",
+      "columns": [
+        "orden_id"
+      ],
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "ordenes",
+      "name": "fk_ordenes_cliente_id_clientes_id_fk",
+      "columns": [
+        "cliente_id"
+      ],
+      "tableTo": "clientes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "ordenes",
+      "name": "fk_ordenes_equipo_id_equipos_id_fk",
+      "columns": [
+        "equipo_id"
+      ],
+      "tableTo": "equipos",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "ordenes",
+      "name": "fk_ordenes_tecnico_id_usuarios_id_fk",
+      "columns": [
+        "tecnico_id"
+      ],
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "ordenes",
+      "name": "fk_ordenes_solicitante_id_usuarios_id_fk",
+      "columns": [
+        "solicitante_id"
+      ],
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "fk_repuestos_orden_orden_id_ordenes_id_fk",
+      "columns": [
+        "orden_id"
+      ],
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "nameExplicit": false,
+      "entityType": "fks"
+    },
+    {
+      "table": "auditoria_cambios",
+      "name": "auditoria_cambios_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "clientes",
+      "name": "clientes_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "configuracion_empresa",
+      "name": "configuracion_empresa_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "equipos",
+      "name": "equipos_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "formato_acta_entrega",
+      "name": "formato_acta_entrega_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "formato_actividades",
+      "name": "formato_actividades_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "formato_ot",
+      "name": "formato_ot_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "fotos_evidencia",
+      "name": "fotos_evidencia_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "notificaciones_auditoria",
+      "name": "notificaciones_auditoria_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "ordenes",
+      "name": "ordenes_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "repuestos_orden",
+      "name": "repuestos_orden_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "tipos_falla",
+      "name": "tipos_falla_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "table": "usuarios",
+      "name": "usuarios_pk",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    }
+  ],
+  "renames": []
+}

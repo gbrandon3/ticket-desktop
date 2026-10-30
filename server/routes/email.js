@@ -1,12 +1,17 @@
-const db = require('../db');
-
+const { orm, schema } = require('../orm');
 const emailHandler = require('../../api/send-email');
 
 module.exports = app => {
   app.post('/api/send-email', async (req, res) => {
     try {
-      const config = db.prepare('SELECT * FROM configuracion_empresa LIMIT 1').get();
-      req.body = { ...req.body, host: config.smtp_host, port: config.smtp_port, user: config.smtp_user, pass: require('../secrets').decrypt(config.smtp_pass) };
+      const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
+      req.body = {
+        ...req.body,
+        host: config.smtpHost,
+        port: config.smtpPort,
+        user: config.smtpUser,
+        pass: require('../secrets').decrypt(config.smtpPass),
+      };
       await emailHandler(req, res);
     } catch (err) {
       console.error('Error enviando email:', err);

@@ -1,34 +1,44 @@
-const db = require('../db');
+const { eq, and, or, like, desc } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
 const { formatEquipo, formatOrden } = require('../serializers');
 
 module.exports = app => {
   app.get('/api/equipos', (req, res) => {
     try {
       const { tipo, estado, busqueda, clienteId } = req.query;
-      let sql = 'SELECT e.*, c.nombre_completo as cliente_nombre FROM equipos e JOIN clientes c ON e.cliente_id = c.id WHERE 1=1';
-      const params = [];
+      const conditions = [];
 
       if (clienteId) {
-        sql += ' AND e.cliente_id = ?';
-        params.push(parseInt(clienteId, 10));
+        conditions.push(eq(schema.equipos.clienteId, parseInt(clienteId, 10)));
       }
       if (tipo && tipo !== 'TODOS') {
-        sql += ' AND e.tipo_equipo = ?';
-        params.push(tipo);
+        conditions.push(eq(schema.equipos.tipoEquipo, tipo));
       }
       if (estado && estado !== 'TODOS') {
-        sql += ' AND e.estado_equipo = ?';
-        params.push(estado);
+        conditions.push(eq(schema.equipos.estadoEquipo, estado));
       }
       if (busqueda && busqueda.trim().length > 0) {
         const term = `%${busqueda.trim()}%`;
-        sql += ' AND (e.numero_serie LIKE ? OR e.marca LIKE ? OR e.modelo LIKE ? OR c.nombre_completo LIKE ?)';
-        params.push(term, term, term, term);
+        conditions.push(
+          or(
+            like(schema.equipos.numeroSerie, term),
+            like(schema.equipos.marca, term),
+            like(schema.equipos.modelo, term),
+            like(schema.clientes.nombreCompleto, term)
+          )
+        );
       }
-      sql += ' ORDER BY e.id DESC';
 
-      const rows = db.prepare(sql).all(...params);
-      res.json({ success: true, data: rows.map(formatEquipo) });
+      const query = orm
+        .select({ equipo: schema.equipos, clienteNombre: schema.clientes.nombreCompleto })
+        .from(schema.equipos)
+        .innerJoin(schema.clientes, eq(schema.equipos.clienteId, schema.clientes.id));
+
+      const joinedRows = (conditions.length > 0 ? query.where(and(...conditions)) : query)
+        .orderBy(desc(schema.equipos.id))
+        .all();
+
+      res.json({ success: true, data: joinedRows.map(r => formatEquipo(r.equipo)) });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
     }
@@ -37,7 +47,12 @@ module.exports = app => {
   app.get('/api/equipos/:id/historial', (req, res) => {
     try {
       const equipoId = parseInt(req.params.id, 10);
-      const rows = db.prepare('SELECT * FROM ordenes WHERE equipo_id = ? ORDER BY id DESC').all(equipoId);
+      const rows = orm
+        .select()
+        .from(schema.ordenes)
+        .where(eq(schema.ordenes.equipoId, equipoId))
+        .orderBy(desc(schema.ordenes.id))
+        .all();
       res.json({ success: true, data: rows.map(formatOrden) });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -48,7 +63,11 @@ module.exports = app => {
     try {
       const equipoId = parseInt(req.params.id, 10);
       const { nuevoEstado } = req.body;
-      db.prepare('UPDATE equipos SET estado_equipo = ? WHERE id = ?').run(nuevoEstado, equipoId);
+      orm
+        .update(schema.equipos)
+        .set({ estadoEquipo: nuevoEstado })
+        .where(eq(schema.equipos.id, equipoId))
+        .run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });

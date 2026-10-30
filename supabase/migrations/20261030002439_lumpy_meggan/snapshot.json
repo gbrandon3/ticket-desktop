@@ -1,0 +1,2881 @@
+{
+  "type": "base",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "8dfb73b8-478b-43fd-9939-bc898a8fc01b",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "auditoria_cambios"
+      ],
+      "writes": [
+        "s|tbl|public.auditoria_cambios",
+        "n|tbl|public.auditoria_cambios",
+        "e|tbl|public.auditoria_cambios",
+        "n|rel|public.auditoria_cambios",
+        "n|type|public.auditoria_cambios",
+        "n|rel|public.auditoria_cambios_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "clientes"
+      ],
+      "writes": [
+        "s|tbl|public.clientes",
+        "n|tbl|public.clientes",
+        "e|tbl|public.clientes",
+        "n|rel|public.clientes",
+        "n|type|public.clientes",
+        "n|rel|public.clientes_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "configuracion_empresa"
+      ],
+      "writes": [
+        "s|tbl|public.configuracion_empresa",
+        "n|tbl|public.configuracion_empresa",
+        "e|tbl|public.configuracion_empresa",
+        "n|rel|public.configuracion_empresa",
+        "n|type|public.configuracion_empresa",
+        "n|rel|public.configuracion_empresa_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "equipos"
+      ],
+      "writes": [
+        "s|tbl|public.equipos",
+        "n|tbl|public.equipos",
+        "e|tbl|public.equipos",
+        "n|rel|public.equipos",
+        "n|type|public.equipos",
+        "n|rel|public.equipos_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_acta_entrega"
+      ],
+      "writes": [
+        "s|tbl|public.formato_acta_entrega",
+        "n|tbl|public.formato_acta_entrega",
+        "e|tbl|public.formato_acta_entrega",
+        "n|rel|public.formato_acta_entrega",
+        "n|type|public.formato_acta_entrega",
+        "n|rel|public.formato_acta_entrega_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_actividades"
+      ],
+      "writes": [
+        "s|tbl|public.formato_actividades",
+        "n|tbl|public.formato_actividades",
+        "e|tbl|public.formato_actividades",
+        "n|rel|public.formato_actividades",
+        "n|type|public.formato_actividades",
+        "n|rel|public.formato_actividades_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_ot"
+      ],
+      "writes": [
+        "s|tbl|public.formato_ot",
+        "n|tbl|public.formato_ot",
+        "e|tbl|public.formato_ot",
+        "n|rel|public.formato_ot",
+        "n|type|public.formato_ot",
+        "n|rel|public.formato_ot_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "fotos_evidencia"
+      ],
+      "writes": [
+        "s|tbl|public.fotos_evidencia",
+        "n|tbl|public.fotos_evidencia",
+        "e|tbl|public.fotos_evidencia",
+        "n|rel|public.fotos_evidencia",
+        "n|type|public.fotos_evidencia",
+        "n|rel|public.fotos_evidencia_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "notificaciones_auditoria"
+      ],
+      "writes": [
+        "s|tbl|public.notificaciones_auditoria",
+        "n|tbl|public.notificaciones_auditoria",
+        "e|tbl|public.notificaciones_auditoria",
+        "n|rel|public.notificaciones_auditoria",
+        "n|type|public.notificaciones_auditoria",
+        "n|rel|public.notificaciones_auditoria_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "ordenes"
+      ],
+      "writes": [
+        "s|tbl|public.ordenes",
+        "n|tbl|public.ordenes",
+        "e|tbl|public.ordenes",
+        "n|rel|public.ordenes",
+        "n|type|public.ordenes",
+        "n|rel|public.ordenes_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "repuestos_orden"
+      ],
+      "writes": [
+        "s|tbl|public.repuestos_orden",
+        "n|tbl|public.repuestos_orden",
+        "e|tbl|public.repuestos_orden",
+        "n|rel|public.repuestos_orden",
+        "n|type|public.repuestos_orden",
+        "n|rel|public.repuestos_orden_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "tipos_falla"
+      ],
+      "writes": [
+        "s|tbl|public.tipos_falla",
+        "n|tbl|public.tipos_falla",
+        "e|tbl|public.tipos_falla",
+        "n|rel|public.tipos_falla",
+        "n|type|public.tipos_falla",
+        "n|rel|public.tipos_falla_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "usuarios"
+      ],
+      "writes": [
+        "s|tbl|public.usuarios",
+        "n|tbl|public.usuarios",
+        "e|tbl|public.usuarios",
+        "n|rel|public.usuarios",
+        "n|type|public.usuarios",
+        "n|rel|public.usuarios_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "auditoria_cambios",
+        "idx_auditoria_fecha"
+      ],
+      "writes": [
+        "s|idx|public.idx_auditoria_fecha",
+        "n|idx|public.idx_auditoria_fecha",
+        "e|idx|public.idx_auditoria_fecha",
+        "n|rel|public.idx_auditoria_fecha"
+      ],
+      "reads": [
+        "n|tbl|public.auditoria_cambios",
+        "n|sch|public",
+        "n|col|public.auditoria_cambios.fecha"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "clientes",
+        "clientes_documento_unique"
+      ],
+      "writes": [
+        "s|idx|public.clientes_documento_unique",
+        "n|idx|public.clientes_documento_unique",
+        "e|idx|public.clientes_documento_unique",
+        "n|rel|public.clientes_documento_unique"
+      ],
+      "reads": [
+        "n|tbl|public.clientes",
+        "n|sch|public",
+        "n|col|public.clientes.numero_documento"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "ordenes",
+        "ordenes_codigo_unique"
+      ],
+      "writes": [
+        "s|idx|public.ordenes_codigo_unique",
+        "n|idx|public.ordenes_codigo_unique",
+        "e|idx|public.ordenes_codigo_unique",
+        "n|rel|public.ordenes_codigo_unique"
+      ],
+      "reads": [
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.ordenes.codigo_orden"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "tipos_falla",
+        "tipos_falla_nombre_unique"
+      ],
+      "writes": [
+        "s|idx|public.tipos_falla_nombre_unique",
+        "n|idx|public.tipos_falla_nombre_unique",
+        "e|idx|public.tipos_falla_nombre_unique",
+        "n|rel|public.tipos_falla_nombre_unique"
+      ],
+      "reads": [
+        "n|tbl|public.tipos_falla",
+        "n|sch|public",
+        "n|col|public.tipos_falla.nombre"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usuarios",
+        "usuarios_email_unique"
+      ],
+      "writes": [
+        "s|idx|public.usuarios_email_unique",
+        "n|idx|public.usuarios_email_unique",
+        "e|idx|public.usuarios_email_unique",
+        "n|rel|public.usuarios_email_unique"
+      ],
+      "reads": [
+        "n|tbl|public.usuarios",
+        "n|sch|public",
+        "n|col|public.usuarios.email"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "auditoria_cambios"
+      ],
+      "writes": [
+        "s|fk|public.auditoria_cambios.auditoria_cambios_usuario_id_usuarios_id_fkey",
+        "n|fk|public.auditoria_cambios.auditoria_cambios_usuario_id_usuarios_id_fkey",
+        "e|fk|public.auditoria_cambios.auditoria_cambios_usuario_id_usuarios_id_fkey",
+        "n|con|public.auditoria_cambios.auditoria_cambios_usuario_id_usuarios_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.auditoria_cambios",
+        "n|sch|public",
+        "n|tbl|public.usuarios",
+        "n|sch|public",
+        "n|col|public.auditoria_cambios.usuario_id",
+        "n|col|public.usuarios.id",
+        "e|uniqueness|public.usuarios.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "equipos"
+      ],
+      "writes": [
+        "s|fk|public.equipos.equipos_cliente_id_clientes_id_fkey",
+        "n|fk|public.equipos.equipos_cliente_id_clientes_id_fkey",
+        "e|fk|public.equipos.equipos_cliente_id_clientes_id_fkey",
+        "n|con|public.equipos.equipos_cliente_id_clientes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.equipos",
+        "n|sch|public",
+        "n|tbl|public.clientes",
+        "n|sch|public",
+        "n|col|public.equipos.cliente_id",
+        "n|col|public.clientes.id",
+        "e|uniqueness|public.clientes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_acta_entrega"
+      ],
+      "writes": [
+        "s|fk|public.formato_acta_entrega.formato_acta_entrega_orden_id_ordenes_id_fkey",
+        "n|fk|public.formato_acta_entrega.formato_acta_entrega_orden_id_ordenes_id_fkey",
+        "e|fk|public.formato_acta_entrega.formato_acta_entrega_orden_id_ordenes_id_fkey",
+        "n|con|public.formato_acta_entrega.formato_acta_entrega_orden_id_ordenes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.formato_acta_entrega",
+        "n|sch|public",
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.formato_acta_entrega.orden_id",
+        "n|col|public.ordenes.id",
+        "e|uniqueness|public.ordenes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_actividades"
+      ],
+      "writes": [
+        "s|fk|public.formato_actividades.formato_actividades_orden_id_ordenes_id_fkey",
+        "n|fk|public.formato_actividades.formato_actividades_orden_id_ordenes_id_fkey",
+        "e|fk|public.formato_actividades.formato_actividades_orden_id_ordenes_id_fkey",
+        "n|con|public.formato_actividades.formato_actividades_orden_id_ordenes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.formato_actividades",
+        "n|sch|public",
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.formato_actividades.orden_id",
+        "n|col|public.ordenes.id",
+        "e|uniqueness|public.ordenes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "formato_ot"
+      ],
+      "writes": [
+        "s|fk|public.formato_ot.formato_ot_orden_id_ordenes_id_fkey",
+        "n|fk|public.formato_ot.formato_ot_orden_id_ordenes_id_fkey",
+        "e|fk|public.formato_ot.formato_ot_orden_id_ordenes_id_fkey",
+        "n|con|public.formato_ot.formato_ot_orden_id_ordenes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.formato_ot",
+        "n|sch|public",
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.formato_ot.orden_id",
+        "n|col|public.ordenes.id",
+        "e|uniqueness|public.ordenes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "fotos_evidencia"
+      ],
+      "writes": [
+        "s|fk|public.fotos_evidencia.fotos_evidencia_orden_id_ordenes_id_fkey",
+        "n|fk|public.fotos_evidencia.fotos_evidencia_orden_id_ordenes_id_fkey",
+        "e|fk|public.fotos_evidencia.fotos_evidencia_orden_id_ordenes_id_fkey",
+        "n|con|public.fotos_evidencia.fotos_evidencia_orden_id_ordenes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.fotos_evidencia",
+        "n|sch|public",
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.fotos_evidencia.orden_id",
+        "n|col|public.ordenes.id",
+        "e|uniqueness|public.ordenes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ordenes"
+      ],
+      "writes": [
+        "s|fk|public.ordenes.ordenes_cliente_id_clientes_id_fkey",
+        "n|fk|public.ordenes.ordenes_cliente_id_clientes_id_fkey",
+        "e|fk|public.ordenes.ordenes_cliente_id_clientes_id_fkey",
+        "n|con|public.ordenes.ordenes_cliente_id_clientes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|tbl|public.clientes",
+        "n|sch|public",
+        "n|col|public.ordenes.cliente_id",
+        "n|col|public.clientes.id",
+        "e|uniqueness|public.clientes.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ordenes"
+      ],
+      "writes": [
+        "s|fk|public.ordenes.ordenes_equipo_id_equipos_id_fkey",
+        "n|fk|public.ordenes.ordenes_equipo_id_equipos_id_fkey",
+        "e|fk|public.ordenes.ordenes_equipo_id_equipos_id_fkey",
+        "n|con|public.ordenes.ordenes_equipo_id_equipos_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|tbl|public.equipos",
+        "n|sch|public",
+        "n|col|public.ordenes.equipo_id",
+        "n|col|public.equipos.id",
+        "e|uniqueness|public.equipos.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ordenes"
+      ],
+      "writes": [
+        "s|fk|public.ordenes.ordenes_tecnico_id_usuarios_id_fkey",
+        "n|fk|public.ordenes.ordenes_tecnico_id_usuarios_id_fkey",
+        "e|fk|public.ordenes.ordenes_tecnico_id_usuarios_id_fkey",
+        "n|con|public.ordenes.ordenes_tecnico_id_usuarios_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|tbl|public.usuarios",
+        "n|sch|public",
+        "n|col|public.ordenes.tecnico_id",
+        "n|col|public.usuarios.id",
+        "e|uniqueness|public.usuarios.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "ordenes"
+      ],
+      "writes": [
+        "s|fk|public.ordenes.ordenes_solicitante_id_usuarios_id_fkey",
+        "n|fk|public.ordenes.ordenes_solicitante_id_usuarios_id_fkey",
+        "e|fk|public.ordenes.ordenes_solicitante_id_usuarios_id_fkey",
+        "n|con|public.ordenes.ordenes_solicitante_id_usuarios_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|tbl|public.usuarios",
+        "n|sch|public",
+        "n|col|public.ordenes.solicitante_id",
+        "n|col|public.usuarios.id",
+        "e|uniqueness|public.usuarios.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "repuestos_orden"
+      ],
+      "writes": [
+        "s|fk|public.repuestos_orden.repuestos_orden_orden_id_ordenes_id_fkey",
+        "n|fk|public.repuestos_orden.repuestos_orden_orden_id_ordenes_id_fkey",
+        "e|fk|public.repuestos_orden.repuestos_orden_orden_id_ordenes_id_fkey",
+        "n|con|public.repuestos_orden.repuestos_orden_orden_id_ordenes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.repuestos_orden",
+        "n|sch|public",
+        "n|tbl|public.ordenes",
+        "n|sch|public",
+        "n|col|public.repuestos_orden.orden_id",
+        "n|col|public.ordenes.id",
+        "e|uniqueness|public.ordenes.id"
+      ]
+    }
+  ],
+  "ddl": [
+    {
+      "schema": "public",
+      "name": "auditoria_cambios",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "clientes",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "configuracion_empresa",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "equipos",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "formato_acta_entrega",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "formato_actividades",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "formato_ot",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "fotos_evidencia",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "notificaciones_auditoria",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "ordenes",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "repuestos_orden",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "tipos_falla",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "name": "usuarios",
+      "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "usuario_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "usuario_nombre",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "metodo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "ruta",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "fecha",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "tipo_documento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "numero_documento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "nombre_completo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "telefono",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "email",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "direccion",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "created_at",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "nombre_empresa",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'Santi Inc'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "slogan",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "nit",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "telefono",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "email",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "direccion",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "ciudad",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "logo_base64",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "smtp_host",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'smtp.gmail.com'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "smtp_port",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "465",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "smtp_user",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "smtp_pass",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "smtp_api_url",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "portal_host_url",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'http://localhost:3000'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "color_primario",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'#0F172A'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "color_secundario",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'#0284C7'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "is_setup_completed",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "cliente_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "tipo_equipo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "marca",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "modelo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "numero_serie",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "sistema_operativo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "procesador",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "memoria_ram",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "almacenamiento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "tarjeta_grafica",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "estado_equipo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'OPERATIVO'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "created_at",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "orden_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "estado_operatividad",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'OPERATIVO'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "observaciones",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "recomendaciones_cuidado",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "garantia_dias",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "30",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "persona_recibe_nombre",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "persona_recibe_documento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "check_conformidad",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "firma_digital_base64",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "fecha_entrega",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "orden_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "procedimientos_realizados",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "pasta_termica",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "alcohol_isopropilico",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "sopleteado_contactos",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "brocha_antiestatica",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "pano_microfibra",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "depuracion_temporales",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "optimizacion_inicio",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "escaneo_malware",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "actualizacion_drivers",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "comprobacion_disco",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "qa_estres_termico",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "qa_puertos",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "qa_conectividad",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "qa_bateria",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "qa_teclado_touchpad",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "costo_mano_obra",
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "fecha_actividad",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "orden_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "diagnostico_preliminar",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "herramientas_chips",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "tiempo_estimado_entrega",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "accesorio_cargador",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "accesorio_cable_poder",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "accesorio_mouse",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "accesorio_maletin",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "encendido_inicial",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "estado_carcasa",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "pin_contrasena",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "orden_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "etapa",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "ruta_o_bytes_base64",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "nota_tecnica",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "fecha_captura",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "destinatario",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "asunto",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "evento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "estado",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "fecha_envio",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "codigo_orden",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "cliente_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "equipo_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "tecnico_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "solicitante_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "tipo_servicio",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "categoria_falla",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "prioridad",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "titulo",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "descripcion",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "estado",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'RECIBIDO'",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "fecha_ingreso",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "fecha_limite_sla",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "fecha_cierre",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "orden_id",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "referencia",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "cantidad",
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "precio_unitario",
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "created_at",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "tipo_servicio",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "nombre",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "descripcion",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "activo",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "created_at",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "id",
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "nombre",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "email",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "password",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "documento",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "telefono",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "rol",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "activo",
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "created_at",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "CURRENT_TIMESTAMP",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "idx_auditoria_fecha",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "fecha",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "clientes_documento_unique",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "numero_documento",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_codigo_unique",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "codigo_orden",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "tipos_falla_nombre_unique",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "nombre",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "usuarios_email_unique",
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "email",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "entityType": "indexes"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "auditoria_cambios_usuario_id_usuarios_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "usuario_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "equipos_cliente_id_clientes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "cliente_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "clientes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "formato_acta_entrega_orden_id_ordenes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "orden_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "formato_actividades_orden_id_ordenes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "orden_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "formato_ot_orden_id_ordenes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "orden_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "fotos_evidencia_orden_id_ordenes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "orden_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_cliente_id_clientes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "cliente_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "clientes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_equipo_id_equipos_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "equipo_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "equipos",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_tecnico_id_usuarios_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "tecnico_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_solicitante_id_usuarios_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "solicitante_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "usuarios",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "repuestos_orden_orden_id_ordenes_id_fkey",
+      "nameExplicit": false,
+      "columns": [
+        "orden_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ordenes",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "entityType": "fks"
+    },
+    {
+      "schema": "public",
+      "table": "auditoria_cambios",
+      "name": "auditoria_cambios_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "clientes",
+      "name": "clientes_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "configuracion_empresa",
+      "name": "configuracion_empresa_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "equipos",
+      "name": "equipos_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_acta_entrega",
+      "name": "formato_acta_entrega_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_actividades",
+      "name": "formato_actividades_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "formato_ot",
+      "name": "formato_ot_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "fotos_evidencia",
+      "name": "fotos_evidencia_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "notificaciones_auditoria",
+      "name": "notificaciones_auditoria_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "ordenes",
+      "name": "ordenes_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "repuestos_orden",
+      "name": "repuestos_orden_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "tipos_falla",
+      "name": "tipos_falla_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    },
+    {
+      "schema": "public",
+      "table": "usuarios",
+      "name": "usuarios_pkey",
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "entityType": "pks"
+    }
+  ]
+}

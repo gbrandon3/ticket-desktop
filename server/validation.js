@@ -1,4 +1,7 @@
 const db = require('./db');
+const { eq } = require('drizzle-orm');
+const { orm, schema } = require('./orm');
+
 const states = ['RECIBIDO', 'EN_DIAGNOSTICO', 'EN_TALLER', 'LISTO_ENTREGA', 'ENTREGADO_CERRADO'];
 
 function validationMiddleware(req, res, next) {
@@ -14,6 +17,10 @@ function validationMiddleware(req, res, next) {
       if (!required(account, ['email', 'password']) || account.password.length < 8 || account.password.length > 256) return fail(400, 'Cada cuenta requiere correo y contraseña de 8 a 256 caracteres');
     }
     if (new Set(accounts.map(account => account.email.trim().toLowerCase())).size !== accounts.length) return fail(400, 'Cada cuenta debe tener un correo distinto');
+  }
+  if (req.path === '/auth/recover-password' && req.method === 'POST') {
+    if (!required(body, ['email', 'recoveryCode', 'newPassword'])) return fail(400, 'Complete correo, clave de recuperación y contraseña nueva');
+    if (body.newPassword.length < 8 || body.newPassword.length > 256) return fail(400, 'La contraseña debe tener entre 8 y 256 caracteres');
   }
   if (/^\/usuarios(?:\/\d+)?$/.test(req.path) && ['POST', 'PUT'].includes(req.method)) {
     if (!required(body, ['nombre', 'email']) || !['admin', 'solicitante', 'tecnico'].includes(body.rol)) return fail(400, 'Usuario o rol inválido');
@@ -33,14 +40,22 @@ function validationMiddleware(req, res, next) {
   }
   const match = req.path.match(/^\/ordenes\/(\d+)(?:\/(.*))?$/);
   let order;
-  if (match) order = db.prepare('SELECT * FROM ordenes WHERE id = ?').get(Number(match[1]));
+  if (match) {
+    order = orm.select().from(schema.ordenes).where(eq(schema.ordenes.id, Number(match[1]))).get();
+  }
   const child = req.path.match(/^\/(repuestos|fotos)\/(\d+)$/);
   if (child && write) {
-    const table = child[1] === 'repuestos' ? 'repuestos_orden' : 'fotos_evidencia';
-    order = db.prepare(`SELECT o.* FROM ordenes o JOIN ${table} c ON c.orden_id = o.id WHERE c.id = ?`).get(Number(child[2]));
+    const childTable = child[1] === 'repuestos' ? schema.repuestosOrden : schema.fotosEvidencia;
+    const joined = orm
+      .select({ orden: schema.ordenes })
+      .from(schema.ordenes)
+      .innerJoin(childTable, eq(childTable.ordenId, schema.ordenes.id))
+      .where(eq(childTable.id, Number(child[2])))
+      .get();
+    order = joined?.orden;
   }
   if ((match || child) && !order) return fail(404, 'Orden o registro no encontrado');
-  if (order && req.user?.rol === 'tecnico' && order.tecnico_id !== req.user.id) return fail(403, 'Orden asignada a otro técnico');
+  if (order && req.user?.rol === 'tecnico' && order.tecnicoId !== req.user.id) return fail(403, 'Orden asignada a otro técnico');
   if (order && write) {
     if (order.estado === 'ENTREGADO_CERRADO') return fail(409, 'La orden entregada es de solo lectura');
     if (match?.[2] === 'estado') {
@@ -50,9 +65,17 @@ function validationMiddleware(req, res, next) {
     }
     if (match?.[2] === 'acta') {
       if (order.estado !== 'LISTO_ENTREGA' || !required(body, ['personaRecibeNombre', 'personaRecibeDocumento']) || body.checkConformidad !== true) return fail(409, 'Se requiere orden lista, receptor y conformidad para entregar');
-      const ot = db.prepare('SELECT diagnostico_preliminar FROM formato_ot WHERE orden_id = ?').get(order.id);
-      const activities = db.prepare('SELECT procedimientos_realizados FROM formato_actividades WHERE orden_id = ?').get(order.id);
-      if (!ot?.diagnostico_preliminar?.trim() || !activities?.procedimientos_realizados?.trim()) return fail(409, 'Guarde el diagnóstico de la OT y la bitácora antes de entregar');
+      const ot = orm
+        .select({ diagnosticoPreliminar: schema.formatoOt.diagnosticoPreliminar })
+        .from(schema.formatoOt)
+        .where(eq(schema.formatoOt.ordenId, order.id))
+        .get();
+      const activities = orm
+        .select({ procedimientosRealizados: schema.formatoActividades.procedimientosRealizados })
+        .from(schema.formatoActividades)
+        .where(eq(schema.formatoActividades.ordenId, order.id))
+        .get();
+      if (!ot?.diagnosticoPreliminar?.trim() || !activities?.procedimientosRealizados?.trim()) return fail(409, 'Guarde el diagnóstico de la OT y la bitácora antes de entregar');
     }
     if (match?.[2] === 'ot' && !required(body, ['diagnosticoPreliminar'])) return fail(400, 'Escriba el diagnóstico antes de guardar la OT');
     if (match?.[2] === 'actividades' && (!required(body, ['procedimientosRealizados']) || !Number.isFinite(body.costoManoObra ?? 0) || (body.costoManoObra ?? 0) < 0)) return fail(400, 'La bitácora requiere procedimientos y un costo de mano de obra válido, mayor o igual a cero');

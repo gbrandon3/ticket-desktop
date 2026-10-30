@@ -1,4 +1,5 @@
-const db = require('../db');
+const { eq, and, asc } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
 const { toBool } = require('../serializers');
 
 module.exports = app => {
@@ -7,15 +8,25 @@ module.exports = app => {
       const { tipoServicio } = req.query;
       let rows;
       if (tipoServicio) {
-        rows = db.prepare('SELECT * FROM tipos_falla WHERE tipo_servicio = ? AND activo = 1 ORDER BY nombre ASC').all(tipoServicio);
+        rows = orm
+          .select()
+          .from(schema.tiposFalla)
+          .where(and(eq(schema.tiposFalla.tipoServicio, tipoServicio), eq(schema.tiposFalla.activo, true)))
+          .orderBy(asc(schema.tiposFalla.nombre))
+          .all();
       } else {
-        rows = db.prepare('SELECT * FROM tipos_falla WHERE activo = 1 ORDER BY nombre ASC').all();
+        rows = orm
+          .select()
+          .from(schema.tiposFalla)
+          .where(eq(schema.tiposFalla.activo, true))
+          .orderBy(asc(schema.tiposFalla.nombre))
+          .all();
       }
       res.json({
         success: true,
         data: rows.map(t => ({
           id: t.id,
-          tipoServicio: t.tipo_servicio,
+          tipoServicio: t.tipoServicio,
           nombre: t.nombre,
           descripcion: t.descripcion,
           activo: toBool(t.activo),
@@ -29,13 +40,19 @@ module.exports = app => {
   app.post('/api/tipos-falla', (req, res) => {
     try {
       const { tipoServicio, nombre, descripcion } = req.body;
-      const info = db.prepare(`
-        INSERT INTO tipos_falla (tipo_servicio, nombre, descripcion, activo)
-        VALUES (?, ?, ?, 1)
-      `).run(tipoServicio, nombre.trim(), descripcion || null);
+      const inserted = orm
+        .insert(schema.tiposFalla)
+        .values({
+          tipoServicio,
+          nombre: nombre.trim(),
+          descripcion: descripcion || null,
+          activo: true,
+        })
+        .returning()
+        .get();
       res.json({
         success: true,
-        data: { id: info.lastInsertRowid, tipoServicio, nombre, descripcion, activo: true },
+        data: { id: inserted.id, tipoServicio, nombre, descripcion, activo: true },
       });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -45,7 +62,7 @@ module.exports = app => {
   app.delete('/api/tipos-falla/:id', (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      db.prepare('DELETE FROM tipos_falla WHERE id = ?').run(id);
+      orm.delete(schema.tiposFalla).where(eq(schema.tiposFalla.id, id)).run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });

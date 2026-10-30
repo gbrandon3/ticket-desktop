@@ -15,6 +15,7 @@ import '../entities/usuario.dart';
 abstract class IOrdenesRepository {
   // Autenticación y Usuarios
   Future<Usuario?> login(String email, String password);
+  Future<void> recoverPassword(String email, String recoveryCode, String newPassword);
   Future<List<Usuario>> getUsuarios({String? rol});
   Future<Usuario> createUsuario(Usuario usuario);
   Future<void> updateUsuario(Usuario usuario);

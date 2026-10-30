@@ -1,4 +1,5 @@
-const db = require('../db');
+const { eq, or, asc, sql } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
 const { formatOrden, toBool } = require('../serializers');
 
 module.exports = app => {
@@ -12,90 +13,116 @@ module.exports = app => {
       const cleanQ = q.toUpperCase().replace('#', '').trim();
 
       // 1. Buscar por Código de Orden exacto o parcial
-      const ordenRow = db.prepare(`
-        SELECT * FROM ordenes
-        WHERE UPPER(codigo_orden) = ?
-           OR UPPER(codigo_orden) = ?
-           OR UPPER(codigo_orden) = ?
+      const ordenRow = orm
+        .select()
+        .from(schema.ordenes)
+        .where(
+          or(
+            sql`UPPER(${schema.ordenes.codigoOrden}) = ${cleanQ}`,
+            sql`UPPER(${schema.ordenes.codigoOrden}) = ${`ORD-${cleanQ}`}`,
+            sql`UPPER(${schema.ordenes.codigoOrden}) = ${`TCK-${cleanQ}`}`
+          )
+        )
+        .get();
 
-      `).get(cleanQ, `ORD-${cleanQ}`, `TCK-${cleanQ}`);
+      function formatOt(row) {
+        if (!row) return null;
+        let chips = [];
+        try {
+          chips = JSON.parse(row.herramientasChips || '[]');
+        } catch (_) {}
+        return {
+          id: row.id,
+          ordenId: row.ordenId,
+          diagnosticoPreliminar: row.diagnosticoPreliminar,
+          herramientasChips: chips,
+          tiempoEstimadoEntrega: row.tiempoEstimadoEntrega,
+          accesorioCargador: toBool(row.accesorioCargador),
+          accesorioCablePoder: toBool(row.accesorioCablePoder),
+          accesorioMouse: toBool(row.accesorioMouse),
+          accesorioMaletin: toBool(row.accesorioMaletin),
+          encendidoInicial: toBool(row.encendidoInicial),
+          estadoCarcasa: row.estadoCarcasa,
+        };
+      }
 
-  function formatOt(row) {
-    if (!row) return null;
-    let chips = [];
-    try { chips = JSON.parse(row.herramientas_chips || '[]'); } catch (_) {}
-    return {
-      id: row.id,
-      ordenId: row.orden_id,
-      diagnosticoPreliminar: row.diagnostico_preliminar,
-      herramientasChips: chips,
-      tiempoEstimadoEntrega: row.tiempo_estimado_entrega,
-      accesorioCargador: toBool(row.accesorio_cargador),
-      accesorioCablePoder: toBool(row.accesorio_cable_poder),
-      accesorioMouse: toBool(row.accesorio_mouse),
-      accesorioMaletin: toBool(row.accesorio_maletin),
-      encendidoInicial: toBool(row.encendido_inicial),
-      estadoCarcasa: row.estado_carcasa,
+      function formatActividades(row) {
+        if (!row) return null;
+        return {
+          id: row.id,
+          ordenId: row.ordenId,
+          procedimientosRealizados: row.procedimientosRealizados,
+          pastaTermica: toBool(row.pastaTermica),
+          alcoholIsopropilico: toBool(row.alcoholIsopropilico),
+          sopleteadoContactos: toBool(row.sopleteadoContactos),
+          brochaAntiestatica: toBool(row.brochaAntiestatica),
+          panoMicrofibra: toBool(row.panoMicrofibra),
+          depuracionTemporales: toBool(row.depuracionTemporales),
+          optimizacionInicio: toBool(row.optimizacionInicio),
+          escaneoMalware: toBool(row.escaneoMalware),
+          actualizacionDrivers: toBool(row.actualizacionDrivers),
+          comprobacionDisco: toBool(row.comprobacionDisco),
+          qaEstresTermico: toBool(row.qaEstresTermico),
+          qaPuertos: toBool(row.qaPuertos),
+          qaConectividad: toBool(row.qaConectividad),
+          qaBateria: toBool(row.qaBateria),
+          qaTecladoTouchpad: toBool(row.qaTecladoTouchpad),
+          costoManoObra: row.costoManoObra || 0,
+        };
+      }
 
-    };
-  }
-
-  function formatActividades(row) {
-    if (!row) return null;
-    return {
-      id: row.id,
-      ordenId: row.orden_id,
-      procedimientosRealizados: row.procedimientos_realizados,
-      pastaTermica: toBool(row.pasta_termica),
-      alcoholIsopropilico: toBool(row.alcohol_isopropilico),
-      sopleteadoContactos: toBool(row.sopleteado_contactos),
-      brochaAntiestatica: toBool(row.brocha_antiestatica),
-      panoMicrofibra: toBool(row.pano_microfibra),
-      depuracionTemporales: toBool(row.depuracion_temporales),
-      optimizacionInicio: toBool(row.optimizacion_inicio),
-      escaneoMalware: toBool(row.escaneo_malware),
-      actualizacionDrivers: toBool(row.actualizacion_drivers),
-      comprobacionDisco: toBool(row.comprobacion_disco),
-      qaEstresTermico: toBool(row.qa_estres_termico),
-      qaPuertos: toBool(row.qa_puertos),
-      qaConectividad: toBool(row.qa_conectividad),
-      qaBateria: toBool(row.qa_bateria),
-      qaTecladoTouchpad: toBool(row.qa_teclado_touchpad),
-      costoManoObra: row.costo_mano_obra || 0,
-    };
-  }
-
-  function formatActa(row) {
-    if (!row) return null;
-    return {
-      id: row.id,
-      ordenId: row.orden_id,
-      estadoOperatividad: row.estado_operatividad,
-      observaciones: row.observaciones,
-      recomendacionesCuidado: row.recomendaciones_cuidado,
-      garantiaDias: row.garantia_dias,
-      personaRecibeNombre: row.persona_recibe_nombre,
-      personaRecibeDocumento: row.persona_recibe_documento,
-      checkConformidad: toBool(row.check_conformidad),
-      firmaDigitalBase64: row.firma_digital_base64,
-      fechaEntrega: row.fecha_entrega,
-    };
-  }
+      function formatActa(row) {
+        if (!row) return null;
+        return {
+          id: row.id,
+          ordenId: row.ordenId,
+          estadoOperatividad: row.estadoOperatividad,
+          observaciones: row.observaciones,
+          recomendacionesCuidado: row.recomendacionesCuidado,
+          garantiaDias: row.garantiaDias,
+          personaRecibeNombre: row.personaRecibeNombre,
+          personaRecibeDocumento: row.personaRecibeDocumento,
+          checkConformidad: toBool(row.checkConformidad),
+          firmaDigitalBase64: row.firmaDigitalBase64,
+          fechaEntrega: row.fechaEntrega,
+        };
+      }
 
       if (ordenRow) {
-        const fotosRows = db.prepare('SELECT * FROM fotos_evidencia WHERE orden_id = ? ORDER BY id ASC').all(ordenRow.id);
+        const fotosRows = orm
+          .select()
+          .from(schema.fotosEvidencia)
+          .where(eq(schema.fotosEvidencia.ordenId, ordenRow.id))
+          .orderBy(asc(schema.fotosEvidencia.id))
+          .all();
         const fotos = fotosRows.map(f => ({
           id: f.id,
-          ordenId: f.orden_id,
+          ordenId: f.ordenId,
           etapa: f.etapa,
-          rutaOBytesBase64: f.ruta_o_bytes_base64,
-          notaTecnica: f.nota_tecnica,
-          fechaCaptura: f.fecha_captura,
+          rutaOBytesBase64: f.rutaOBytesBase64,
+          notaTecnica: f.notaTecnica,
+          fechaCaptura: f.fechaCaptura,
         }));
-        const otRow = db.prepare('SELECT * FROM formato_ot WHERE orden_id = ?').get(ordenRow.id);
-        const actRow = db.prepare('SELECT * FROM formato_actividades WHERE orden_id = ?').get(ordenRow.id);
-        const actaRow = db.prepare('SELECT * FROM formato_acta_entrega WHERE orden_id = ?').get(ordenRow.id);
-        const repRows = db.prepare('SELECT * FROM repuestos_orden WHERE orden_id = ?').all(ordenRow.id);
+        const otRow = orm
+          .select()
+          .from(schema.formatoOt)
+          .where(eq(schema.formatoOt.ordenId, ordenRow.id))
+          .get();
+        const actRow = orm
+          .select()
+          .from(schema.formatoActividades)
+          .where(eq(schema.formatoActividades.ordenId, ordenRow.id))
+          .get();
+        const actaRow = orm
+          .select()
+          .from(schema.formatoActaEntrega)
+          .where(eq(schema.formatoActaEntrega.ordenId, ordenRow.id))
+          .get();
+        const repRows = orm
+          .select()
+          .from(schema.repuestosOrden)
+          .where(eq(schema.repuestosOrden.ordenId, ordenRow.id))
+          .all();
 
         return res.json({
           success: true,
@@ -108,11 +135,11 @@ module.exports = app => {
             actaEntrega: formatActa(actaRow),
             repuestos: repRows.map(r => ({
               id: r.id,
-              ordenId: r.orden_id,
+              ordenId: r.ordenId,
               referencia: r.referencia,
               cantidad: r.cantidad,
-              precioUnitario: r.precio_unitario,
-              subtotal: r.cantidad * r.precio_unitario,
+              precioUnitario: r.precioUnitario,
+              subtotal: r.cantidad * r.precioUnitario,
             })),
           },
         });
@@ -123,5 +150,4 @@ module.exports = app => {
       res.status(500).json({ success: false, error: 'Error consultando la orden' });
     }
   });
-
 };

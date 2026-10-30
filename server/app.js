@@ -7,6 +7,7 @@ const { validationMiddleware, atomicRoute } = require('./validation');
 const app = express();
 const PORT = process.env.PORT || 3000;
 migratePasswords();
+require('./recovery').getRecoveryCode();
 require('./secrets').migrateSecrets(require('./db'));
 require('./change-audit');
 app.disable('x-powered-by');
@@ -15,10 +16,12 @@ app.use(cors({ origin(origin, callback) {
   callback(null, !origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) || allowed.includes(origin));
 } }));
 app.use(express.json({ limit: '15mb' }));
-const uploadsDir = path.join(__dirname, '..', 'data', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const uploadsDir = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, '..', 'data', 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (_) {}
 app.use('/uploads', express.static(uploadsDir));
 app.use('/api', securityMiddleware, validationMiddleware);
 // SQLite writes inside each synchronous route either all commit or all roll back.

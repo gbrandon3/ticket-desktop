@@ -13,6 +13,8 @@ npm start
 
 El servidor escucha en http://localhost:3000. Si existe build/web, sirve la aplicación web. La base se crea en data/tickets.sqlite. Complete el asistente inicial una sola vez; las contraseñas nuevas requieren entre 8 y 256 caracteres.
 
+Si un usuario olvida su contraseña, use el enlace del login. La clave privada del servidor se consulta localmente con `npm run recovery-code`; no requiere SMTP y se guarda en `data/recovery.key`. Proteja ese archivo como una contraseña administrativa.
+
 Para compilar y probar el frontend:
 
 ```powershell
@@ -76,7 +78,8 @@ El servidor genera un respaldo al iniciar y cada 24 horas mientras está encendi
 - server/secrets.js: cifrado SMTP.
 - server/change-audit.js: historial de modificaciones exitosas, visible en Configuración → Historial de Cambios.
 - server/backup-scheduler.js: copias automáticas y estado.
-- server/db.js: esquema e inicialización SQLite.
+- server/db.js: conexión e inicialización SQLite.
+- server/orm/: modelos y acceso tipado del backend mediante Drizzle ORM sobre `node:sqlite`.
 - lib/: aplicación Flutter.
 
 Consulte CONTEXTO.md para el estado técnico del proyecto.

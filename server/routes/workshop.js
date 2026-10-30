@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const db = require('../db');
+const { eq, asc } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
 const { toBool } = require('../serializers');
 
 const uploadsDir = path.join(__dirname, '..', '..', 'data', 'uploads');
@@ -32,36 +33,38 @@ function saveUploadFile(ordenId, rutaOBytesBase64) {
   }
 }
 
-const toInt = val => val ? 1 : 0;
-
 module.exports = app => {
   // Formato OT
   app.get('/api/ordenes/:id/ot', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const row = db.prepare('SELECT * FROM formato_ot WHERE orden_id = ?').get(ordenId);
+      const row = orm
+        .select()
+        .from(schema.formatoOt)
+        .where(eq(schema.formatoOt.ordenId, ordenId))
+        .get();
       if (!row) return res.json({ success: true, data: null });
 
       let chips = [];
       try {
-        chips = JSON.parse(row.herramientas_chips || '[]');
+        chips = JSON.parse(row.herramientasChips || '[]');
       } catch (_) {}
 
       res.json({
         success: true,
         data: {
           id: row.id,
-          ordenId: row.orden_id,
-          diagnosticoPreliminar: row.diagnostico_preliminar,
+          ordenId: row.ordenId,
+          diagnosticoPreliminar: row.diagnosticoPreliminar,
           herramientasChips: chips,
-          tiempoEstimadoEntrega: row.tiempo_estimado_entrega,
-          accesorioCargador: toBool(row.accesorio_cargador),
-          accesorioCablePoder: toBool(row.accesorio_cable_poder),
-          accesorioMouse: toBool(row.accesorio_mouse),
-          accesorioMaletin: toBool(row.accesorio_maletin),
-          encendidoInicial: toBool(row.encendido_inicial),
-          estadoCarcasa: row.estado_carcasa,
-          pinContrasena: row.pin_contrasena,
+          tiempoEstimadoEntrega: row.tiempoEstimadoEntrega,
+          accesorioCargador: toBool(row.accesorioCargador),
+          accesorioCablePoder: toBool(row.accesorioCablePoder),
+          accesorioMouse: toBool(row.accesorioMouse),
+          accesorioMaletin: toBool(row.accesorioMaletin),
+          encendidoInicial: toBool(row.encendidoInicial),
+          estadoCarcasa: row.estadoCarcasa,
+          pinContrasena: row.pinContrasena,
         },
       });
     } catch (err) {
@@ -73,35 +76,37 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const ot = req.body;
-      const existing = db.prepare('SELECT id FROM formato_ot WHERE orden_id = ?').get(ordenId);
+      const existing = orm
+        .select({ id: schema.formatoOt.id })
+        .from(schema.formatoOt)
+        .where(eq(schema.formatoOt.ordenId, ordenId))
+        .get();
 
       const chipsJson = JSON.stringify(ot.herramientasChips || []);
+      const values = {
+        diagnosticoPreliminar: ot.diagnosticoPreliminar,
+        herramientasChips: chipsJson,
+        tiempoEstimadoEntrega: ot.tiempoEstimadoEntrega || null,
+        accesorioCargador: Boolean(ot.accesorioCargador),
+        accesorioCablePoder: Boolean(ot.accesorioCablePoder),
+        accesorioMouse: Boolean(ot.accesorioMouse),
+        accesorioMaletin: Boolean(ot.accesorioMaletin),
+        encendidoInicial: Boolean(ot.encendidoInicial),
+        estadoCarcasa: ot.estadoCarcasa,
+        pinContrasena: ot.pinContrasena,
+      };
 
       if (existing) {
-        db.prepare(`
-          UPDATE formato_ot SET
-            diagnostico_preliminar = ?, herramientas_chips = ?, tiempo_estimado_entrega = ?,
-            accesorio_cargador = ?, accesorio_cable_poder = ?, accesorio_mouse = ?,
-            accesorio_maletin = ?, encendido_inicial = ?, estado_carcasa = ?, pin_contrasena = ?
-          WHERE id = ?
-        `).run(
-          ot.diagnosticoPreliminar, chipsJson, ot.tiempoEstimadoEntrega || null,
-          toInt(ot.accesorioCargador), toInt(ot.accesorioCablePoder), toInt(ot.accesorioMouse),
-          toInt(ot.accesorioMaletin), toInt(ot.encendidoInicial), ot.estadoCarcasa, ot.pinContrasena,
-          existing.id
-        );
+        orm
+          .update(schema.formatoOt)
+          .set(values)
+          .where(eq(schema.formatoOt.id, existing.id))
+          .run();
       } else {
-        db.prepare(`
-          INSERT INTO formato_ot (
-            orden_id, diagnostico_preliminar, herramientas_chips, tiempo_estimado_entrega,
-            accesorio_cargador, accesorio_cable_poder, accesorio_mouse, accesorio_maletin,
-            encendido_inicial, estado_carcasa, pin_contrasena
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          ordenId, ot.diagnosticoPreliminar, chipsJson, ot.tiempoEstimadoEntrega || null,
-          toInt(ot.accesorioCargador), toInt(ot.accesorioCablePoder), toInt(ot.accesorioMouse),
-          toInt(ot.accesorioMaletin), toInt(ot.encendidoInicial), ot.estadoCarcasa, ot.pinContrasena
-        );
+        orm
+          .insert(schema.formatoOt)
+          .values({ ordenId, ...values })
+          .run();
       }
       res.json({ success: true });
     } catch (err) {
@@ -113,31 +118,35 @@ module.exports = app => {
   app.get('/api/ordenes/:id/actividades', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const row = db.prepare('SELECT * FROM formato_actividades WHERE orden_id = ?').get(ordenId);
+      const row = orm
+        .select()
+        .from(schema.formatoActividades)
+        .where(eq(schema.formatoActividades.ordenId, ordenId))
+        .get();
       if (!row) return res.json({ success: true, data: null });
 
       res.json({
         success: true,
         data: {
           id: row.id,
-          ordenId: row.orden_id,
-          procedimientosRealizados: row.procedimientos_realizados,
-          pastaTermica: toBool(row.pasta_termica),
-          alcoholIsopropilico: toBool(row.alcohol_isopropilico),
-          sopleteadoContactos: toBool(row.sopleteado_contactos),
-          brochaAntiestatica: toBool(row.brocha_antiestatica),
-          panoMicrofibra: toBool(row.pano_microfibra),
-          depuracionTemporales: toBool(row.depuracion_temporales),
-          optimizacionInicio: toBool(row.optimizacion_inicio),
-          escaneoMalware: toBool(row.escaneo_malware),
-          actualizacionDrivers: toBool(row.actualizacion_drivers),
-          comprobacionDisco: toBool(row.comprobacion_disco),
-          qaEstresTermico: toBool(row.qa_estres_termico),
-          qaPuertos: toBool(row.qa_puertos),
-          qaConectividad: toBool(row.qa_conectividad),
-          qaBateria: toBool(row.qa_bateria),
-          qaTecladoTouchpad: toBool(row.qa_teclado_touchpad),
-          costoManoObra: row.costo_mano_obra || 0,
+          ordenId: row.ordenId,
+          procedimientosRealizados: row.procedimientosRealizados,
+          pastaTermica: toBool(row.pastaTermica),
+          alcoholIsopropilico: toBool(row.alcoholIsopropilico),
+          sopleteadoContactos: toBool(row.sopleteadoContactos),
+          brochaAntiestatica: toBool(row.brochaAntiestatica),
+          panoMicrofibra: toBool(row.panoMicrofibra),
+          depuracionTemporales: toBool(row.depuracionTemporales),
+          optimizacionInicio: toBool(row.optimizacionInicio),
+          escaneoMalware: toBool(row.escaneoMalware),
+          actualizacionDrivers: toBool(row.actualizacionDrivers),
+          comprobacionDisco: toBool(row.comprobacionDisco),
+          qaEstresTermico: toBool(row.qaEstresTermico),
+          qaPuertos: toBool(row.qaPuertos),
+          qaConectividad: toBool(row.qaConectividad),
+          qaBateria: toBool(row.qaBateria),
+          qaTecladoTouchpad: toBool(row.qaTecladoTouchpad),
+          costoManoObra: row.costoManoObra || 0,
         },
       });
     } catch (err) {
@@ -149,43 +158,43 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const act = req.body;
-      const existing = db.prepare('SELECT id FROM formato_actividades WHERE orden_id = ?').get(ordenId);
+      const existing = orm
+        .select({ id: schema.formatoActividades.id })
+        .from(schema.formatoActividades)
+        .where(eq(schema.formatoActividades.ordenId, ordenId))
+        .get();
+
+      const values = {
+        procedimientosRealizados: act.procedimientosRealizados,
+        pastaTermica: Boolean(act.pastaTermica),
+        alcoholIsopropilico: Boolean(act.alcoholIsopropilico),
+        sopleteadoContactos: Boolean(act.sopleteadoContactos),
+        brochaAntiestatica: Boolean(act.brochaAntiestatica),
+        panoMicrofibra: Boolean(act.panoMicrofibra),
+        depuracionTemporales: Boolean(act.depuracionTemporales),
+        optimizacionInicio: Boolean(act.optimizacionInicio),
+        escaneoMalware: Boolean(act.escaneoMalware),
+        actualizacionDrivers: Boolean(act.actualizacionDrivers),
+        comprobacionDisco: Boolean(act.comprobacionDisco),
+        qaEstresTermico: Boolean(act.qaEstresTermico),
+        qaPuertos: Boolean(act.qaPuertos),
+        qaConectividad: Boolean(act.qaConectividad),
+        qaBateria: Boolean(act.qaBateria),
+        qaTecladoTouchpad: Boolean(act.qaTecladoTouchpad),
+        costoManoObra: act.costoManoObra || 0,
+      };
 
       if (existing) {
-        db.prepare(`
-          UPDATE formato_actividades SET
-            procedimientos_realizados = ?, pasta_termica = ?, alcohol_isopropilico = ?,
-            sopleteado_contactos = ?, brocha_antiestatica = ?, pano_microfibra = ?,
-            depuracion_temporales = ?, optimizacion_inicio = ?, escaneo_malware = ?,
-            actualizacion_drivers = ?, comprobacion_disco = ?, qa_estres_termico = ?,
-            qa_puertos = ?, qa_conectividad = ?, qa_bateria = ?, qa_teclado_touchpad = ?,
-            costo_mano_obra = ?
-          WHERE id = ?
-        `).run(
-          act.procedimientosRealizados, toInt(act.pastaTermica), toInt(act.alcoholIsopropilico),
-          toInt(act.sopleteadoContactos), toInt(act.brochaAntiestatica), toInt(act.panoMicrofibra),
-          toInt(act.depuracionTemporales), toInt(act.optimizacionInicio), toInt(act.escaneoMalware),
-          toInt(act.actualizacionDrivers), toInt(act.comprobacionDisco), toInt(act.qaEstresTermico),
-          toInt(act.qaPuertos), toInt(act.qaConectividad), toInt(act.qaBateria), toInt(act.qaTecladoTouchpad),
-          act.costoManoObra || 0, existing.id
-        );
+        orm
+          .update(schema.formatoActividades)
+          .set(values)
+          .where(eq(schema.formatoActividades.id, existing.id))
+          .run();
       } else {
-        db.prepare(`
-          INSERT INTO formato_actividades (
-            orden_id, procedimientos_realizados, pasta_termica, alcohol_isopropilico,
-            sopleteado_contactos, brocha_antiestatica, pano_microfibra, depuracion_temporales,
-            optimizacion_inicio, escaneo_malware, actualizacion_drivers, comprobacion_disco,
-            qa_estres_termico, qa_puertos, qa_conectividad, qa_bateria, qa_teclado_touchpad,
-            costo_mano_obra
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          ordenId, act.procedimientosRealizados, toInt(act.pastaTermica), toInt(act.alcoholIsopropilico),
-          toInt(act.sopleteadoContactos), toInt(act.brochaAntiestatica), toInt(act.panoMicrofibra),
-          toInt(act.depuracionTemporales), toInt(act.optimizacionInicio), toInt(act.escaneoMalware),
-          toInt(act.actualizacionDrivers), toInt(act.comprobacionDisco), toInt(act.qaEstresTermico),
-          toInt(act.qaPuertos), toInt(act.qaConectividad), toInt(act.qaBateria), toInt(act.qaTecladoTouchpad),
-          act.costoManoObra || 0
-        );
+        orm
+          .insert(schema.formatoActividades)
+          .values({ ordenId, ...values })
+          .run();
       }
       res.json({ success: true });
     } catch (err) {
@@ -197,16 +206,21 @@ module.exports = app => {
   app.get('/api/ordenes/:id/repuestos', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const rows = db.prepare('SELECT * FROM repuestos_orden WHERE orden_id = ? ORDER BY id ASC').all(ordenId);
+      const rows = orm
+        .select()
+        .from(schema.repuestosOrden)
+        .where(eq(schema.repuestosOrden.ordenId, ordenId))
+        .orderBy(asc(schema.repuestosOrden.id))
+        .all();
       res.json({
         success: true,
         data: rows.map(r => ({
           id: r.id,
-          ordenId: r.orden_id,
+          ordenId: r.ordenId,
           referencia: r.referencia,
           cantidad: r.cantidad,
-          precioUnitario: r.precio_unitario,
-          subtotal: r.cantidad * r.precio_unitario,
+          precioUnitario: r.precioUnitario,
+          subtotal: r.cantidad * r.precioUnitario,
         })),
       });
     } catch (err) {
@@ -218,11 +232,17 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const r = req.body;
-      const info = db.prepare(`
-        INSERT INTO repuestos_orden (orden_id, referencia, cantidad, precio_unitario)
-        VALUES (?, ?, ?, ?)
-      `).run(ordenId, r.referencia, r.cantidad || 1, r.precioUnitario || 0);
-      res.json({ success: true, id: info.lastInsertRowid });
+      const inserted = orm
+        .insert(schema.repuestosOrden)
+        .values({
+          ordenId,
+          referencia: r.referencia,
+          cantidad: r.cantidad || 1,
+          precioUnitario: r.precioUnitario || 0,
+        })
+        .returning({ id: schema.repuestosOrden.id })
+        .get();
+      res.json({ success: true, id: inserted.id });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
     }
@@ -231,7 +251,7 @@ module.exports = app => {
   app.delete('/api/repuestos/:id', (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      db.prepare('DELETE FROM repuestos_orden WHERE id = ?').run(id);
+      orm.delete(schema.repuestosOrden).where(eq(schema.repuestosOrden.id, id)).run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -242,16 +262,21 @@ module.exports = app => {
   app.get('/api/ordenes/:id/fotos', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const rows = db.prepare('SELECT * FROM fotos_evidencia WHERE orden_id = ? ORDER BY id ASC').all(ordenId);
+      const rows = orm
+        .select()
+        .from(schema.fotosEvidencia)
+        .where(eq(schema.fotosEvidencia.ordenId, ordenId))
+        .orderBy(asc(schema.fotosEvidencia.id))
+        .all();
       res.json({
         success: true,
         data: rows.map(f => ({
           id: f.id,
-          ordenId: f.orden_id,
+          ordenId: f.ordenId,
           etapa: f.etapa,
-          rutaOBytesBase64: f.ruta_o_bytes_base64,
-          notaTecnica: f.nota_tecnica,
-          fechaCaptura: f.fecha_captura,
+          rutaOBytesBase64: f.rutaOBytesBase64,
+          notaTecnica: f.notaTecnica,
+          fechaCaptura: f.fechaCaptura,
         })),
       });
     } catch (err) {
@@ -264,11 +289,18 @@ module.exports = app => {
       const ordenId = parseInt(req.params.id, 10);
       const f = req.body;
       const storedPath = saveUploadFile(ordenId, f.rutaOBytesBase64);
-      const info = db.prepare(`
-        INSERT INTO fotos_evidencia (orden_id, etapa, ruta_o_bytes_base64, nota_tecnica, fecha_captura)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(ordenId, f.etapa, storedPath, f.notaTecnica || null, f.fechaCaptura || new Date().toISOString());
-      res.json({ success: true, id: info.lastInsertRowid, ruta: storedPath });
+      const inserted = orm
+        .insert(schema.fotosEvidencia)
+        .values({
+          ordenId,
+          etapa: f.etapa,
+          rutaOBytesBase64: storedPath,
+          notaTecnica: f.notaTecnica || null,
+          fechaCaptura: f.fechaCaptura || new Date().toISOString(),
+        })
+        .returning({ id: schema.fotosEvidencia.id })
+        .get();
+      res.json({ success: true, id: inserted.id, ruta: storedPath });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
     }
@@ -277,14 +309,20 @@ module.exports = app => {
   app.delete('/api/fotos/:id', (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
-      const row = db.prepare('SELECT ruta_o_bytes_base64 FROM fotos_evidencia WHERE id = ?').get(id);
-      if (row && row.ruta_o_bytes_base64 && typeof row.ruta_o_bytes_base64 === 'string' && row.ruta_o_bytes_base64.startsWith('/uploads/')) {
-        const filePath = path.join(uploadsDir, path.basename(row.ruta_o_bytes_base64));
+      const row = orm
+        .select({ rutaOBytesBase64: schema.fotosEvidencia.rutaOBytesBase64 })
+        .from(schema.fotosEvidencia)
+        .where(eq(schema.fotosEvidencia.id, id))
+        .get();
+      if (row && row.rutaOBytesBase64 && typeof row.rutaOBytesBase64 === 'string' && row.rutaOBytesBase64.startsWith('/uploads/')) {
+        const filePath = path.join(uploadsDir, path.basename(row.rutaOBytesBase64));
         if (fs.existsSync(filePath)) {
-          try { fs.unlinkSync(filePath); } catch (_) {}
+          try {
+            fs.unlinkSync(filePath);
+          } catch (_) {}
         }
       }
-      db.prepare('DELETE FROM fotos_evidencia WHERE id = ?').run(id);
+      orm.delete(schema.fotosEvidencia).where(eq(schema.fotosEvidencia.id, id)).run();
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
@@ -295,22 +333,26 @@ module.exports = app => {
   app.get('/api/ordenes/:id/acta', (req, res) => {
     try {
       const ordenId = parseInt(req.params.id, 10);
-      const row = db.prepare('SELECT * FROM formato_acta_entrega WHERE orden_id = ?').get(ordenId);
+      const row = orm
+        .select()
+        .from(schema.formatoActaEntrega)
+        .where(eq(schema.formatoActaEntrega.ordenId, ordenId))
+        .get();
       if (!row) return res.json({ success: true, data: null });
       res.json({
         success: true,
         data: {
           id: row.id,
-          ordenId: row.orden_id,
-          estadoOperatividad: row.estado_operatividad,
+          ordenId: row.ordenId,
+          estadoOperatividad: row.estadoOperatividad,
           observaciones: row.observaciones,
-          recomendacionesCuidado: row.recomendaciones_cuidado,
-          garantiaDias: row.garantia_dias,
-          personaRecibeNombre: row.persona_recibe_nombre,
-          personaRecibeDocumento: row.persona_recibe_documento,
-          checkConformidad: toBool(row.check_conformidad),
-          firmaDigitalBase64: row.firma_digital_base64,
-          fechaEntrega: row.fecha_entrega,
+          recomendacionesCuidado: row.recomendacionesCuidado,
+          garantiaDias: row.garantiaDias,
+          personaRecibeNombre: row.personaRecibeNombre,
+          personaRecibeDocumento: row.personaRecibeDocumento,
+          checkConformidad: toBool(row.checkConformidad),
+          firmaDigitalBase64: row.firmaDigitalBase64,
+          fechaEntrega: row.fechaEntrega,
         },
       });
     } catch (err) {
@@ -322,37 +364,56 @@ module.exports = app => {
     try {
       const ordenId = parseInt(req.params.id, 10);
       const a = req.body;
-      const existing = db.prepare('SELECT id FROM formato_acta_entrega WHERE orden_id = ?').get(ordenId);
+      const existing = orm
+        .select({ id: schema.formatoActaEntrega.id })
+        .from(schema.formatoActaEntrega)
+        .where(eq(schema.formatoActaEntrega.ordenId, ordenId))
+        .get();
+
+      const values = {
+        estadoOperatividad: a.estadoOperatividad || 'OPERATIVO',
+        observaciones: a.observaciones || null,
+        recomendacionesCuidado: a.recomendacionesCuidado || null,
+        garantiaDias: a.garantiaDias || 30,
+        personaRecibeNombre: a.personaRecibeNombre,
+        personaRecibeDocumento: a.personaRecibeDocumento,
+        checkConformidad: Boolean(a.checkConformidad),
+        firmaDigitalBase64: a.firmaDigitalBase64 || null,
+      };
 
       if (existing) {
-        db.prepare(`
-          UPDATE formato_acta_entrega SET
-            estado_operatividad = ?, observaciones = ?, recomendaciones_cuidado = ?,
-            garantia_dias = ?, persona_recibe_nombre = ?, persona_recibe_documento = ?,
-            check_conformidad = ?, firma_digital_base64 = ?
-          WHERE id = ?
-        `).run(
-          a.estadoOperatividad || 'OPERATIVO', a.observaciones || null, a.recomendacionesCuidado || null,
-          a.garantiaDias || 30, a.personaRecibeNombre, a.personaRecibeDocumento,
-          toInt(a.checkConformidad), a.firmaDigitalBase64 || null, existing.id
-        );
+        orm
+          .update(schema.formatoActaEntrega)
+          .set(values)
+          .where(eq(schema.formatoActaEntrega.id, existing.id))
+          .run();
       } else {
-        db.prepare(`
-          INSERT INTO formato_acta_entrega (
-            orden_id, estado_operatividad, observaciones, recomendaciones_cuidado,
-            garantia_dias, persona_recibe_nombre, persona_recibe_documento,
-            check_conformidad, firma_digital_base64
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          ordenId, a.estadoOperatividad || 'OPERATIVO', a.observaciones || null, a.recomendacionesCuidado || null,
-          a.garantiaDias || 30, a.personaRecibeNombre, a.personaRecibeDocumento,
-          toInt(a.checkConformidad), a.firmaDigitalBase64 || null
-        );
+        orm
+          .insert(schema.formatoActaEntrega)
+          .values({ ordenId, ...values })
+          .run();
       }
 
-      // Cerrar automáticamente la orden
-      db.prepare("UPDATE ordenes SET estado = 'ENTREGADO_CERRADO', fecha_cierre = datetime('now') WHERE id = ?").run(ordenId);
-      db.prepare('UPDATE equipos SET estado_equipo = ? WHERE id = (SELECT equipo_id FROM ordenes WHERE id = ?)').run(a.estadoOperatividad === 'SIN_SOLUCION' ? 'DE_BAJA' : 'OPERATIVO', ordenId);
+      // Cerrar automáticamente la orden y actualizar estado del equipo
+      const ordenRow = orm
+        .select({ equipoId: schema.ordenes.equipoId })
+        .from(schema.ordenes)
+        .where(eq(schema.ordenes.id, ordenId))
+        .get();
+
+      orm
+        .update(schema.ordenes)
+        .set({ estado: 'ENTREGADO_CERRADO', fechaCierre: new Date().toISOString() })
+        .where(eq(schema.ordenes.id, ordenId))
+        .run();
+
+      if (ordenRow?.equipoId) {
+        orm
+          .update(schema.equipos)
+          .set({ estadoEquipo: a.estadoOperatividad === 'SIN_SOLUCION' ? 'DE_BAJA' : 'OPERATIVO' })
+          .where(eq(schema.equipos.id, ordenRow.equipoId))
+          .run();
+      }
 
       res.json({ success: true, message: 'Acta guardada y orden cerrada con éxito' });
     } catch (err) {

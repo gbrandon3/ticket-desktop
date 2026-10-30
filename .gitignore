@@ -86,6 +86,7 @@ node_modules/
 # Backups and local secrets
 /backups/
 *.key
+/data/recovery.key
 .env
 
 # Generated validation artifacts

@@ -1,4 +1,6 @@
 const db = require('./db');
+const { eq } = require('drizzle-orm');
+const { orm, schema } = require('./orm');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS auditoria_cambios (
@@ -14,9 +16,20 @@ db.exec(`
 
 function recordChange(req) {
   if (!req.user || req.path.startsWith('/api/auth/') || req.path === '/api/auditoria') return;
-  const actor = db.prepare('SELECT nombre FROM usuarios WHERE id = ?').get(req.user.id);
-  db.prepare(`INSERT INTO auditoria_cambios (usuario_id, usuario_nombre, metodo, ruta)
-    VALUES (?, ?, ?, ?)`).run(actor ? req.user.id : null, actor?.nombre || 'Usuario eliminado', req.method, req.originalUrl.split('?')[0]);
+  const actor = orm
+    .select({ nombre: schema.usuarios.nombre })
+    .from(schema.usuarios)
+    .where(eq(schema.usuarios.id, req.user.id))
+    .get();
+  orm
+    .insert(schema.auditoriaCambios)
+    .values({
+      usuarioId: actor ? req.user.id : null,
+      usuarioNombre: actor?.nombre || 'Usuario eliminado',
+      metodo: req.method,
+      ruta: req.originalUrl.split('?')[0],
+    })
+    .run();
 }
 
 module.exports = { recordChange };

@@ -38,13 +38,20 @@ test('API: configuración, sesiones, permisos, persistencia y cierre', async () 
   assert.equal(login.body.usuario.password, undefined);
   adminToken = login.body.token;
   assert.equal((await request('/auth/login', 'POST', { email: account.email, password: 'wrong-password' })).status, 401);
+  assert.equal((await request('/auth/recover-password', 'POST', {
+    email: 'technician@test.com', recoveryCode: 'incorrecta', newPassword: 'new-password-123',
+  })).status, 401);
+  assert.equal((await request('/auth/recover-password', 'POST', {
+    email: 'technician@test.com', recoveryCode: 'TEST1-TEST2-TEST3-TEST4', newPassword: 'new-password-123',
+  })).status, 200);
+  assert.equal((await request('/auth/login', 'POST', { email: 'technician@test.com', password: account.password })).status, 401);
   await request('/config', 'POST', { smtpUser: 'mail@test.com', smtpPass: 'smtp-secret' }, adminToken);
   assert.ok(db.prepare('SELECT smtp_pass FROM configuracion_empresa').get().smtp_pass.startsWith('enc:'));
   assert.equal((await request('/config', 'GET', null, adminToken)).body.data.smtpPass, '********');
   assert.notEqual((await request('/config')).body.data.smtpUser, 'mail@test.com');
   await request('/config', 'POST', { smtpPass: '********' }, adminToken);
   assert.equal(require('../secrets').decrypt(db.prepare('SELECT smtp_pass FROM configuracion_empresa').get().smtp_pass), 'smtp-secret');
-  technicianToken = (await request('/auth/login', 'POST', { email: 'technician@test.com', password: account.password })).body.token;
+  technicianToken = (await request('/auth/login', 'POST', { email: 'technician@test.com', password: 'new-password-123' })).body.token;
   assert.equal((await request('/config', 'POST', {}, technicianToken)).status, 403);
   assert.equal((await request('/usuarios', 'POST', { ...account, email: 'new@test.com', rol: 'admin' }, technicianToken)).status, 403);
   assert.equal((await request('/usuarios/2', 'PUT', { ...account, email: 'technician@test.com', rol: 'admin', currentPassword: 'incorrect' }, technicianToken)).status, 403);

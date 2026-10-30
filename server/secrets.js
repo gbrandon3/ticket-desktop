@@ -1,6 +1,8 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { eq } = require('drizzle-orm');
+const { orm, schema } = require('./orm');
 
 let key;
 function getKey() {
@@ -33,10 +35,18 @@ function decrypt(value) {
   return Buffer.concat([cipher.update(Buffer.from(data, 'hex')), cipher.final()]).toString('utf8');
 }
 
-function migrateSecrets(db) {
-  for (const row of db.prepare('SELECT id, smtp_pass FROM configuracion_empresa').all()) {
-    if (row.smtp_pass && !row.smtp_pass.startsWith('enc:')) {
-      db.prepare('UPDATE configuracion_empresa SET smtp_pass = ? WHERE id = ?').run(encrypt(row.smtp_pass), row.id);
+function migrateSecrets() {
+  const rows = orm
+    .select({ id: schema.configuracionEmpresa.id, smtpPass: schema.configuracionEmpresa.smtpPass })
+    .from(schema.configuracionEmpresa)
+    .all();
+  for (const row of rows) {
+    if (row.smtpPass && !row.smtpPass.startsWith('enc:')) {
+      orm
+        .update(schema.configuracionEmpresa)
+        .set({ smtpPass: encrypt(row.smtpPass) })
+        .where(eq(schema.configuracionEmpresa.id, row.id))
+        .run();
     }
   }
 }

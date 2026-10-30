@@ -36,6 +36,11 @@ class OrdenesRepositoryImpl implements IOrdenesRepository {
   }
 
   @override
+  Future<void> recoverPassword(String email, String recoveryCode, String newPassword) {
+    throw UnsupportedError('La recuperación se realiza mediante el servidor central');
+  }
+
+  @override
   Future<List<Usuario>> getUsuarios({String? rol}) async {
     final query = db.select(db.usuariosTable);
     if (rol != null && rol.isNotEmpty && rol != 'TODOS') {

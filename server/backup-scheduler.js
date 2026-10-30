@@ -15,6 +15,7 @@ function runBackup() {
 }
 
 function startBackupSchedule() {
+  if (process.env.VERCEL || process.env.DATABASE_URL) return () => {};
   const hours = Number(process.env.BACKUP_INTERVAL_HOURS ?? 24);
   if (!Number.isFinite(hours) || hours < 0 || hours > 500) throw new Error('BACKUP_INTERVAL_HOURS debe estar entre 0 y 500');
   status.enabled = hours > 0;

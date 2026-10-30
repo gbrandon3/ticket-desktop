@@ -1,17 +1,37 @@
-const db = require('../db');
-function cumplimientoSla() {
-  return db.prepare(`SELECT COALESCE(
-    100.0 * SUM(CASE WHEN julianday(fecha_cierre) <= julianday(fecha_limite_sla) THEN 1 ELSE 0 END) / COUNT(*), 100.0) AS porcentaje
-    FROM ordenes WHERE estado = 'ENTREGADO_CERRADO' AND fecha_cierre IS NOT NULL AND fecha_limite_sla IS NOT NULL`).get().porcentaje;
+const { eq } = require('drizzle-orm');
+const { orm, schema } = require('../orm');
+
+function parseDateMs(value) {
+  if (!value) return null;
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T') + 'Z';
+  const ms = Date.parse(normalized);
+  return Number.isNaN(ms) ? null : ms;
+}
+
+function cumplimientoSla(ordenesRows) {
+  const closedWithSla = ordenesRows.filter(
+    o =>
+      o.estado === 'ENTREGADO_CERRADO' &&
+      parseDateMs(o.fechaCierre) !== null &&
+      parseDateMs(o.fechaLimiteSla) !== null
+  );
+  if (closedWithSla.length === 0) return 100.0;
+  const onTime = closedWithSla.filter(
+    o => parseDateMs(o.fechaCierre) <= parseDateMs(o.fechaLimiteSla)
+  ).length;
+  return (100.0 * onTime) / closedWithSla.length;
 }
 
 module.exports = app => {
   app.get('/api/metrics/dashboard', (req, res) => {
     try {
-      const total = db.prepare('SELECT COUNT(*) as c FROM ordenes').get().c;
-      const enTaller = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE estado IN ('RECIBIDO', 'EN_DIAGNOSTICO', 'EN_TALLER')").get().c;
-      const listos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE estado = 'LISTO_ENTREGA'").get().c;
-      const cerrados = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE estado = 'ENTREGADO_CERRADO'").get().c;
+      const allOrders = orm.select().from(schema.ordenes).all();
+      const total = allOrders.length;
+      const enTaller = allOrders.filter(o =>
+        ['RECIBIDO', 'EN_DIAGNOSTICO', 'EN_TALLER'].includes(o.estado)
+      ).length;
+      const listos = allOrders.filter(o => o.estado === 'LISTO_ENTREGA').length;
+      const cerrados = allOrders.filter(o => o.estado === 'ENTREGADO_CERRADO').length;
 
       res.json({
         success: true,
@@ -20,7 +40,7 @@ module.exports = app => {
           ticketsEnTaller: enTaller,
           ticketsListos: listos,
           ticketsEntregados: cerrados,
-          cumplimientoSlaPorcentaje: cumplimientoSla(),
+          cumplimientoSlaPorcentaje: cumplimientoSla(allOrders),
         },
       });
     } catch (err) {
@@ -30,26 +50,61 @@ module.exports = app => {
 
   app.get('/api/metrics/admin', (req, res) => {
     try {
-      const total = db.prepare('SELECT COUNT(*) as c FROM ordenes').get().c;
-      const sinAsignar = db.prepare('SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id IS NULL AND estado != \'ENTREGADO_CERRADO\'').get().c;
-      const preventivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'PREVENTIVO'").get().c;
-      const correctivos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tipo_servicio = 'CORRECTIVO'").get().c;
-      const vencidos = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE fecha_limite_sla IS NOT NULL AND julianday(fecha_limite_sla) < julianday('now') AND estado NOT IN ('ENTREGADO_CERRADO', 'LISTO_ENTREGA')").get().c;
+      const allOrders = orm.select().from(schema.ordenes).all();
+      const nowMs = Date.now();
 
-      const tecnicos = db.prepare("SELECT id, nombre FROM usuarios WHERE rol = 'tecnico'").all();
+      const total = allOrders.length;
+      const sinAsignar = allOrders.filter(
+        o => o.tecnicoId === null && o.estado !== 'ENTREGADO_CERRADO'
+      ).length;
+      const preventivos = allOrders.filter(o => o.tipoServicio === 'PREVENTIVO').length;
+      const correctivos = allOrders.filter(o => o.tipoServicio === 'CORRECTIVO').length;
+      const vencidos = allOrders.filter(o => {
+        const slaMs = parseDateMs(o.fechaLimiteSla);
+        return (
+          slaMs !== null &&
+          slaMs < nowMs &&
+          !['ENTREGADO_CERRADO', 'LISTO_ENTREGA'].includes(o.estado)
+        );
+      }).length;
+
+      const tecnicos = orm
+        .select({ id: schema.usuarios.id, nombre: schema.usuarios.nombre })
+        .from(schema.usuarios)
+        .where(eq(schema.usuarios.rol, 'tecnico'))
+        .all();
+
       const cargaTecnicos = tecnicos.map(t => {
-        const activas = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id = ? AND estado != 'ENTREGADO_CERRADO'").get(t.id).c;
-        const cerradas = db.prepare("SELECT COUNT(*) as c FROM ordenes WHERE tecnico_id = ? AND estado = 'ENTREGADO_CERRADO'").get(t.id).c;
+        const activas = allOrders.filter(
+          o => o.tecnicoId === t.id && o.estado !== 'ENTREGADO_CERRADO'
+        ).length;
+        const cerradas = allOrders.filter(
+          o => o.tecnicoId === t.id && o.estado === 'ENTREGADO_CERRADO'
+        ).length;
         return {
           id: t.id,
           tecnicoId: t.id,
           nombre: t.nombre,
-          activas: activas,
+          activas,
           ordenesActivas: activas,
           terminadas: cerradas,
           ordenesCerradas: cerradas,
         };
       });
+
+      const validClosedDurations = allOrders
+        .filter(o => {
+          if (o.estado !== 'ENTREGADO_CERRADO') return false;
+          const start = parseDateMs(o.fechaIngreso);
+          const end = parseDateMs(o.fechaCierre);
+          return start !== null && end !== null && end >= start;
+        })
+        .map(o => (parseDateMs(o.fechaCierre) - parseDateMs(o.fechaIngreso)) / 3600000);
+
+      const tiempoPromedioHoras =
+        validClosedDurations.length > 0
+          ? validClosedDurations.reduce((a, b) => a + b, 0) / validClosedDurations.length
+          : 0.0;
 
       res.json({
         success: true,
@@ -59,10 +114,8 @@ module.exports = app => {
           sinAsignar,
           preventivos,
           correctivos,
-          cumplimientoSlaPorcentaje: cumplimientoSla(),
-          tiempoPromedioHoras: db.prepare(`SELECT COALESCE(AVG((julianday(fecha_cierre) - julianday(fecha_ingreso)) * 24), 0.0) AS horas
-            FROM ordenes WHERE estado = 'ENTREGADO_CERRADO' AND fecha_cierre IS NOT NULL
-            AND julianday(fecha_cierre) >= julianday(fecha_ingreso)`).get().horas,
+          cumplimientoSlaPorcentaje: cumplimientoSla(allOrders),
+          tiempoPromedioHoras,
           cargaTecnicos,
         },
       });

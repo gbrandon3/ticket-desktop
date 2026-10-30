@@ -82,6 +82,122 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _mostrarRecuperacion() async {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    final codeCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    var processing = false;
+    var obscure = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Restablecer contraseña'),
+            content: SizedBox(
+              width: 440,
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Esta opción funciona sin correo SMTP. En el equipo donde corre el servidor, obtenga la clave con:',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
+                        child: const SelectableText('npm run recovery-code', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Correo de la cuenta', prefixIcon: Icon(Icons.email_outlined)),
+                        validator: (value) => value == null || !value.contains('@') ? 'Ingrese un correo válido' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: codeCtrl,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: const InputDecoration(labelText: 'Clave de recuperación', prefixIcon: Icon(Icons.key_outlined)),
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Ingrese la clave del servidor' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: passCtrl,
+                        obscureText: obscure,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña nueva',
+                          prefixIcon: const Icon(Icons.lock_reset),
+                          suffixIcon: IconButton(
+                            onPressed: () => setDialogState(() => obscure = !obscure),
+                            icon: Icon(obscure ? Icons.visibility : Icons.visibility_off),
+                          ),
+                        ),
+                        validator: (value) => (value?.length ?? 0) < 8 ? 'Use al menos 8 caracteres' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: confirmCtrl,
+                        obscureText: obscure,
+                        decoration: const InputDecoration(labelText: 'Confirmar contraseña nueva', prefixIcon: Icon(Icons.lock_outline)),
+                        validator: (value) => value != passCtrl.text ? 'Las contraseñas no coinciden' : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: processing ? null : () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: processing ? null : () async {
+                  if (formKey.currentState?.validate() != true) return;
+                  setDialogState(() => processing = true);
+                  try {
+                    await ref.read(ordenesRepositoryProvider).recoverPassword(emailCtrl.text, codeCtrl.text, passCtrl.text);
+                    if (!dialogContext.mounted) return;
+                    Navigator.pop(dialogContext);
+                    _emailCtrl.text = emailCtrl.text.trim();
+                    _passCtrl.clear();
+                    ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+                      content: Text('Contraseña restablecida. Inicie sesión con la contraseña nueva.'),
+                      backgroundColor: Color(0xFF16A34A),
+                    ));
+                  } catch (error) {
+                    if (!dialogContext.mounted) return;
+                    setDialogState(() => processing = false);
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
+                      content: Text(error.toString().replaceFirst('Exception: ', '')),
+                      backgroundColor: const Color(0xFFDC2626),
+                    ));
+                  }
+                },
+                child: processing
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Restablecer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      emailCtrl.dispose();
+      codeCtrl.dispose();
+      passCtrl.dispose();
+      confirmCtrl.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final empresaAsync = ref.watch(empresaConfigStreamProvider);
@@ -203,7 +319,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           onFieldSubmitted: (_) => _iniciarSesion(),
                         ),
-                        const SizedBox(height: 20),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _cargando ? null : _mostrarRecuperacion,
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
 
                         ElevatedButton(
                           onPressed: _cargando ? null : _iniciarSesion,
