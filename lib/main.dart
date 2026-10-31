@@ -1,9 +1,22 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/santi_constants.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/ordenes/presentation/providers/auth_provider.dart';
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +57,7 @@ class _SantiIncAppState extends ConsumerState<SantiIncApp> {
         return MaterialApp.router(
           title: SantiConstants.appName,
           debugShowCheckedModeBanner: false,
+          scrollBehavior: const AppScrollBehavior(),
           theme: AppTheme.buildTheme(
             primary: themeState.primaryColor,
             header: themeState.headerColor,
@@ -54,6 +68,7 @@ class _SantiIncAppState extends ConsumerState<SantiIncApp> {
       loading: () => MaterialApp(
         title: SantiConstants.appName,
         debugShowCheckedModeBanner: false,
+        scrollBehavior: const AppScrollBehavior(),
         theme: AppTheme.buildTheme(
           primary: themeState.primaryColor,
           header: themeState.headerColor,
@@ -67,6 +82,7 @@ class _SantiIncAppState extends ConsumerState<SantiIncApp> {
       error: (err, stack) => MaterialApp(
         title: SantiConstants.appName,
         debugShowCheckedModeBanner: false,
+        scrollBehavior: const AppScrollBehavior(),
         theme: AppTheme.buildTheme(
           primary: themeState.primaryColor,
           header: themeState.headerColor,

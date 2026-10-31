@@ -25,12 +25,97 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _tableScrollController = ScrollController();
   bool _vistaTabla = true;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _tableScrollController.dispose();
     super.dispose();
+  }
+
+  void _confirmarEliminarOrden(BuildContext context, Orden orden) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            SizedBox(width: 10),
+            Text('¿Eliminar Orden?', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('¿Está seguro de que desea eliminar la orden ${orden.codigoOrden}?'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: Color(0xFF991B1B)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Esta acción eliminará permanentemente la orden de servicio y sus formatos asociados. El cliente y el equipo NO serán eliminados.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF991B1B), height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final repo = ref.read(ordenesRepositoryProvider);
+                await repo.deleteOrden(orden.id!);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Orden ${orden.codigoOrden} eliminada correctamente'),
+                      backgroundColor: SantiConstants.successGreen,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar orden: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Eliminar Orden'),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Orden> _filtrarParaTecnico(List<Orden> list, Usuario? user) {
@@ -372,11 +457,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             child: LayoutBuilder(
                               builder: (context, constraints) {
-                                return SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                                    child: DataTable(
+                                final isNarrow = constraints.maxWidth < 900;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (isNarrow)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(12),
+                                            topRight: Radius.circular(12),
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.swap_horiz, size: 16, color: SantiConstants.primaryBlue),
+                                            SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Desliza horizontalmente la tabla (arrastrando con ratón o dedo) para ver Estado, Técnico y Acciones →',
+                                                style: TextStyle(fontSize: 11, color: SantiConstants.primaryBlue, fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    Scrollbar(
+                                      controller: _tableScrollController,
+                                      thumbVisibility: true,
+                                      trackVisibility: true,
+                                      child: SingleChildScrollView(
+                                        controller: _tableScrollController,
+                                        scrollDirection: Axis.horizontal,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                          child: DataTable(
                                       columnSpacing: 28,
                                       horizontalMargin: 20,
                                 headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
@@ -515,6 +632,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 );
                                               },
                                             ),
+                                            if (currentUser?.rol == 'admin')
+                                              IconButton(
+                                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                tooltip: 'Eliminar Orden',
+                                                onPressed: () => _confirmarEliminarOrden(context, orden),
+                                              ),
                                           ],
                                         ),
                                       ),
@@ -523,11 +646,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 }).toList(),
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     );
-                  }
+                  },
+                ),
+              );
+            }
 
                         return ListView.builder(
                           shrinkWrap: true,
@@ -555,6 +681,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 );
                               },
+                              onEliminar: currentUser?.rol == 'admin' ? () => _confirmarEliminarOrden(context, orden) : null,
                             );
                           },
                         );

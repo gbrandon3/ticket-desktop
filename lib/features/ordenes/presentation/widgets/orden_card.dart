@@ -8,12 +8,14 @@ class OrdenCard extends StatelessWidget {
   final Orden orden;
   final VoidCallback onGestionar;
   final VoidCallback onVerDocumento;
+  final VoidCallback? onEliminar;
 
   const OrdenCard({
     super.key,
     required this.orden,
     required this.onGestionar,
     required this.onVerDocumento,
+    this.onEliminar,
   });
 
   @override
@@ -217,27 +219,34 @@ class OrdenCard extends StatelessWidget {
 
             // Botonera de acciones
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                if (onEliminar != null) ...[
+                  IconButton(
+                    onPressed: onEliminar,
+                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                    tooltip: 'Eliminar Orden',
+                  ),
+                ],
+                const Spacer(),
                 OutlinedButton.icon(
                   onPressed: onVerDocumento,
                   icon: const Icon(Icons.picture_as_pdf, size: 18, color: Color(0xFFDC2626)),
-                  label: const Text('Documento Oficial'),
+                  label: const Text('Documento'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1E293B),
                     side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: onGestionar,
                   icon: const Icon(Icons.handyman, size: 18),
-                  label: const Text('Gestionar Taller'),
+                  label: const Text('Gestionar'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A8A),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   ),
                 ),
               ],

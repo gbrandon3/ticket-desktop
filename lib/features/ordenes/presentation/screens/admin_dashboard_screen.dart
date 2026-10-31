@@ -12,6 +12,7 @@ import '../providers/auth_provider.dart';
 import '../providers/catalogo_fallas_provider.dart';
 import '../providers/ordenes_providers.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/orden_card.dart';
 import 'configuracion_page_screen.dart';
 import 'detalle_taller_screen.dart';
 import 'documento_oficial_screen.dart';
@@ -31,6 +32,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   int? _filtroTecnicoId;
   final _searchCtrl = TextEditingController();
+  final ScrollController _tableScrollController = ScrollController();
+  bool _vistaTarjetas = false;
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _tableScrollController.dispose();
     super.dispose();
   }
 
@@ -64,6 +68,93 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final repo = ref.read(ordenesRepositoryProvider);
     await repo.asignarTecnico(ordenId, tecnicoId);
     _cargarDatos();
+  }
+
+  void _confirmarEliminarOrden(BuildContext context, Orden o) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            SizedBox(width: 10),
+            Text('¿Eliminar Orden?', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Está seguro de que desea eliminar la orden ${o.codigoOrden}?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: Color(0xFF991B1B)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Esta acción eliminará únicamente la orden de servicio y sus formatos asociados. El cliente y el equipo NO serán eliminados.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF991B1B), height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final repo = ref.read(ordenesRepositoryProvider);
+                await repo.deleteOrden(o.id!);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Orden ${o.codigoOrden} eliminada correctamente'),
+                      backgroundColor: SantiConstants.successGreen,
+                    ),
+                  );
+                  _cargarDatos();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar orden: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Eliminar Orden'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _exportarCsv(List<Orden> ordenes) async {
@@ -531,9 +622,35 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           ],
 
           // 4. Tabla Global de Supervisión / Mis Órdenes Asignadas
-          Text(
-            esTecnico ? 'Mis Órdenes Asignadas' : 'Supervisión Global de Órdenes',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: SantiConstants.primaryNavy),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                esTecnico ? 'Mis Órdenes Asignadas' : 'Supervisión Global de Órdenes',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: SantiConstants.primaryNavy),
+              ),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: false,
+                    icon: Icon(Icons.table_chart_outlined, size: 16),
+                    label: Text('Tabla', style: TextStyle(fontSize: 12)),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    icon: Icon(Icons.view_agenda_outlined, size: 16),
+                    label: Text('Tarjetas', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+                selected: {_vistaTarjetas},
+                onSelectionChanged: (val) => setState(() => _vistaTarjetas = val.first),
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 8)),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 
@@ -560,6 +677,31 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 );
               }
 
+              if (_vistaTarjetas) {
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: filtradas.length,
+                  itemBuilder: (context, index) {
+                    final o = filtradas[index];
+                    return OrdenCard(
+                      orden: o,
+                      onGestionar: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => DetalleTallerScreen(ordenId: o.id!)),
+                        );
+                      },
+                      onVerDocumento: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: o.id!)),
+                        );
+                      },
+                      onEliminar: currentUser?.rol == 'admin' ? () => _confirmarEliminarOrden(context, o) : null,
+                    );
+                  },
+                );
+              }
+
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -569,134 +711,176 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                        child: DataTable(
-                          columnSpacing: 24,
-                          horizontalMargin: 18,
-                          columns: const [
-                      DataColumn(label: Text('Código')),
-                      DataColumn(label: Text('Cliente')),
-                      DataColumn(label: Text('Equipo')),
-                      DataColumn(label: Text('Tipo')),
-                      DataColumn(label: Text('Estado')),
-                      DataColumn(label: Text('Prioridad')),
-                      DataColumn(label: Text('SLA')),
-                      DataColumn(label: Text('Técnico Asignado')),
-                      DataColumn(label: Text('Acciones')),
-                    ],
-                    rows: filtradas.map((o) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            InkWell(
-                              onTap: () {
-                                Clipboard.setData(ClipboardData(text: o.codigoOrden));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Código ${o.codigoOrden} copiado al portapapeles'),
-                                    duration: const Duration(seconds: 2),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(4),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SelectableText(
-                                      o.codigoOrden,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: SantiConstants.primaryBlue),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Tooltip(
-                                      message: 'Copiar código',
-                                      child: Icon(Icons.copy, size: 14, color: Color(0xFF64748B)),
-                                    ),
-                                  ],
-                                ),
+                    final isNarrow = constraints.maxWidth < 900;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (isNarrow)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
                               ),
                             ),
-                          ),
-                          DataCell(Text(o.cliente?.nombreCompleto ?? 'N/A')),
-                          DataCell(Text('${o.equipo?.tipoEquipo ?? ''} ${o.equipo?.marca ?? ''}')),
-                          DataCell(Text(o.tipoServicio, style: const TextStyle(fontSize: 12))),
-                          DataCell(StatusBadge(status: o.estado)),
-                          DataCell(PriorityBadge(priority: o.prioridad)),
-                          DataCell(
-                            o.estaVencidoSla
-                                ? const Row(
-                                    children: [
-                                      Icon(Icons.warning, color: Colors.red, size: 14),
-                                      SizedBox(width: 4),
-                                      Text('Vencido', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
-                                    ],
-                                  )
-                                : const Text('En Plazo', style: TextStyle(color: Colors.green, fontSize: 11)),
-                          ),
-                          DataCell(
-                            esTecnico
-                                ? Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
-                                    child: Text(
-                                      o.tecnico?.nombre ?? currentUser?.nombre ?? 'Asignado a mí',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                    ),
-                                  )
-                                : DropdownButton<int?>(
-                                    value: o.tecnicoId,
-                                    underline: const SizedBox.shrink(),
-                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                    hint: const Text('Sin asignar', style: TextStyle(fontSize: 12, color: Colors.orange)),
-                                    items: [
-                                      const DropdownMenuItem<int?>(value: null, child: Text('Sin Asignar')),
-                                      ..._tecnicos.map((t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.nombre))),
-                                    ],
-                                    onChanged: (newTId) {
-                                      if (newTId != null) {
-                                        _asignarTecnico(o.id!, newTId);
-                                      }
-                                    },
-                                  ),
-                          ),
-                          DataCell(
-                            Row(
+                            child: const Row(
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.handyman, size: 18, color: SantiConstants.primaryBlue),
-                                  tooltip: 'Gestionar Taller',
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (_) => DetalleTallerScreen(ordenId: o.id!)),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.picture_as_pdf, size: 18, color: Colors.red),
-                                  tooltip: 'Documento Oficial',
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: o.id!)),
-                                    );
-                                  },
+                                Icon(Icons.swap_horiz, size: 16, color: SantiConstants.primaryBlue),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Desliza horizontalmente la tabla (arrastrando con ratón o dedo) para ver Estado, SLA, Técnico y Acciones →',
+                                    style: TextStyle(fontSize: 11, color: SantiConstants.primaryBlue, fontWeight: FontWeight.w500),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                        Scrollbar(
+                          controller: _tableScrollController,
+                          thumbVisibility: true,
+                          trackVisibility: true,
+                          child: SingleChildScrollView(
+                            controller: _tableScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                              child: DataTable(
+                                columnSpacing: 24,
+                                horizontalMargin: 18,
+                                columns: const [
+                                  DataColumn(label: Text('Código')),
+                                  DataColumn(label: Text('Cliente')),
+                                  DataColumn(label: Text('Equipo')),
+                                  DataColumn(label: Text('Tipo')),
+                                  DataColumn(label: Text('Estado')),
+                                  DataColumn(label: Text('Prioridad')),
+                                  DataColumn(label: Text('SLA')),
+                                  DataColumn(label: Text('Técnico Asignado')),
+                                  DataColumn(label: Text('Acciones')),
+                                ],
+                                rows: filtradas.map((o) {
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(
+                                        InkWell(
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(text: o.codigoOrden));
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Código ${o.codigoOrden} copiado al portapapeles'),
+                                                duration: const Duration(seconds: 2),
+                                                behavior: SnackBarBehavior.floating,
+                                              ),
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                SelectableText(
+                                                  o.codigoOrden,
+                                                  style: const TextStyle(fontWeight: FontWeight.bold, color: SantiConstants.primaryBlue),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                const Tooltip(
+                                                  message: 'Copiar código',
+                                                  child: Icon(Icons.copy, size: 14, color: Color(0xFF64748B)),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      DataCell(Text(o.cliente?.nombreCompleto ?? 'N/A')),
+                                      DataCell(Text('${o.equipo?.tipoEquipo ?? ''} ${o.equipo?.marca ?? ''}')),
+                                      DataCell(Text(o.tipoServicio, style: const TextStyle(fontSize: 12))),
+                                      DataCell(StatusBadge(status: o.estado)),
+                                      DataCell(PriorityBadge(priority: o.prioridad)),
+                                      DataCell(
+                                        o.estaVencidoSla
+                                            ? const Row(
+                                                children: [
+                                                  Icon(Icons.warning, color: Colors.red, size: 14),
+                                                  SizedBox(width: 4),
+                                                  Text('Vencido', style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold)),
+                                                ],
+                                              )
+                                            : const Text('En Plazo', style: TextStyle(color: Colors.green, fontSize: 11)),
+                                      ),
+                                      DataCell(
+                                        esTecnico
+                                            ? Padding(
+                                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                                child: Text(
+                                                  o.tecnico?.nombre ?? currentUser?.nombre ?? 'Asignado a mí',
+                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                                ),
+                                              )
+                                            : DropdownButton<int?>(
+                                                value: o.tecnicoId,
+                                                underline: const SizedBox.shrink(),
+                                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                                hint: const Text('Sin asignar', style: TextStyle(fontSize: 12, color: Colors.orange)),
+                                                items: [
+                                                  const DropdownMenuItem<int?>(value: null, child: Text('Sin Asignar')),
+                                                  ..._tecnicos.map((t) => DropdownMenuItem<int?>(value: t.id, child: Text(t.nombre))),
+                                                ],
+                                                onChanged: (newTId) {
+                                                  if (newTId != null) {
+                                                    _asignarTecnico(o.id!, newTId);
+                                                  }
+                                                },
+                                              ),
+                                      ),
+                                      DataCell(
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.handyman, size: 18, color: SantiConstants.primaryBlue),
+                                              tooltip: 'Gestionar Taller',
+                                              onPressed: () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(builder: (_) => DetalleTallerScreen(ordenId: o.id!)),
+                                                );
+                                              },
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.picture_as_pdf, size: 18, color: Colors.red),
+                                              tooltip: 'Documento Oficial',
+                                              onPressed: () {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(builder: (_) => DocumentoOficialScreen(ordenId: o.id!)),
+                                                );
+                                              },
+                                            ),
+                                            if (currentUser?.rol == 'admin')
+                                              IconButton(
+                                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                tooltip: 'Eliminar Orden',
+                                                onPressed: () => _confirmarEliminarOrden(context, o),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               );
             },
-          ),
-        );
-      },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Text('Error: $err'),
           ),

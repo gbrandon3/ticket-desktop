@@ -57,7 +57,7 @@ function validationMiddleware(req, res, next) {
   if ((match || child) && !order) return fail(404, 'Orden o registro no encontrado');
   if (order && req.user?.rol === 'tecnico' && order.tecnicoId !== req.user.id) return fail(403, 'Orden asignada a otro técnico');
   if (order && write) {
-    if (order.estado === 'ENTREGADO_CERRADO') return fail(409, 'La orden entregada es de solo lectura');
+    if (req.method !== 'DELETE' && order.estado === 'ENTREGADO_CERRADO') return fail(409, 'La orden entregada es de solo lectura');
     if (match?.[2] === 'estado') {
       const current = states.indexOf(order.estado);
       if (body.nuevoEstado !== order.estado && states.indexOf(body.nuevoEstado) !== current + 1) return fail(409, 'Transición de estado no permitida');

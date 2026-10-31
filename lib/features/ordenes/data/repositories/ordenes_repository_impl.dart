@@ -367,6 +367,11 @@ class OrdenesRepositoryImpl implements IOrdenesRepository {
     );
   }
 
+  @override
+  Future<void> deleteOrden(int id) async {
+    await (db.delete(db.ordenesTable)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
   // ===================== CLIENTES Y CONSULTA PÚBLICA =====================
 
   @override

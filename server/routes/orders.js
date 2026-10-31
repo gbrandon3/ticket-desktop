@@ -268,4 +268,47 @@ module.exports = app => {
       res.status(500).json({ success: false, error: 'No se pudo completar la operación' });
     }
   });
+
+  app.delete('/api/ordenes/:id', async (req, res) => {
+    try {
+      if (req.user?.rol !== 'admin') {
+        return res.status(403).json({ success: false, error: 'Solo los administradores pueden eliminar órdenes de servicio' });
+      }
+      const ordenId = parseInt(req.params.id, 10);
+      const row = orm.select().from(schema.ordenes).where(eq(schema.ordenes.id, ordenId)).get();
+      if (!row) {
+        return res.status(404).json({ success: false, error: 'Orden no encontrada' });
+      }
+
+      // 1. Limpiar registros técnicos hijos asociados a la orden
+      // (NO se tocan clientes ni equipos)
+      const db = require('../db');
+      db.prepare('DELETE FROM fotos_evidencia WHERE orden_id = ?').run(ordenId);
+      db.prepare('DELETE FROM formato_acta_entrega WHERE orden_id = ?').run(ordenId);
+      db.prepare('DELETE FROM repuestos_orden WHERE orden_id = ?').run(ordenId);
+      db.prepare('DELETE FROM formato_actividades WHERE orden_id = ?').run(ordenId);
+      db.prepare('DELETE FROM formato_ot WHERE orden_id = ?').run(ordenId);
+
+      // 2. Eliminar la orden
+      db.prepare('DELETE FROM ordenes WHERE id = ?').run(ordenId);
+
+      // 3. Eliminación síncrona en Supabase si está conectado
+      const { isSyncEnabled, supabaseRequest } = require('../supabase-sync');
+      if (isSyncEnabled()) {
+        try {
+          await supabaseRequest('DELETE', `/rest/v1/fotos_evidencia?orden_id=eq.${ordenId}`).catch(() => {});
+          await supabaseRequest('DELETE', `/rest/v1/formato_acta_entrega?orden_id=eq.${ordenId}`).catch(() => {});
+          await supabaseRequest('DELETE', `/rest/v1/repuestos_orden?orden_id=eq.${ordenId}`).catch(() => {});
+          await supabaseRequest('DELETE', `/rest/v1/formato_actividades?orden_id=eq.${ordenId}`).catch(() => {});
+          await supabaseRequest('DELETE', `/rest/v1/formato_ot?orden_id=eq.${ordenId}`).catch(() => {});
+          await supabaseRequest('DELETE', `/rest/v1/ordenes?id=eq.${ordenId}`).catch(() => {});
+        } catch (_) {}
+      }
+
+      res.json({ success: true, message: 'Orden eliminada exitosamente' });
+    } catch (err) {
+      console.error('Error al eliminar orden:', err);
+      res.status(500).json({ success: false, error: 'No se pudo eliminar la orden' });
+    }
+  });
 };

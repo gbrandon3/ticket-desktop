@@ -285,4 +285,5 @@ module.exports = {
   pushToSupabase,
   supabaseSyncMiddleware,
   isSyncEnabled,
+  supabaseRequest,
 };

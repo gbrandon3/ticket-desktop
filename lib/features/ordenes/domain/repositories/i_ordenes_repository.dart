@@ -39,6 +39,7 @@ abstract class IOrdenesRepository {
   Future<List<Orden>> getOrdenes({String? busqueda, String? estado, String? tipo, int? tecnicoId, int? solicitanteId});
   Future<Orden?> getOrdenById(int id);
   Future<void> asignarTecnico(int ordenId, int tecnicoId);
+  Future<void> deleteOrden(int id);
 
   // Clientes y Consulta Pública
   Future<Cliente?> findClienteByDocumento(String documento);

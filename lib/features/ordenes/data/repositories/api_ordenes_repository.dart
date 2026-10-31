@@ -351,6 +351,20 @@ class ApiOrdenesRepository implements IOrdenesRepository {
     _notifyChange();
   }
 
+  @override
+  Future<void> deleteOrden(int id) async {
+    final res = await _client.delete(Uri.parse(_buildUrl('/api/ordenes/$id')));
+    if (res.statusCode < 200 || res.statusCode >= 300) {
+      String msg = 'Error al eliminar la orden';
+      try {
+        final d = jsonDecode(res.body);
+        if (d['error'] != null) msg = d['error'];
+      } catch (_) {}
+      throw Exception(msg);
+    }
+    _notifyChange();
+  }
+
   // ===================== CLIENTES Y CONSULTA PÚBLICA =====================
 
   @override
