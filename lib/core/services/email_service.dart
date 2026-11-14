@@ -42,7 +42,7 @@ class EmailService {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              if (ApiSession.token != null && endpoint.origin == ApiSession.origin)
+              if (ApiSession.token != null && ApiSession.token!.isNotEmpty)
                 'Authorization': 'Bearer ${ApiSession.token}',
             },
             body: jsonEncode({
