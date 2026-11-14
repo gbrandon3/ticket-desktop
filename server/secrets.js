@@ -9,7 +9,8 @@ function getKey() {
   if (key) return key;
   if (process.env.TICKETS_DB_PATH === ':memory:' && !process.env.VERCEL) return key = crypto.randomBytes(32);
   if (process.env.VERCEL) {
-    return key = crypto.createHash('sha256').update(process.env.SUPABASE_ANON_KEY || 'santi-inc-master-key-2026').digest();
+    const anonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5Z2F4cWRhZWVrY2VnYWxyZ3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzMjI5OTcsImV4cCI6MjEwODg5ODk5N30.AgOzTzf85T1HZ0ef7gyNxV4hy01evvL5-4_axJPXU90';
+    return key = crypto.createHash('sha256').update(anonKey).digest();
   }
   const location = process.env.TICKETS_SECRET_KEY_FILE || path.join(__dirname, '..', 'data', 'smtp.key');
   try {

@@ -43,6 +43,10 @@ function createEmailHandler(createTransport = nodemailer.createTransport) {
       // Si la contraseña no viene o viene como '********', cargarla y descifrarla desde la BD
       if (!pass || pass === '********') {
         try {
+          const { pullFromSupabase } = require('../server/supabase-sync');
+          await pullFromSupabase(false);
+        } catch (_) {}
+        try {
           const { orm, schema } = require('../server/orm');
           const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
           if (config?.smtpPass) {

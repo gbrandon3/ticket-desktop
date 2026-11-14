@@ -7,7 +7,7 @@ const revokedTokens = new Set();
 const revokedUsersBefore = new Map();
 const attempts = new Map();
 const SESSION_MS = 24 * 60 * 60 * 1000;
-const SESSION_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_ANON_KEY || 'santi-inc-session-hmac-secret-2026';
+const SESSION_SECRET = process.env.SESSION_SECRET || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5Z2F4cWRhZWVrY2VnYWxyZ3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzMjI5OTcsImV4cCI6MjEwODg5ODk5N30.AgOzTzf85T1HZ0ef7gyNxV4hy01evvL5-4_axJPXU90';
 
 function hashPassword(password) {
   if (typeof password !== 'string' || password.length < 8 || password.length > 256) {
