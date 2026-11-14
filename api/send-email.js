@@ -40,23 +40,36 @@ function createEmailHandler(createTransport = nodemailer.createTransport) {
       }
       let { host, port, user, pass, to, subject, message, trackingUrl } = body || {};
 
-      // Si la contraseña no viene o viene como '********', cargarla y descifrarla desde la BD
-      if (!pass || pass === '********') {
+      // Si la contraseña no viene o viene como '********', o falta el usuario, cargar desde Supabase / BD
+      if (!pass || pass === '********' || !user) {
         try {
-          const { pullFromSupabase } = require('../server/supabase-sync');
-          await pullFromSupabase(false);
-        } catch (_) {}
-        try {
-          const { orm, schema } = require('../server/orm');
-          const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
-          if (config?.smtpPass) {
-            pass = require('../server/secrets').decrypt(config.smtpPass);
+          const { supabaseRequest } = require('../server/supabase-sync');
+          const rows = await supabaseRequest('GET', '/rest/v1/configuracion_empresa?select=*&limit=1');
+          if (rows && rows[0]) {
+            const cfg = rows[0];
+            if (!user && (cfg.smtp_user || cfg.email)) user = cfg.smtp_user || cfg.email;
+            if (!host && cfg.smtp_host) host = cfg.smtp_host;
+            if (!port && cfg.smtp_port) port = cfg.smtp_port;
+            if ((!pass || pass === '********') && cfg.smtp_pass) {
+              pass = require('../server/secrets').decrypt(cfg.smtp_pass);
+            }
           }
-          if (!host && config?.smtpHost) host = config.smtpHost;
-          if (!port && config?.smtpPort) port = config.smtpPort;
-          if (!user && (config?.smtpUser || config?.email)) user = config.smtpUser || config.email;
-        } catch (e) {
-          console.warn('No se pudo cargar config de correo:', e.message);
+        } catch (_) {}
+
+        // Fallback a SQLite local si no se obtuvo de Supabase
+        if (!pass || pass === '********' || !user) {
+          try {
+            const { orm, schema } = require('../server/orm');
+            const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
+            if (config?.smtpPass && (!pass || pass === '********')) {
+              pass = require('../server/secrets').decrypt(config.smtpPass);
+            }
+            if (!host && config?.smtpHost) host = config.smtpHost;
+            if (!port && config?.smtpPort) port = config.smtpPort;
+            if (!user && (config?.smtpUser || config?.email)) user = config.smtpUser || config.email;
+          } catch (e) {
+            console.warn('No se pudo cargar config de correo:', e.message);
+          }
         }
       }
 
