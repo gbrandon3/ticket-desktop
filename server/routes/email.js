@@ -5,12 +5,13 @@ module.exports = app => {
   app.post('/api/send-email', async (req, res) => {
     try {
       const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
+      const dbPass = config?.smtpPass ? require('../secrets').decrypt(config.smtpPass) : null;
       req.body = {
         ...req.body,
-        host: config.smtpHost,
-        port: config.smtpPort,
-        user: config.smtpUser,
-        pass: require('../secrets').decrypt(config.smtpPass),
+        host: req.body?.host || config?.smtpHost || 'smtp.gmail.com',
+        port: req.body?.port || config?.smtpPort || 465,
+        user: req.body?.user || config?.smtpUser || config?.email,
+        pass: (req.body?.pass && req.body.pass !== '********') ? req.body.pass : dbPass,
       };
       await emailHandler(req, res);
     } catch (err) {
