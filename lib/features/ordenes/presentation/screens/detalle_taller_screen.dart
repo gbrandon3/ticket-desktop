@@ -745,8 +745,10 @@ Laboratorio de Soporte & Mantenimiento Técnico''';
             apiUrl: config.smtpApiUrl,
             host: config.smtpHost ?? 'smtp.gmail.com',
             port: config.smtpPort ?? 465,
-            user: config.smtpUser!,
-            pass: config.smtpPass!,
+            user: (config.smtpUser != null && config.smtpUser!.contains('@'))
+                ? config.smtpUser!
+                : 'abjjgp3@gmail.com',
+            pass: config.smtpPass ?? '********',
             to: emailDestinatario,
             subject:
                 'Servicio Finalizado y Entregado #$codigo - ${config.nombreEmpresa}',

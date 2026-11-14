@@ -12,8 +12,7 @@ module.exports = app => {
       if (user?.rol !== 'admin' && config) {
         delete config.smtpHost;
         delete config.smtpPort;
-        config.smtpUser = config.smtpUser ? 'configurado' : null;
-        // A boolean placeholder allows the UI to show whether mail is configured.
+        // La contraseña se oculta como '********', pero se conserva el usuario/correo saliente
         config.smtpPass = config.smtpPass ? '********' : null;
         delete config.smtpApiUrl;
       }

@@ -40,24 +40,27 @@ function createEmailHandler(createTransport = nodemailer.createTransport) {
       }
       let { host, port, user, pass, to, subject, message, trackingUrl } = body || {};
 
-      // Si la contraseña no viene o viene como '********', o falta el usuario, cargar desde Supabase / BD
-      if (!pass || pass === '********' || !user) {
+      // Si el usuario viene como 'configurado', vacío o sin '@', debe resolverse desde la base de datos
+      const isPlaceholderUser = !user || user === 'configurado' || !user.includes('@');
+      const isPlaceholderPass = !pass || pass === '********';
+
+      if (isPlaceholderPass || isPlaceholderUser) {
         try {
           const { supabaseRequest } = require('../server/supabase-sync');
           const rows = await supabaseRequest('GET', '/rest/v1/configuracion_empresa?select=*&limit=1');
           if (rows && rows[0]) {
             const cfg = rows[0];
-            if (!user && (cfg.smtp_user || cfg.email)) user = cfg.smtp_user || cfg.email;
+            if (isPlaceholderUser && (cfg.smtp_user || cfg.email)) user = cfg.smtp_user || cfg.email;
             if (!host && cfg.smtp_host) host = cfg.smtp_host;
             if (!port && cfg.smtp_port) port = cfg.smtp_port;
-            if ((!pass || pass === '********') && cfg.smtp_pass) {
+            if (isPlaceholderPass && cfg.smtp_pass) {
               pass = require('../server/secrets').decrypt(cfg.smtp_pass);
             }
           }
         } catch (_) {}
 
         // Fallback a SQLite local si no se obtuvo de Supabase
-        if (!pass || pass === '********' || !user) {
+        if ((!pass || pass === '********') || (!user || user === 'configurado' || !user.includes('@'))) {
           try {
             const { orm, schema } = require('../server/orm');
             const config = orm.select().from(schema.configuracionEmpresa).limit(1).get();
@@ -66,7 +69,9 @@ function createEmailHandler(createTransport = nodemailer.createTransport) {
             }
             if (!host && config?.smtpHost) host = config.smtpHost;
             if (!port && config?.smtpPort) port = config.smtpPort;
-            if (!user && (config?.smtpUser || config?.email)) user = config.smtpUser || config.email;
+            if ((!user || user === 'configurado' || !user.includes('@')) && (config?.smtpUser || config?.email)) {
+              user = config.smtpUser || config.email;
+            }
           } catch (e) {
             console.warn('No se pudo cargar config de correo:', e.message);
           }

@@ -137200,12 +137200,9 @@ g=a1.ba(0,$.cQ(),t.u)
 s=13
 return A.r(g.lg(),$async$ut)
 case 13:f=b8
-a1=!1
-if(f.Q!=null)if(f.as!=null){a3=f.Q
-a3.toString
-if(B.o.S(a3).length!==0){a1=f.as
-a1.toString
-a1=B.o.S(a1).length!==0}}s=a1?14:15
+if(!f.CW)a1=f.as!=null&&f.as.length!==0
+else a1=!0
+s=a1?14:15
 break
 case 14:e="https://ticket-desktop.vercel.app"
 if(f.ax!=null){a1=f.ax
@@ -137235,10 +137232,13 @@ b0=f.y
 a1=b0==null?"smtp.gmail.com":b0
 a3=f.z
 if(a3==null)a3=465
-a4=f.Q
+if(f.Q!=null){a4=f.Q
 a4.toString
+a4=B.o.n(a4,"@")}else a4=!1
+if(a4){a4=f.Q
+a4.toString}else a4="abjjgp3@gmail.com"
 a5=f.as
-a5.toString
+if(a5==null)a5="********"
 a6=m.f
 a6.toString
 a6=B.o.S(a6)
@@ -138354,10 +138354,13 @@ a6=f.y
 if(a6==null)a6="smtp.gmail.com"
 a7=f.z
 if(a7==null)a7=465
-a8=f.Q
+if(f.Q!=null){a8=f.Q
 a8.toString
+a8=B.o.n(a8,"@")}else a8=!1
+if(a8){a8=f.Q
+a8.toString}else a8="abjjgp3@gmail.com"
 a9=f.as
-a9.toString
+if(a9==null)a9="********"
 b1=i
 s=21
 return A.r(A.Jc(b5,a6,a3,a9,a7,"Servicio Finalizado y Entregado #"+A.j(a2)+" - "+f.b,b1,d,a8),$async$py)

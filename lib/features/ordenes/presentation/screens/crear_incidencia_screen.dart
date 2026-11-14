@@ -650,10 +650,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
           final repo = ref.read(ordenesRepositoryProvider);
           final config = await repo.getEmpresaConfig();
 
-          if (config.smtpUser != null &&
-              config.smtpPass != null &&
-              config.smtpUser!.trim().isNotEmpty &&
-              config.smtpPass!.trim().isNotEmpty) {
+          if (config.isSetupCompleted || (config.smtpPass != null && config.smtpPass!.isNotEmpty)) {
             String baseUrl = 'https://ticket-desktop.vercel.app';
             if (config.portalHostUrl != null &&
                 config.portalHostUrl!.trim().isNotEmpty) {
@@ -694,8 +691,10 @@ ${config.nombreEmpresa}
               apiUrl: config.smtpApiUrl,
               host: config.smtpHost ?? 'smtp.gmail.com',
               port: config.smtpPort ?? 465,
-              user: config.smtpUser!,
-              pass: config.smtpPass!,
+              user: (config.smtpUser != null && config.smtpUser!.contains('@'))
+                  ? config.smtpUser!
+                  : 'abjjgp3@gmail.com',
+              pass: config.smtpPass ?? '********',
               to: cliente.email!.trim(),
               subject: 'Incidencia Radicada #$codigo - ${config.nombreEmpresa}',
               message: msg,
