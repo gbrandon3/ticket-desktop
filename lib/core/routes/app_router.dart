@@ -34,51 +34,62 @@ class AppRouterNotifier extends ChangeNotifier {
   }
 }
 
+String _determineInitialLocation() {
+  if (kIsWeb) {
+    try {
+      final base = Uri.base.toString();
+      if (base.contains('consulta')) {
+        final frag = Uri.base.fragment;
+        if (frag.isNotEmpty) {
+          return frag.startsWith('/') ? frag : '/$frag';
+        }
+        final path = Uri.base.path;
+        final query = Uri.base.hasQuery ? '?${Uri.base.query}' : '';
+        if (path.contains('consulta')) {
+          return '$path$query';
+        }
+        return '/consulta';
+      }
+    } catch (_) {}
+  }
+  return '/';
+}
+
 final appRouterNotifierProvider = Provider<AppRouterNotifier>((ref) {
   return AppRouterNotifier(ref);
 });
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final notifier = ref.watch(appRouterNotifierProvider);
+  final notifier = ref.read(appRouterNotifierProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: _determineInitialLocation(),
     refreshListenable: notifier,
     redirect: (BuildContext context, GoRouterState state) {
       final loc = state.matchedLocation;
 
       // 1. Detección PRIORITARIA de consulta pública (NUNCA redirigir a /login ni a /conexion)
-      String consultaQuery = state.uri.queryParameters['q'] ?? '';
-      bool isConsulta = loc == '/consulta' ||
-          loc.startsWith('/consulta') ||
-          state.uri.path == '/consulta' ||
-          state.uri.path.startsWith('/consulta');
-
-      if (!isConsulta && kIsWeb) {
-        try {
-          final uri = Uri.base;
-          final frag = uri.fragment;
-          if (frag.startsWith('/consulta') || frag.startsWith('consulta') || uri.path.startsWith('/consulta')) {
-            isConsulta = true;
-            if (consultaQuery.isEmpty) {
-              if (frag.contains('?')) {
-                final fragUri = Uri.parse(frag.startsWith('/') ? frag : '/$frag');
-                consultaQuery = fragUri.queryParameters['q'] ?? '';
-              }
-              if (consultaQuery.isEmpty) {
-                consultaQuery = uri.queryParameters['q'] ?? '';
-              }
-            }
-          }
-        } catch (_) {}
-      }
+      final rawUri = state.uri.toString();
+      final baseUri = kIsWeb ? Uri.base.toString() : '';
+      final isConsulta = loc.contains('consulta') ||
+          rawUri.contains('consulta') ||
+          baseUri.contains('consulta');
 
       if (isConsulta) {
-        if (loc != '/consulta' && !loc.startsWith('/consulta')) {
-          return consultaQuery.isNotEmpty
-              ? '/consulta?q=${Uri.encodeComponent(consultaQuery)}'
-              : '/consulta';
+        if (!loc.startsWith('/consulta')) {
+          String q = state.uri.queryParameters['q'] ?? '';
+          if (q.isEmpty && kIsWeb) {
+            try {
+              final uri = Uri.base;
+              q = uri.queryParameters['q'] ?? '';
+              if (q.isEmpty && uri.fragment.contains('?')) {
+                final f = Uri.parse(uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}');
+                q = f.queryParameters['q'] ?? '';
+              }
+            } catch (_) {}
+          }
+          return q.isNotEmpty ? '/consulta?q=${Uri.encodeComponent(q)}' : '/consulta';
         }
         return null;
       }
@@ -87,7 +98,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isSetup = setupAsync.asData?.value ?? true;
       final user = ref.read(authProvider);
 
-      if (setupAsync.isLoading || setupAsync.hasError) {
+      // NUNCA secuestrar la navegación mientras se verifica el setup inicial en segundo plano
+      if (setupAsync.isLoading) {
+        return null;
+      }
+
+      if (setupAsync.hasError) {
         return loc == '/conexion' ? null : '/conexion';
       }
       if (loc == '/conexion') {
@@ -144,6 +160,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/',
+        redirect: (context, state) {
+          final user = ref.read(authProvider);
+          if (user == null) return '/login';
+          return (user.rol == 'solicitante' || user.rol == 'cliente')
+              ? '/solicitante'
+              : '/dashboard';
+        },
+      ),
       GoRoute(
         path: '/conexion',
         builder: (context, state) => Consumer(
