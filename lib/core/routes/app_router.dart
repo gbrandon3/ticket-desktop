@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,15 +46,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: notifier,
     redirect: (BuildContext context, GoRouterState state) {
+      final loc = state.matchedLocation;
+
+      // 1. Detección PRIORITARIA de consulta pública (NUNCA redirigir a /login ni a /conexion)
+      String consultaQuery = state.uri.queryParameters['q'] ?? '';
+      bool isConsulta = loc == '/consulta' ||
+          loc.startsWith('/consulta') ||
+          state.uri.path == '/consulta' ||
+          state.uri.path.startsWith('/consulta');
+
+      if (!isConsulta && kIsWeb) {
+        try {
+          final uri = Uri.base;
+          final frag = uri.fragment;
+          if (frag.startsWith('/consulta') || frag.startsWith('consulta') || uri.path.startsWith('/consulta')) {
+            isConsulta = true;
+            if (consultaQuery.isEmpty) {
+              if (frag.contains('?')) {
+                final fragUri = Uri.parse(frag.startsWith('/') ? frag : '/$frag');
+                consultaQuery = fragUri.queryParameters['q'] ?? '';
+              }
+              if (consultaQuery.isEmpty) {
+                consultaQuery = uri.queryParameters['q'] ?? '';
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (isConsulta) {
+        if (loc != '/consulta' && !loc.startsWith('/consulta')) {
+          return consultaQuery.isNotEmpty
+              ? '/consulta?q=${Uri.encodeComponent(consultaQuery)}'
+              : '/consulta';
+        }
+        return null;
+      }
+
       final setupAsync = ref.read(setupCompletedProvider);
       final isSetup = setupAsync.asData?.value ?? true;
       final user = ref.read(authProvider);
-      final loc = state.matchedLocation;
-
-      // 1. Ruta pública de consulta ciudadana / seguimiento de ticket (SIEMPRE accesible para clientes)
-      if (loc == '/consulta' || loc.startsWith('/consulta')) {
-        return null;
-      }
 
       if (setupAsync.isLoading || setupAsync.hasError) {
         return loc == '/conexion' ? null : '/conexion';

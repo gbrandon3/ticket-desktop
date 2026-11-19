@@ -38,7 +38,10 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
         final uri = Uri.base;
         q = uri.queryParameters['q'] ?? uri.queryParameters['codigo'];
         if ((q == null || q.isEmpty) && uri.fragment.contains('?')) {
-          final fragUri = Uri.parse(uri.fragment);
+          var frag = uri.fragment;
+          if (frag.startsWith('#')) frag = frag.substring(1);
+          if (!frag.startsWith('/')) frag = '/$frag';
+          final fragUri = Uri.parse(frag);
           q = fragUri.queryParameters['q'] ?? fragUri.queryParameters['codigo'];
         }
       } catch (_) {}
