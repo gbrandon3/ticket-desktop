@@ -167,6 +167,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
+        path: '/consulta/:codigo',
+        builder: (context, state) {
+          final codigo = state.pathParameters['codigo'];
+          final q = state.uri.queryParameters['q'] ?? codigo;
+          return ConsultaPublicaScreen(initialQuery: q);
+        },
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
         path: '/ordenes/:id',
         builder: (context, state) {
           final idStr = state.pathParameters['id'];

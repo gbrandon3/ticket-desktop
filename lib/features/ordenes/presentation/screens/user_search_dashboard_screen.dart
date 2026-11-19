@@ -52,7 +52,18 @@ class _UserSearchDashboardScreenState extends ConsumerState<UserSearchDashboardS
     setState(() => _buscando = true);
 
     final repo = ref.read(ordenesRepositoryProvider);
-    final cliente = await repo.findClienteByDocumento(doc);
+    var cliente = await repo.findClienteByDocumento(doc);
+    if (cliente == null) {
+      try {
+        final list = await repo.searchClientes(doc);
+        if (list.isNotEmpty) {
+          cliente = list.firstWhere(
+            (c) => c.numeroDocumento.trim() == doc,
+            orElse: () => list.first,
+          );
+        }
+      } catch (_) {}
+    }
 
     if (cliente != null && cliente.id != null) {
       final equipos = await repo.getEquiposByClienteId(cliente.id!);

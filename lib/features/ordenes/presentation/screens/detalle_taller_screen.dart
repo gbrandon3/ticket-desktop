@@ -694,7 +694,8 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen>
               Uri.base.host.isNotEmpty) {
             baseUrl = Uri.base.origin;
           }
-          final trackingUrl = '$baseUrl/#/consulta';
+          final codigo = _orden?.codigoOrden ?? widget.ordenId.toString();
+          final trackingUrl = '$baseUrl/#/consulta?q=${Uri.encodeComponent(codigo)}';
 
           final obsText = _obsEntregaController.text.trim().isNotEmpty
               ? '• Observaciones: ${_obsEntregaController.text.trim()}\n'
@@ -712,7 +713,6 @@ class _DetalleTallerScreenState extends ConsumerState<DetalleTallerScreen>
                   _orden!.equipo!.numeroSerie.isNotEmpty)
               ? _orden!.equipo!.numeroSerie
               : 'N/A';
-          final codigo = _orden?.codigoOrden ?? widget.ordenId.toString();
 
           final msg =
               '''Estimado(a) ${cliente.nombreCompleto},

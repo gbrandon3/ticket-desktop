@@ -32,11 +32,33 @@ class _ConsultaPublicaScreenState extends ConsumerState<ConsultaPublicaScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialQuery != null && widget.initialQuery!.trim().isNotEmpty) {
-      _searchCtrl.text = widget.initialQuery!.trim();
+    String? q = widget.initialQuery?.trim();
+    if (q == null || q.isEmpty) {
+      try {
+        final uri = Uri.base;
+        q = uri.queryParameters['q'] ?? uri.queryParameters['codigo'];
+        if ((q == null || q.isEmpty) && uri.fragment.contains('?')) {
+          final fragUri = Uri.parse(uri.fragment);
+          q = fragUri.queryParameters['q'] ?? fragUri.queryParameters['codigo'];
+        }
+      } catch (_) {}
+    }
+    if (q != null && q.isNotEmpty) {
+      _searchCtrl.text = q;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _ejecutarConsulta(widget.initialQuery!.trim());
+        _ejecutarConsulta(q);
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ConsultaPublicaScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialQuery != oldWidget.initialQuery &&
+        widget.initialQuery != null &&
+        widget.initialQuery!.trim().isNotEmpty) {
+      _searchCtrl.text = widget.initialQuery!.trim();
+      _ejecutarConsulta(widget.initialQuery!.trim());
     }
   }
 

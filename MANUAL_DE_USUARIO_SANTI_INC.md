@@ -1,321 +1,265 @@
-# 📖 MANUAL DE USUARIO — PLATAFORMA DE GESTIÓN DE TALLER SANTI INC
-## Documento Guía Oficial para la Operación del Sistema
+# MANUAL DE USUARIO DEL SISTEMA
+## Plataforma Integral de Gestión de Tickets, Taller y Soporte Técnico
 
-```
-  ╔════════════════════════════════════════════════════════════════════════════════════════╗
-  ║  SERVICIO NACIONAL DE APRENDIZAJE - SENA                                               ║
-  ║  Documento de Entrega: Manual de Usuario del Software                                  ║
-  ║  Proyecto: Sistema de Gestión de Órdenes y Soporte Técnico — Santi Inc                 ║
-  ║  Versión del Sistema: 1.0.0 (Producción)                                               ║
-  ║  Elaborado por (Aprendices): ________________________________________________________  ║
-  ║  Ficha: ____________________   Fecha: ______ / ______ / 202X                           ║
-  ╚════════════════════════════════════════════════════════════════════════════════════════╝
-```
+| Atributo del Documento | Detalle Oficial |
+| :--- | :--- |
+| **Sistema de Información** | Plataforma Integral de Gestión de Tickets, Taller y Mantenimiento de Equipos |
+| **Versión de Producción** | 1.0.0 Oficial (Windows Desktop x64 & Web SPA) |
+| **Arquitectura del Sistema** | Plataforma configurable multi-empresa (Servidor Node.js + SQLite Relacional) |
+| **Base de Datos y Motor** | SQLite Relacional con Respaldos Automáticos y Almacenamiento en Disco |
+| **Alcance del Manual** | Guía de operación para Administradores, Operadores de Mesa de Ayuda, Técnicos y Clientes |
 
 ---
 
-## 📑 TABLA DE CONTENIDO
-1. [Introducción y Alcance](#1-introducción-y-alcance)
-2. [Requisitos y Acceso a la Plataforma](#2-requisitos-y-acceso-a-la-plataforma)
-3. [Capítulo 1: Configuración Inicial de la Empresa (Setup Wizard)](#capítulo-1-configuración-inicial-de-la-empresa-setup-wizard)
-4. [Capítulo 2: Módulo de Seguridad y Gestión de Usuarios](#capítulo-2-módulo-de-seguridad-y-gestión-de-usuarios)
-5. [Capítulo 3: Catálogo de Tipos de Falla](#capítulo-3-catálogo-de-tipos-de-falla)
-6. [Capítulo 4: Gestión de Clientes](#capítulo-4-gestión-de-clientes)
-7. [Capítulo 5: Inventario y Ficha Técnica de Equipos](#capítulo-5-inventario-y-ficha-técnica-de-equipos)
-8. [Capítulo 6: Radicación de Incidencias y Órdenes de Servicio](#capítulo-6-radicación-de-incidencias-y-órdenes-de-servicio)
-9. [Capítulo 7: Mesa de Trabajo y Gestión Técnica de Taller](#capítulo-7-mesa-de-trabajo-y-gestión-técnica-de-taller)
-10. [Capítulo 8: Panel Administrativo y Métricas de Rendimiento](#capítulo-8-panel-administrativo-y-métricas-de-rendimiento)
-11. [Capítulo 9: Portal de Consulta Pública de Estados](#capítulo-9-portal-de-consulta-pública-de-estados)
-12. [Glosario de Términos](#glosario-de-términos)
+# 1. Introducción, Alcance y Perfiles de Usuario
+
+El presente **Manual de Usuario** describe de manera detallada el funcionamiento operativo de la **Plataforma de Gestión de Tickets, Taller y Soporte Técnico**. El software ha sido diseñado para estandarizar y controlar de principio a fin el flujo de trabajo en centros de soporte, departamentos de TI y laboratorios de mantenimiento de cómputo: desde el registro inicial de clientes y activos de hardware, pasando por el diagnóstico técnico, bitácora de procedimientos, pruebas de control de calidad pre-entrega (QA) y evidencias fotográficas, hasta la generación del Acta Oficial de Entrega en formato PDF y el envío de notificaciones automáticas por correo electrónico.
+
+## 1.1 Perfiles y Roles Operativos del Sistema
+
+El control de acceso de la plataforma aplica permisos diferenciados según el perfil asignado a cada cuenta de usuario:
+
+| Rol en el Sistema | Responsabilidades y Alcance Operativo | Módulos Habilitados |
+| :--- | :--- | :--- |
+| **Administrador (`ADMIN`)** | Supervisión global del laboratorio, gestión de identidad corporativa, alta y control de usuarios, parametrización del catálogo de fallas, configuración SMTP, copias de seguridad y auditoría de cambios. | Todos los módulos, Dashboard SLA, Configuración, Usuarios, Respaldos e Historial. |
+| **Operador / Mesa de Ayuda (`OPERADOR`)** | Atención en ventanilla, recepción de equipos, alta de clientes e inventario, radicación de incidencias correctivas o preventivas, asignación de técnicos y entrega formal al cliente. | Bandeja General, Nueva Incidencia, Clientes, Inventario, Taller y Consulta. |
+| **Técnico Especialista (`TECNICO`)** | Inspección diagnóstica en mesa de trabajo (OT), documentación de bitácora, aplicación de insumos y repuestos, ejecución de protocolo de pruebas de calidad (QA), carga de fotos y cierre técnico. | Bandeja de Órdenes Asignadas, Mesa de Taller (3 pestañas), Inventario. |
+| **Cliente Externo (`PÚBLICO`)** | Consulta en línea del estado de su orden de servicio mediante el código único asignado, sin requerir usuario ni contraseña. | Portal de Consulta Pública (`/consulta`). |
+
+## 1.2 Ciclo de Vida de una Orden de Servicio
+
+Toda orden radicada en el sistema transita por estados controlados que garantizan la trazabilidad técnica y administrativa:
+
+1. **`RECIBIDO`:** La orden ha sido radicada en recepción y el equipo ingresa formalmente al inventario del taller.
+2. **`EN DIAGNÓSTICO`:** El técnico especialista evalúa el equipo y diligencia la Orden de Trabajo (OT) preliminar junto con la inspección física y fotografías de recepción.
+3. **`EN TALLER`:** Se ejecutan las labores de reparación o mantenimiento preventivo, consumo de insumos/repuestos y pruebas de control de calidad (QA).
+4. **`LISTO PARA ENTREGA`:** El equipo ha superado las pruebas de diagnóstico pre-entrega y se encuentra disponible para ser retirado por el titular.
+5. **`ENTREGADO / CERRADO`:** Se emite el Acta Oficial de Entrega con garantía y conformidad del cliente, bloqueando la orden en modo solo lectura y actualizando el estado del equipo en inventario (`OPERATIVO` o `DE_BAJA`).
 
 ---
 
-## 1. INTRODUCCIÓN Y ALCANCE
-El presente **Manual de Usuario** tiene como finalidad orientar a los usuarios en la operación diaria de la plataforma de soporte y servicio técnico de **Santi Inc**. Describe de manera gráfica y detallada cada pantalla, botón, formulario y flujo operativo, garantizando una atención estandarizada desde la recepción del equipo hasta su entrega final.
+# 2. Módulo 1: Asistente de Configuración Inicial (Setup Wizard)
 
-### Roles del Sistema:
-* **Administrador (`admin`):** Control total de la empresa, usuarios, catálogos, métricas de SLA y auditoría.
-* **Operador (`operador`):** Recepción de clientes, registro de equipos en inventario, radicación de incidencias y entrega formal.
-* **Técnico (`tecnico`):** Diagnóstico en banco de trabajo, registro de bitácoras, aplicación de repuestos y cierre técnico.
+Cuando la plataforma se ejecuta por primera vez sobre una base de datos limpia, el sistema despliega de manera automática el **Asistente de Configuración Inicial**. Este flujo guiado de tres pasos permite registrar la identidad jurídica del taller, crear la cuenta raíz del Administrador Principal y habilitar opcionalmente el personal base de operación.
 
----
+## 2.1 Paso 1: Datos de la Empresa o Taller
 
-## 2. REQUISITOS Y ACCESO A LA PLATAFORMA
-* **Sistema Operativo:** Windows 10 / 11, Linux o macOS.
-* **Conectividad:** Funciona de manera 100% autónoma y local (base de datos SQLite embebida). No requiere internet para operar en el taller.
-* **Inicio de la Aplicación:** Ejecutar el archivo de la aplicación `tickets_app.exe`.
+En esta primera sección se establece la razón social y los datos de contacto oficiales que encabezarán los membretes de todas las órdenes de trabajo, comprobantes de recepción, actas de entrega en PDF y notificaciones enviadas por correo electrónico.
 
----
+| Campo del Formulario | Obligatorio | Descripción y Uso en el Sistema | Ejemplo Configurado |
+| :--- | :---: | :--- | :--- |
+| **Nombre de la Empresa o Proyecto** | Sí | Razón social o nombre comercial que aparece en el encabezado general y documentos PDF. | `SANTI INC` |
+| **NIT / RUT / ID Fiscal** | Sí | Identificación tributaria de la empresa o laboratorio técnico. | `922348710` |
+| **Teléfono Móvil o WhatsApp** | Sí | Línea de atención al cliente impresa en las actas de servicio. | `+57 3053633737` |
+| **Correo Electrónico de Soporte** | Sí | Dirección oficial de contacto del laboratorio. | `SantiINC@gmail.com` |
+| **Ciudad y País** | Sí | Ubicación geográfica principal de operación del taller. | `Monteria, Cordoba` |
+| **Dirección Física del Taller** | Sí | Domicilio físico para recepción y retiro de equipos. | `Dg. 23, Montería, Córdoba` |
 
-## CAPÍTULO 1: CONFIGURACIÓN INICIAL DE LA EMPRESA (SETUP WIZARD)
+> *Figura 1: Paso 1 del Asistente de Configuración Inicial con los datos de la empresa o taller (incluida en `MANUAL_DE_USUARIO_SISTEMA_TICKETS.docx`).*
 
-### 1.1 Descripción de la Pantalla
-Al ejecutar la aplicación por primera vez en un equipo nuevo o con base de datos limpia, el sistema presenta automáticamente el **Asistente de Puesta en Marcha (Setup Wizard)**. Esta interfaz permite registrar la identidad corporativa y la cuenta del Administrador principal.
+**Operación en pantalla:** Una vez completados todos los campos obligatorios marcados con asterisco (`*`), presione el botón azul **"Continuar al Siguiente Paso"** para avanzar a la configuración del administrador.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 1.1: Pantalla del Asistente de Configuración Inicial ]       │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL ASISTENTE INICIAL DILIGENCIADO <<        │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 2.2 Paso 2: Cuenta del Administrador Principal
 
-### 1.2 Campos y Funcionalidades
-1. **Razón Social / Nombre Comercial:** Nombre del taller o empresa (Ej: `Santi Inc - Taller de Soporte Técnico`).
-2. **NIT / Documento:** Identificación fiscal de la empresa (Ej: `901876543-2`).
-3. **Dirección y Teléfono:** Datos de contacto que aparecerán impresos en todos los comprobantes y actas PDF generados.
-4. **Cuenta Administrador:**
-   * *Nombre completo y Cédula:* Datos del administrador del sistema.
-   * *Correo y Contraseña:* Credenciales con las que se iniciará sesión por primera vez.
-5. **Botón "Finalizar y Comenzar":** Guarda la configuración en la base de datos local y redirige al Dashboard principal.
+El segundo paso crea la cuenta principal con privilegios globales de administración. Por seguridad, la contraseña ingresada se almacena utilizando derivación criptográfica (`scrypt`) y nunca se expone en texto plano.
 
----
+| Campo del Formulario | Obligatorio | Descripción Funcional | Ejemplo en Captura |
+| :--- | :---: | :--- | :--- |
+| **Nombre Completo del Administrador** | Sí | Nombre y apellidos del responsable general del sistema. | `Santiago Matias Ojeda Cuadrado` |
+| **Cédula / Documento de Identidad** | Sí | Número de identificación del administrador. | `1068423488` |
+| **Teléfono Móvil** | Sí | Número de contacto directo del administrador. | `3053633737` |
+| **Correo Electrónico de Acceso** | Sí | Credencial única de usuario para iniciar sesión en la plataforma. | `matiasOjeda1803@gmail.com` |
+| **Contraseña de Acceso** | Sí | Clave secreta de autenticación (incluye botón de visualización para verificar su escritura). | `Admin123` |
 
-## CAPÍTULO 2: MÓDULO DE SEGURIDAD Y GESTIÓN DE USUARIOS
+> *Figura 2: Paso 2 del Asistente de Configuración Inicial con la parametrización del Administrador Principal (incluida en `MANUAL_DE_USUARIO_SISTEMA_TICKETS.docx`).*
 
-### 2.1 Descripción de la Pantalla
-Ubicada en **Configuración > Gestión de Usuarios**. Permite al Administrador dar de alta, consultar y administrar los permisos del personal del taller.
+> **Nota de Seguridad:** El rol Administrador posee permisos exclusivos sobre la configuración de correo SMTP, gestión de cuentas de personal, descarga/restauración de respaldos de base de datos y consulta del historial de auditoría. Se recomienda resguardar estas credenciales de forma segura.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 2.1: Tabla de Usuarios Registrados y Formulario de Alta ]    │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DE LA TABLA CON ROLES ADMIN, TÉCNICO Y OP << │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 2.3 Paso 3: Registro de Personal Inicial Opcional
 
-### 2.2 Procedimiento para Crear un Nuevo Usuario
-1. Dirigirse al menú **Configuración** y seleccionar la pestaña **Usuarios**.
-2. Hacer clic en el botón superior **"+ Nuevo Usuario"**.
-3. Diligenciar los campos obligatorios:
-   * **Nombre Completo:** Nombre del empleado o técnico.
-   * **Documento:** Cédula de ciudadanía.
-   * **Correo Electrónico:** Correo institucional que servirá como usuario de acceso.
-   * **Contraseña:** Clave de acceso al sistema.
-   * **Rol:** Seleccionar estrictamente entre **Administrador**, **Técnico** u **Operador**.
-4. Hacer clic en **"Guardar Usuario"**. El nuevo usuario aparecerá inmediatamente listado en la tabla.
+El tercer paso permite dar de alta de forma inmediata al primer Operador de Mesa de Ayuda y al primer Técnico Especialista sin necesidad de crearlos posteriormente desde el panel de configuración:
+
+* **Primer Operador o Mesa de Ayuda:** Perfil orientado a la recepción de clientes, consulta de directorio, registro de equipos y radicación de tickets (*Ejemplo en captura:* `Celeste Azul Luna Palmera` — `lunapalmera@gmail.com` — Tel: `3124698356`).
+* **Primer Técnico Especialista:** Perfil orientado al banco de trabajo, diagnóstico de hardware/software, registro de bitácoras y pruebas de control de calidad (*Ejemplo en captura:* `Santiago Andres Quintana Martinez` — `Quitana16@gmail.com` — Tel: `3244275335`).
+
+> *Figura 3: Paso 3 del Asistente de Configuración Inicial con el alta del Operador de Mesa de Ayuda y Técnico Especialista (incluida en `MANUAL_DE_USUARIO_SISTEMA_TICKETS.docx`).*
+
+**Finalización del Asistente:** Al pulsar el botón **"Finalizar e Ingresar"**, el sistema guarda de forma atómica la configuración institucional y las cuentas creadas, iniciando sesión automáticamente en el panel principal.
 
 ---
 
-## CAPÍTULO 3: CATÁLOGO DE TIPOS DE FALLA
+# 3. Módulo 2: Inicio de Sesión y Control de Acceso (Login)
 
-### 3.1 Descripción de la Pantalla
-Ubicada en **Configuración > Catálogo de Fallas**. Permite tipificar las averías frecuentes atendidas en el taller para agilizar la radicación y generar estadísticas precisas.
+La pantalla de autenticación constituye la puerta de enlace a la plataforma operativa. Verifica las credenciales del funcionario contra la base de datos central y establece una sesión autenticada mediante token.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 3.1: Catálogo de Tipos de Falla Activos ]                    │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL CATÁLOGO DE FALLAS CREADAS <<            │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 3.1 Controles y Opciones de la Pantalla de Acceso
+* **Correo Electrónico:** Campo de entrada para el correo registrado del Administrador, Operador o Técnico.
+* **Contraseña:** Campo protegido con opción de alternar visibilidad (icono de ojo) para confirmar la clave antes de ingresar.
+* **Botón "Iniciar Sesión":** Valida las credenciales. Si son correctas, redirige al usuario a su entorno de trabajo correspondiente; si son inválidas, despliega una alerta explícita indicando el error de autenticación.
+* **Acceso a Consulta Pública de Equipos:** En la parte inferior de la tarjeta de inicio de sesión se dispone del botón de acceso directo al **Portal Público (`/consulta`)**, diseñado para que los clientes verifiquen el estado de sus órdenes sin necesidad de credenciales.
 
-### 3.2 Procedimiento para Registrar una Falla
-1. En la pestaña **Catálogo de Fallas**, hacer clic en **"+ Nuevo Tipo de Falla"**.
-2. Ingresar:
-   * **Nombre de la Falla:** (Ej: `Falla de Hardware y Pantalla`, `Mantenimiento Preventivo`).
-   * **Categoría:** Seleccionar entre *Hardware*, *Software* o *Preventivo*.
-   * **Descripción:** Breve detalle técnico de los síntomas habituales.
-3. Guardar el registro. La falla quedará disponible en el selector del formulario de radicación.
+> **Resiliencia de Conexión:** En caso de interrupción temporal de la comunicación con el servidor central, la pantalla informa el estado de conexión con opción de reintento inmediato sin redirigir erróneamente al asistente de instalación.
 
 ---
 
-## CAPÍTULO 4: GESTIÓN DE CLIENTES
+# 4. Módulo 3: Catálogo de Fallas y Diagnósticos
 
-### 4.1 Descripción de la Pantalla
-Permite registrar y mantener la base de datos de personas naturales o empresas que solicitan servicios en el taller.
+Disponible para el perfil Administrador desde el menú lateral **Configuración > pestaña "Fallas & Diagnósticos"**. Este módulo permite estandarizar las categorías de servicio que los operadores seleccionarán al momento de radicar nuevas incidencias, evitando errores de digitación y facilitando las métricas operativas.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 4.1: Módulo de Clientes — Formulario y Listado ]             │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL FORMULARIO Y TABLA DE CLIENTES <<        │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 4.1 Estructura del Catálogo por Modalidad de Servicio
+La interfaz organiza los motivos de ingreso en dos tarjetas independientes con contadores dinámicos de elementos activos:
 
-### 4.2 Procedimiento para Registrar un Cliente
-1. Ir al módulo **Clientes** y presionar **"+ Nuevo Cliente"**.
-2. Registrar los datos del solicitante:
-   * **Nombre / Razón Social:** (Ej: *María García*, *Carlos Pérez*, *Empresa XYZ S.A.S.*).
-   * **Número de Documento (CC / NIT):** Documento con el que el cliente podrá consultar el estado de su orden.
-   * **Teléfono y Correo:** Canales para envío de comprobantes y notificaciones.
-   * **Dependencia / Ubicación:** Oficina o departamento de procedencia (Ej: *Sala de Sistemas*, *Rectoría*, *Contabilidad*).
-3. Presionar **"Guardar Cliente"**.
+1. **Tipos de Falla — Mantenimiento Correctivo:** Agrupa averías, fallos eléctricos, daños físicos o errores de software reportados en equipos que presentan mal funcionamiento (*Ejemplos:* `"Falla de Pantalla / Video"`, `"Falla de Disco / Almacenamiento"`).
+2. **Tipos de Falla — Mantenimiento Preventivo:** Agrupa rutinas programadas de preservación, limpieza interna y optimización destinadas a prevenir fallos futuros (*Ejemplos:* `"Mantenimiento Preventivo Semestral"`, `"Limpieza Física y Cambio de Pasta Térmica"`).
+
+## 4.2 Procedimiento para Agregar o Eliminar Tipos de Falla
+1. Iniciar sesión con perfil Administrador y dirigirse a **Configuración > Fallas & Diagnósticos**.
+2. En la tarjeta correspondiente (Correctivo o Preventivo), hacer clic en el botón **"+ Agregar"**.
+3. Digitar el nombre descriptivo de la falla o servicio y confirmar el guardado. El indicador superior actualizará de inmediato el número de registros activos.
+4. Para retirar una categoría en desuso, presionar el icono de eliminación junto al elemento deseado.
 
 ---
 
-## CAPÍTULO 5: INVENTARIO Y FICHA TÉCNICA DE EQUIPOS
+# 5. Módulo 4: Gestión de Clientes y Directorio
 
-### 5.1 Descripción de la Pantalla
-Ubicada en el menú **Inventario de Equipos**. Mantiene la hoja de vida técnica de cada máquina ingresada al taller.
+El sistema administra un directorio centralizado de personas naturales, dependencias internas y empresas que solicitan servicios en el laboratorio. El registro de clientes puede realizarse tanto desde el módulo de búsqueda/directorio como de forma integrada durante la radicación de una incidencia.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 5.1: Inventario de Equipos con Ficha Técnica Detallada ]     │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DE LA TABLA DE EQUIPOS REGISTRADOS <<        │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 5.1 Información Registrada por Cliente
 
-### 5.2 Procedimiento de Alta de Equipo
-1. Hacer clic en **"+ Nuevo Equipo"**.
-2. Completar las especificaciones físicas y de hardware:
-   * **Tipo:** Portátil, PC de Mesa (Torre), All-in-One, etc.
-   * **Marca y Modelo:** (Ej: `HP Pavilion 15-dw1024`, `Dell Inspiron 24`).
-   * **Número de Serie:** Serial del fabricante (si no posee, marcar como sin serie visible).
-   * **Hardware:** Procesador, memoria RAM y capacidad de almacenamiento.
-   * **Propietario:** Asociar al cliente registrado previamente.
-3. Guardar. El equipo queda enlazado para futuras órdenes de servicio sin necesidad de volver a digitar sus especificaciones.
+| Campo del Cliente | Obligatorio | Propósito Operativo y Administrativo |
+| :--- | :---: | :--- |
+| **Tipo de Documento** | Sí | Permite distinguir entre Cédula de Ciudadanía (CC), NIT empresarial, Cédula de Extranjería o Pasaporte. |
+| **Número de Documento / NIT** | Sí | Identificador único del titular para búsquedas rápidas y asociación de equipos en inventario. |
+| **Nombre Completo / Razón Social** | Sí | Nombre del titular o entidad que figurará en los comprobantes de ingreso y Actas de Entrega. |
+| **Correo Electrónico** | Recomendado | Canal utilizado por el servidor SMTP para enviar automáticamente la confirmación de radicación y el acta de cierre. |
+| **Teléfono de Contacto** | Sí | Número telefónico para notificaciones urgentes o coordinación de entrega. |
+| **Dirección / Ubicación** | Sí | Dirección física, sede o dependencia a la que pertenece el cliente. |
 
 ---
 
-## CAPÍTULO 6: RADICACIÓN DE INCIDENCIAS Y ÓRDENES DE SERVICIO
+# 6. Módulo 5: Inventario Técnico y Hoja de Vida de Equipos
 
-### 6.1 Asistente de Radicación Paso a Paso
-El proceso de radicación se realiza a través de un asistente guiado de 4 pasos para garantizar que no falte información técnica ni legal:
+El módulo de **Inventario de Equipos** permite llevar el control detallado del parque computacional atendido por el taller, vinculando cada máquina a su propietario legítimo y conservando su expediente histórico de intervenciones.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURAS 6.1 - 6.4: Asistente de 4 Pasos de Creación de Incidencia ] │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURAS DE LOS PASOS 1, 2, 3 Y 4 DEL ASISTENTE <<  │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 6.1 Ficha Técnica del Equipo
+Al registrar un equipo nuevo (ya sea desde Inventario o al radicar una orden), se documentan sus especificaciones de hardware:
+* **Datos de Identificación:** Tipo de equipo (`Portátil`, `PC de Escritorio`, `All-in-One`, `Impresora / Periférico`), Marca, Modelo y Número de Serie (Serial único).
+* **Especificaciones Internas:** Procesador (CPU), Capacidad y tipo de Memoria RAM, Almacenamiento principal (SSD/HDD), Tarjeta Gráfica (GPU) y Sistema Operativo instalado.
+* **Estado en Inventario:** Indica la condición actual del activo: `OPERATIVO` (en uso normal), `EN_TALLER` (actualmente bajo intervención técnica) o `DE_BAJA` (retirado por daño irreparable).
 
-1. **Paso 1 — Solicitante y Modalidad:**
-   * Selección del cliente y tipo de mantenimiento (**Correctivo** o **Preventivo**).
-   * Asignación de prioridad (*Baja, Media, Alta, Crítica*).
-2. **Paso 2 — Selección del Equipo y Falla:**
-   * Selección del equipo desde el inventario del cliente.
-   * Descripción clara del problema reportado por el usuario.
-3. **Paso 3 — Estado Físico y Accesorios:**
-   * Checklist de elementos recibidos (cargador, cables, fundas, adaptadores).
-   * Carga de fotografías de recepción para evidenciar rayones, golpes o roturas previas.
-4. **Paso 4 — Asignación y Comprobante:**
-   * Asignación del **Técnico Responsable**.
-   * Generación automática del **Comprobante de Ingreso en PDF** para entrega al cliente.
+## 6.2 Consulta de Hoja de Vida y Trazabilidad Histórica
+Desde la tabla general de inventario, al seleccionar la opción **"Hoja de Vida"** sobre cualquier equipo, el sistema despliega una ventana modal con su expediente completo: especificaciones de fábrica, propietario asociado y el listado cronológico de todas las órdenes de mantenimiento (preventivas y correctivas) que se le han practicado, permitiendo detectar reincidencias de fallas o verificar garantías vigentes.
 
 ---
 
-## CAPÍTULO 7: MESA DE TRABAJO Y GESTIÓN TÉCNICA DE TALLER
+# 7. Módulo 6: Radicación de Incidencias (Correctivas y Preventivas)
 
-### 7.1 Panel de Detalle Técnico (Rol Técnico)
-Al ingresar con cuenta de **Técnico**, el usuario accede a las órdenes asignadas y presiona **"Gestionar Mantenimiento"**. El panel se divide en 4 pestañas especializadas:
+El módulo **"+ Nueva Incidencia"** permite a los Operadores y Administradores registrar el ingreso de un equipo al taller mediante un formulario adaptable de alta productividad.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 7.1: Pestaña OT y Diagnóstico de Taller ]                    │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DE LA PESTAÑA OT CON DIAGNÓSTICO <<          │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 7.1 Flujo de Radicación de una Orden de Servicio
+1. **Identificación del Titular:** Se busca al cliente por su número de documento o nombre. Si el cliente es nuevo, se completan sus datos de contacto directamente en la sección de solicitante.
+2. **Selección del Tipo de Servicio y Prioridad:** Se define si la orden corresponde a un **Mantenimiento Correctivo** (reparación de falla) o **Mantenimiento Preventivo** (limpieza y preservación). Al elegir el nivel de prioridad (`Baja`, `Media`, `Alta` o `Crítica`), el sistema calcula automáticamente la fecha y hora límite del Acuerdo de Nivel de Servicio (SLA).
+3. **Asociación del Equipo y Reglas de Integridad:** Se selecciona un equipo existente del cliente o se registra uno nuevo digitando su serial, marca, modelo y especificaciones. El sistema valida automáticamente dos reglas de negocio críticas:
+   * No permite abrir una nueva orden a un equipo que ya tenga otra orden abierta en curso.
+   * Impide reasignar accidentalmente un serial existente a otro propietario distinto.
+4. **Categoría del Catálogo y Descripción del Motivo:** El operador selecciona la categoría de falla o alcance preventivo desde el selector alimentado por el Catálogo de Fallas, y detalla los síntomas reportados o requerimientos específicos del servicio.
+5. **Asignación de Técnico y Emisión:** Se selecciona al Técnico Especialista responsable (o se deja en bandeja general por asignar) y se pulsa el botón de radicación.
 
-#### A. Pestaña Orden de Trabajo (OT):
-* Registro del diagnóstico preliminar de laboratorio.
-* Selección de herramientas especializadas utilizadas.
-* Estado físico del equipo durante la intervención.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 7.2: Pestaña Bitácora — Procedimientos, Repuestos y Checklists]│
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DE BITÁCORA CON REPUESTO Y CHECKLISTS <<     │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-#### B. Pestaña Bitácora de Actividades:
-* Detalle cronológico de los procedimientos técnicos realizados.
-* **Carga de Repuestos / Materiales:** Registro de piezas sustituidas con cantidad y costo (Ej: `Pasta térmica Cooler Master - $8.000`).
-* **Checklists de Control de Calidad:** Verificación de pruebas térmicas, limpieza y puertos funcionales.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 7.3: Galería Fotográfica de Evidencias (Antes y Después) ]   │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DE LAS FOTOS CARGADAS EN EL TALLER <<        │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-#### C. Pestaña Evidencias Fotográficas:
-* Registro fotográfico del estado inicial del componente averiado vs el componente reparado o sustituido.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 7.4: Pestaña Acta de Entrega y Cierre Oficial ]              │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL ACTA DE ENTREGA Y PDF GENERADO <<        │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-#### D. Pestaña Acta de Entrega y Cierre:
-1. Marcación del estado final del equipo (**Operativo**).
-2. Recomendaciones de cuidado al usuario.
-3. Registro de la persona que recibe a conformidad.
-4. Clic en **"Cerrar Incidencia y Generar Acta"**.
-5. Clic en **"Ver Documento Oficial"**: Despliega el PDF formal con membrete de Santi Inc, firmas digitales y condiciones de garantía.
+## 7.2 Código de Seguimiento y Notificación Automática por Correo
+Al confirmar la creación de la orden, la plataforma ejecuta de inmediato tres acciones:
+* **Generación de Código Único con Sufijo de Seguridad:** Se emite el código oficial del ticket y se presenta en un cuadro de confirmación con botón de copiado rápido al portapapeles.
+* **Actualización de Inventario:** El equipo asociado pasa automáticamente al estado `EN_TALLER`.
+* **Despacho de Correo Electrónico al Cliente:** Si el cliente cuenta con correo electrónico registrado y el servidor SMTP está activo, el sistema envía automáticamente un mensaje formal con el resumen de recepción y el enlace directo al Portal de Consulta Pública.
 
 ---
 
-## CAPÍTULO 8: PANEL ADMINISTRATIVO Y MÉTRICAS DE RENDIMIENTO
+# 8. Módulo 7: Mesa de Trabajo y Gestión Técnica de Taller
 
-### 8.1 Descripción de la Pantalla
-El **Dashboard de Administrador** consolida en tiempo real la operación global del taller de soporte.
+Cuando el Técnico Especialista inicia sesión, accede a su bandeja personalizada de órdenes asignadas. Al hacer clic sobre cualquier orden, se abre la pantalla **Detalle de Taller**, la cual organiza todo el trabajo técnico en un encabezado informativo (con acceso para copiar el código completo y selector de estado) y **tres (3) pestañas operativas**.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 8.1: Dashboard Principal con Indicadores SLA y Carga ]       │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL DASHBOARD CON LAS ÓRDENES ACTIVAS <<     │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+## 8.1 Pestaña 1: Orden de Trabajo (OT) y Evidencias Fotográficas
+Esta primera pestaña documenta las condiciones físicas en las que se recibe el equipo, el diagnóstico técnico inicial y el registro fotográfico de respaldo:
+* **Diagnóstico Preliminar e Instrumental:** Campo para detallar el dictamen técnico inicial, selector de fecha estimada de entrega y etiquetas interactivas (chips) para registrar las herramientas e instrumentos de medición utilizados (ej. Multímetro digital, Fuente regulada, Alcohol isopropílico, Destornilladores de precisión).
+* **Inspección Física y Accesorios Recibidos:** Casillas de verificación para dejar constancia de si el equipo enciende al ingresar y qué accesorios entrega el cliente (`Cargador`, `Cable de poder`, `Mouse`, `Maletín/Funda`), además del estado físico de la carcasa y el PIN o contraseña de desbloqueo proporcionado para pruebas.
+* **Galería de Evidencias Fotográficas Integrada:** Permite subir fotografías clasificadas por etapa (`RECEPCION`, `PROCESO`, `ENTREGA`). Las imágenes se comprimen automáticamente y se almacenan en el directorio físico del servidor (`data/uploads/`) para mantener el máximo rendimiento de la base de datos.
 
-### 8.2 Componentes del Tablero
-1. **Tarjetas Métricas de SLA:** Porcentaje de tickets resueltos a tiempo según su nivel de prioridad.
-2. **Panel de Carga Técnica:** Balance de órdenes asignadas por cada técnico para evitar sobrecargas de trabajo.
-3. **Tabla General de Órdenes:** Filtro rápido por estados (*Abierta, En Revisión, Esperando Repuesto, Reparada, Cerrada*).
-4. **Módulo de Auditoría:** Historial inmutable con fecha, hora y usuario que ejecutó cada acción en el sistema.
+## 8.2 Pestaña 2: Bitácora, Repuestos y Control de Calidad (QA)
+En la segunda pestaña el técnico registra todos los procedimientos ejecutados sobre la máquina, los materiales empleados, las pruebas de validación pre-entrega y los costos asociados:
+* **Procedimientos y Labores Realizadas:** Descripción exhaustiva del trabajo técnico efectuado (reparación de componentes, desensamble, limpieza ultrasónica, reemplazo de piezas, etc.).
+* **Insumos Físicos y Mantenimiento Lógico:** Checklists dedicados para marcar los insumos aplicados en laboratorio (*Pasta térmica de alto rendimiento, Alcohol isopropílico, Sopleteado/aire comprimido, Brocha antiestática, Paño de microfibra*) y las optimizaciones de software (*Depuración de archivos temporales, Optimización de arranque, Escaneo de malware/seguridad y Actualización de drivers/BIOS*).
+* **Protocolo de Pruebas de Diagnóstico Pre-Entrega (Control de Calidad QA):** Conjunto de verificaciones técnicas obligatorias antes de dar por terminado el servicio:
+  1. Estrés Térmico CPU/GPU (*HWMonitor*).
+  2. Salud de Disco SMART (*CrystalDiskInfo*).
+  3. Diagnóstico de Memoria RAM (*MemTest*).
+  4. Verificación de Puertos USB/HDMI/Audio.
+  5. Conectividad Wi-Fi y Ethernet RJ45.
+  6. Ciclos y Carga de Batería.
+  7. Respuesta de Teclado y Touchpad.
+  *(Cada prueba permite adjuntar su respectiva captura de pantalla como evidencia).*
+* **Consumo de Repuestos y Mano de Obra:** Tabla para agregar repuestos instalados (referencia, cantidad y precio unitario) junto con el valor de la mano de obra técnica. El sistema calcula el total económico de forma automática.
 
----
+## 8.3 Pestaña 3: Acta Oficial de Entrega, Garantía y Cierre
+La tercera pestaña formaliza la devolución del equipo al cliente y el cierre definitivo del expediente técnico:
 
-## CAPÍTULO 9: PORTAL DE CONSULTA PÚBLICA DE ESTADOS
+> **Validación Estricta de Cierre:** El sistema impide cerrar una orden de forma accidental: para emitir el Acta Oficial de Entrega, la orden debe encontrarse en estado `LISTO_ENTREGA`, contar con el Diagnóstico Inicial (OT) y la Bitácora de Procedimientos previamente guardados, registrar los datos de quien recibe y marcar la casilla de conformidad.
 
-### 9.1 Descripción y Acceso
-Permite a cualquier cliente consultar el avance de su equipo en cualquier momento sin necesidad de contar con usuario o contraseña del sistema.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│  [ FIGURA 9.1: Formulario de Consulta Pública y Resultado Visual ]     │
-│                                                                        │
-│  >> INSERTAR AQUÍ CAPTURA DEL BUSCADOR PÚBLICO Y LA LÍNEA DE TIEMPO << │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-### 9.2 Instrucciones para el Cliente
-1. Ingresar a la pantalla de bienvenida / login de la aplicación.
-2. Hacer clic en el enlace inferior **"¿Quieres consultar el estado de tu equipo? Consulta pública"**.
-3. Ingresar:
-   * **Código de la Orden / Ticket:** (Ej: `TK-2026-0003`).
-   * **Documento del Cliente:** Cédula o NIT registrado en la recepción.
-4. Presionar **"Consultar"**.
-5. La plataforma mostrará una línea de tiempo interactiva con la fase actual del equipo, fecha de ingreso, diagnóstico preliminar y constancia de si está listo para entrega.
+* **Estado de Operatividad Final:** Define si el equipo se entrega `OPERATIVO` o `IRREPARABLE / SIN REPARACIÓN`. Al cerrar el acta, el inventario del equipo se sincroniza automáticamente a `OPERATIVO` o `DE_BAJA` según corresponda.
+* **Vigencia de Garantía y Observaciones:** Permite establecer el periodo de cobertura otorgado (ej. Sin garantía, 30 días, 60 días, 90 días), las observaciones técnicas de salida y las **Recomendaciones de Cuidado y Uso** para el cliente.
+* **Datos del Receptor y Conformidad:** Registra el nombre completo y documento de identidad de la persona que retira el equipo, junto con la casilla de verificación de entrega a satisfacción.
+* **Notificación Automática de Cierre y Documento Oficial PDF:** Al pulsar **"Finalizar Servicio y Emitir Acta Oficial"**, la orden queda archivada en modo solo lectura, se envía automáticamente un correo electrónico al cliente con el resumen de entrega, garantía y recomendaciones, y se habilita el visor para imprimir o exportar el **Documento Oficial en PDF** con membrete corporativo y espacios de firma.
 
 ---
 
-## 📚 GLOSARIO DE TÉRMINOS
-* **OT (Orden de Trabajo):** Documento digital técnico que guía las labores de reparación en el banco de trabajo.
-* **SLA (Service Level Agreement):** Acuerdo de nivel de servicio que define el tiempo límite establecido para solucionar una incidencia.
-* **Acta de Entrega:** Documento oficial vinculante generado en PDF que certifica la devolución a satisfacción del equipo al cliente.
-* **Mantenimiento Correctivo:** Acción técnica destinada a reparar una falla ya presentada en el equipo.
-* **Mantenimiento Preventivo:** Rutina periódica de limpieza, revisión y optimización para prevenir fallas futuras.
+# 9. Módulo 8: Panel Administrativo y Métricas Operativas (SLA)
+
+El **Dashboard Administrativo** ofrece a la gerencia del laboratorio una vista ejecutiva en tiempo real sobre el desempeño del taller y el cumplimiento de los tiempos prometidos a los clientes:
+* **Indicadores de Cumplimiento SLA:** Tarjetas superiores que contabilizan el total de órdenes activas, órdenes cerradas, órdenes sin asignar y alertas de tickets con SLA vencido.
+* **Balance de Carga por Técnico Especialista:** Gráfico comparativo que muestra cuántas órdenes activas y cuántas finalizadas tiene cada técnico del laboratorio, facilitando la asignación equitativa de nuevos ingresos.
+* **Matriz Maestra Multi-Estado:** Tabla interactiva con filtros rápidos por estado (*Recibido, En Diagnóstico, En Taller, Listo para Entrega, Entregado/Cerrado*) y buscador instantáneo por código, cliente o equipo.
+
+---
+
+# 10. Módulo 9: Configuración Integral, SMTP, Respaldos y Auditoría
+
+Desde el módulo de **Configuración**, el Administrador gestiona los parámetros críticos de operación, seguridad y continuidad de negocio:
+
+| Sección de Configuración | Función y Capacidades Principales |
+| :--- | :--- |
+| **Identidad Corporativa** | Actualización de razón social, NIT, teléfonos, dirección física y URL del host del portal público para los enlaces enviados por correo. |
+| **Gestión de Usuarios y Roles** | Creación de nuevos operadores o técnicos, edición de datos de contacto, activación/inactivación de cuentas y restablecimiento seguro de contraseñas. |
+| **Servidor de Correo Saliente (SMTP)** | Configuración del host SMTP (ej. `smtp.gmail.com`), puerto (`465`/`587`), cuenta emisora y contraseña de aplicación (almacenada con cifrado autenticado en el servidor), incluyendo botón de prueba de envío en vivo. |
+| **Respaldos de Base de Datos (Backups)** | Panel de mantenimiento que muestra el estado del programador automático de copias (ejecutado al iniciar y cada 24 horas mediante SQLite `VACUUM INTO`) y permite descargar o restaurar instantáneamente un archivo `.sqlite` consistente. |
+| **Historial de Cambios y Auditoría** | Registro inmutable de las operaciones críticas realizadas en el servidor (usuario, fecha, hora, ruta afectada y acción) junto con la bitácora de correos electrónicos despachados. |
+
+---
+
+# 11. Módulo 10: Portal de Consulta Pública para Clientes
+
+El **Portal de Consulta Pública (`/consulta`)** permite a cualquier cliente verificar en línea el avance real de su equipo desde su computador o teléfono móvil, utilizando el enlace recibido por correo electrónico o accediendo desde la pantalla principal.
+
+## 11.1 Privacidad y Búsqueda por Código Exacto
+Para proteger la privacidad de la información, el buscador público exige digitar el **código exacto de la orden de servicio** y omite datos sensibles como el documento de identidad, teléfono del propietario o el PIN de desbloqueo del equipo.
+
+## 11.2 Información Desplegada al Cliente en Tiempo Real
+1. **Estado Actual y Datos del Equipo:** Insignia visual del estado de la orden (*En Proceso / Finalizado*), tipo de servicio, marca, modelo y número de serie.
+2. **Diagnóstico Inicial de Recepción (OT):** Dictamen preliminar emitido por el laboratorio y checklist del estado físico y accesorios registrados al ingreso.
+3. **Bitácora Técnica y Resultados de Tests de Calidad (QA):** Detalle de los procedimientos realizados, insumos aplicados y el estado de aprobación de las 10 pruebas de control de calidad (*Estrés térmico, Salud de disco SMART, Puertos, Conectividad, Batería, Teclado/Touchpad, Malware, Drivers, Inicio y Temporales*).
+4. **Repuestos Instalados:** Listado transparente de componentes o piezas reemplazadas durante el servicio.
+5. **Acta de Entrega, Garantía y Recomendaciones de Cuidado:** Estado operativo de salida, vigencia de la garantía otorgada, observaciones finales y pautas recomendadas para preservar la vida útil del equipo.
+6. **Galería Fotográfica de Evidencias:** Miniaturas interactivas de las fotos tomadas en recepción, taller y pruebas, con visor modal de ampliación en alta resolución.
+
+---
+
+# 12. Glosario de Términos Técnicos y Operativos
+
+| Término / Sigla | Definición en el Contexto de la Plataforma de Gestión de Tickets |
+| :--- | :--- |
+| **Acta de Entrega Oficial** | Documento formal en PDF generado al finalizar una orden, que certifica los trabajos realizados, la garantía otorgada y la conformidad del cliente. |
+| **Bitácora Técnica** | Registro pormenorizado de los procedimientos de hardware y software, insumos consumidos y repuestos instalados durante la intervención en taller. |
+| **Hoja de Vida del Equipo** | Expediente histórico asociado al número de serie de una máquina que recopila todas sus especificaciones y mantenimientos previos. |
+| **Mantenimiento Correctivo** | Servicio técnico orientado a diagnosticar y reparar una falla, avería o mal funcionamiento existente en un equipo. |
+| **Mantenimiento Preventivo** | Servicio periódico programado de limpieza física interna, recambio de pasta térmica y optimización lógica para evitar fallas futuras. |
+| **Orden de Trabajo (OT)** | Formato técnico inicial donde se documenta el diagnóstico preliminar, el estado físico de recepción y los accesorios entregados por el cliente. |
+| **Protocolo QA (Quality Assurance)** | Conjunto de pruebas diagnósticas pre-entrega (temperatura, salud SMART de disco, memoria, periféricos y red) que validan el óptimo funcionamiento del equipo. |
+| **SLA (Service Level Agreement)** | Acuerdo de Nivel de Servicio que define el tiempo máximo objetivo para resolver una incidencia según su nivel de prioridad (Baja, Media, Alta o Crítica). |
+| **SMTP** | Protocolo estándar de red configurado en la plataforma para el envío automático de notificaciones por correo electrónico al radicar y cerrar órdenes. |

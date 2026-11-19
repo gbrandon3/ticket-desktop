@@ -55,6 +55,22 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
   List<Equipo> _equiposEncontrados = [];
   bool _buscandoEquipos = false;
   Equipo? _equipoSeleccionado;
+  int _paginaEquipoActual = 0;
+  static const int _equiposPorPagina = 5;
+
+  int get _totalPaginasEquipos {
+    if (_equiposEncontrados.isEmpty) return 1;
+    return (_equiposEncontrados.length / _equiposPorPagina).ceil();
+  }
+
+  List<Equipo> get _equiposPaginaActual {
+    if (_equiposEncontrados.isEmpty) return [];
+    final total = _equiposEncontrados.length;
+    final inicio = (_paginaEquipoActual * _equiposPorPagina).clamp(0, total);
+    final fin = (inicio + _equiposPorPagina).clamp(0, total);
+    return _equiposEncontrados.sublist(inicio, fin);
+  }
+
   bool _mostrarFormularioEquipo = true;
   bool _sinSerialVisible = false;
 
@@ -85,6 +101,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
 
   Future<void> _inicializarDatos() async {
     _buscarClientesRealtime('');
+    _buscarEquipos('');
     _cargarTecnicos();
   }
 
@@ -140,14 +157,19 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
     setState(() => _buscandoEquipos = true);
     final repo = ref.read(ordenesRepositoryProvider);
     try {
-      final list = await repo.searchEquipos(
-        clienteId: _clienteSeleccionado?.id,
-        tipo: _tipoEquipo,
-        query: query ?? _searchEquipoCtrl.text,
+      final cleanQuery = (query ?? _searchEquipoCtrl.text).trim();
+      var list = await repo.searchEquipos(
+        tipo: cleanQuery.isNotEmpty ? null : _tipoEquipo,
+        query: cleanQuery.isNotEmpty ? cleanQuery : null,
       );
+      // Si no hay resultados para el tipo específico y no se ha escrito búsqueda manual, buscar todos los equipos
+      if (list.isEmpty && cleanQuery.isEmpty) {
+        list = await repo.searchEquipos();
+      }
       if (mounted) {
         setState(() {
           _equiposEncontrados = list;
+          _paginaEquipoActual = 0;
           _buscandoEquipos = false;
         });
       }
@@ -543,6 +565,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
       return;
     }
     setState(() => _currentStep = 2);
+    _buscarEquipos('');
   }
 
   void _validarYAvanzarPaso3() {
@@ -663,7 +686,7 @@ class _CrearIncidenciaScreenState extends ConsumerState<CrearIncidenciaScreen> {
                 Uri.base.host.isNotEmpty) {
               baseUrl = Uri.base.origin;
             }
-            final trackingUrl = '$baseUrl/#/consulta';
+            final trackingUrl = '$baseUrl/#/consulta?q=${Uri.encodeComponent(codigo)}';
 
             final msg =
                 '''Estimado(a) ${cliente.nombreCompleto},
@@ -680,8 +703,9 @@ RESUMEN DE LA INCIDENCIA:
 • Fecha de Radicación: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}
 
 SEGUIMIENTO EN VIVO:
-Puede consultar en tiempo real el avance, diagnósticos y fotografías de evidencia de su equipo ingresando al portal de consulta con su código de ticket ($codigo):
+Puede consultar en tiempo real el avance, diagnósticos y fotografías de evidencia de su equipo ingresando directamente al siguiente enlace:
 $trackingUrl
+(O ingrese al portal con su código de ticket: $codigo)
 
 Atentamente,
 ${config.nombreEmpresa}
@@ -2084,12 +2108,23 @@ ${config.nombreEmpresa}
                   Expanded(
                     child: TextField(
                       controller: _searchEquipoCtrl,
+                      onChanged: (val) => _buscarEquipos(val),
                       decoration: InputDecoration(
                         hintText: 'Escriba número de serie, modelo o marca (vacío muestra todos)...',
                         hintStyle: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF94A3B8),
                         ),
+                        prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF64748B)),
+                        suffixIcon: _searchEquipoCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchEquipoCtrl.clear();
+                                  _buscarEquipos('');
+                                },
+                              )
+                            : null,
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
@@ -2098,6 +2133,7 @@ ${config.nombreEmpresa}
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
                         ),
                       ),
                     ),
@@ -2151,55 +2187,160 @@ ${config.nombreEmpresa}
 
               const SizedBox(height: 12),
 
-              // Alerta amarilla o tabla de resultados
+              // Alerta o tabla de resultados con Paginador
               if (_buscandoEquipos)
                 const Padding(
                   padding: EdgeInsets.all(16),
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (_equiposEncontrados.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    'No hay coincidencias para este cliente. Complete los datos del equipo nuevo abajo.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Color(0xFFD97706), size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'No hay equipos registrados previamente en esta categoría. Complete abajo los datos técnicos para registrar el equipo nuevo.',
+                          style: TextStyle(fontSize: 12.5, color: Color(0xFF92400E)),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Equipos encontrados:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Equipos encontrados (${_equiposEncontrados.length}):',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        if (_totalPaginasEquipos > 1)
+                          Text(
+                            'Página ${_paginaEquipoActual + 1} de $_totalPaginasEquipos',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    ..._equiposEncontrados.map((eq) {
+                    const SizedBox(height: 8),
+                    ..._equiposPaginaActual.map((eq) {
                       final isSel = _equipoSeleccionado?.id == eq.id;
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 6),
+                        margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: 14,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           color: isSel ? const Color(0xFFF0FDF4) : Colors.white,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSel
                                 ? const Color(0xFF22C55E)
                                 : const Color(0xFFE2E8F0),
+                            width: isSel ? 1.5 : 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${eq.marca} ${eq.modelo} [SN: ${eq.numeroSerie}] - ${eq.sistemaOperativo}',
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                eq.tipoEquipo == 'PC de Mesa'
+                                    ? Icons.desktop_windows
+                                    : (eq.tipoEquipo == 'All-in-One'
+                                        ? Icons.desktop_mac
+                                        : Icons.laptop_mac),
+                                size: 20,
+                                color: isSel
+                                    ? const Color(0xFF16A34A)
+                                    : const Color(0xFF2563EB),
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${eq.marca} ${eq.modelo}'.trim(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 2,
+                                    children: [
+                                      Text(
+                                        'SN: ${eq.numeroSerie}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF475569),
+                                        ),
+                                      ),
+                                      if ((eq.sistemaOperativo ?? '').isNotEmpty)
+                                        Text(
+                                          '• ${eq.sistemaOperativo}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      if ((eq.procesador ?? '').isNotEmpty)
+                                        Text(
+                                          '• ${eq.procesador}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      if ((eq.memoriaRam ?? '').isNotEmpty)
+                                        Text(
+                                          '• ${eq.memoriaRam}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             ElevatedButton(
                               onPressed: () => _seleccionarEquipoDeTabla(eq),
                               style: ElevatedButton.styleFrom(
@@ -2208,19 +2349,87 @@ ${config.nombreEmpresa}
                                     : const Color(0xFF2563EB),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
                               child: Text(
-                                isSel ? '✓ Seleccionado' : 'Elegir Equipo',
-                                style: const TextStyle(fontSize: 11),
+                                isSel ? '✓ Elegido' : 'Elegir Equipo',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
                         ),
                       );
                     }),
+
+                    // Controles del Paginador (Pager)
+                    if (_totalPaginasEquipos > 1) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Mostrando ${(_paginaEquipoActual * _equiposPorPagina) + 1}–${((_paginaEquipoActual * _equiposPorPagina) + _equiposPaginaActual.length)} de ${_equiposEncontrados.length}',
+                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _paginaEquipoActual > 0
+                                      ? () => setState(() => _paginaEquipoActual--)
+                                      : null,
+                                  icon: const Icon(Icons.chevron_left, size: 16),
+                                  label: const Text('Anterior', style: TextStyle(fontSize: 11.5)),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  ),
+                                  child: Text(
+                                    '${_paginaEquipoActual + 1} / $_totalPaginasEquipos',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  onPressed: _paginaEquipoActual < _totalPaginasEquipos - 1
+                                      ? () => setState(() => _paginaEquipoActual++)
+                                      : null,
+                                  icon: const Icon(Icons.chevron_right, size: 16),
+                                  label: const Text('Siguiente', style: TextStyle(fontSize: 11.5)),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
             ],
