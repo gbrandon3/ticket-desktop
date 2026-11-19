@@ -30,6 +30,34 @@
 
   <title>tickets_app</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    (function() {
+      try {
+        var path = window.location.pathname || '';
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+
+        // Si el cliente de correo (Gmail, Outlook) codificó '#' como '%23'
+        if (window.location.href.indexOf('%23') !== -1) {
+          window.location.replace(window.location.href.replace(/%23/g, '#'));
+          return;
+        }
+
+        // Si se abrió como URL limpia sin hash: /consulta o /consulta?q=...
+        if (path.indexOf('/consulta') !== -1 && !hash) {
+          var query = search;
+          if (!query && path.indexOf('/consulta/') !== -1) {
+            var parts = path.split('/consulta/');
+            if (parts.length > 1 && parts[1]) {
+              query = '?q=' + encodeURIComponent(parts[1]);
+            }
+          }
+          window.location.replace('/#/consulta' + query);
+          return;
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <!--

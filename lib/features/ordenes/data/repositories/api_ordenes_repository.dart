@@ -449,8 +449,6 @@ class ApiOrdenesRepository implements IOrdenesRepository {
                 notaTecnica: f['notaTecnica'],
                 fechaCaptura: DateTime.tryParse(f['fechaCaptura'] ?? '') ?? DateTime.now(),
               )).toList();
-            } else if (ord.id != null) {
-              fotos = await getFotosEvidencia(ord.id!);
             }
 
             FormatoOt? formatoOt;
@@ -470,8 +468,6 @@ class ApiOrdenesRepository implements IOrdenesRepository {
                 estadoCarcasa: ot['estadoCarcasa'],
                 pinContrasena: ot['pinContrasena'],
               );
-            } else if (ord.id != null) {
-              formatoOt = await getFormatoOt(ord.id!);
             }
 
             FormatoActividades? actividades;
@@ -498,8 +494,6 @@ class ApiOrdenesRepository implements IOrdenesRepository {
                 qaTecladoTouchpad: act['qaTecladoTouchpad'] == true,
                 costoManoObra: (act['costoManoObra'] as num?)?.toDouble() ?? 0.0,
               );
-            } else if (ord.id != null) {
-              actividades = await getFormatoActividades(ord.id!);
             }
 
             FormatoActaEntrega? actaEntrega;
@@ -517,8 +511,6 @@ class ApiOrdenesRepository implements IOrdenesRepository {
                 checkConformidad: a['checkConformidad'] == true,
                 fechaEntrega: DateTime.tryParse(a['fechaEntrega'] ?? '') ?? DateTime.now(),
               );
-            } else if (ord.id != null) {
-              actaEntrega = await getActaEntrega(ord.id!);
             }
 
             List<Repuesto> repuestos = [];
