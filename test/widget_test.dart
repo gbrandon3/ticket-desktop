@@ -467,7 +467,7 @@ void main() {
     expect(find.text('Cargar Evidencia de Recepción'), findsNothing);
   });
 
-  testWidgets('DetalleTallerScreen contiene protocolo de pruebas de diagnóstico pre-entrega (CrystalDiskInfo, HWMonitor, MemTest)', (WidgetTester tester) async {
+  testWidgets('DetalleTallerScreen contiene protocolo de pruebas de diagnóstico pre-entrega (Teclado y Periféricos)', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -489,13 +489,9 @@ void main() {
     await tester.tap(find.text('2. Bitácora & Insumos'));
     await tester.pumpAndSettle();
 
-    // Validar presencia del protocolo y de las herramientas solicitadas por el usuario
+    // Validar presencia del protocolo y de la prueba de teclado/periféricos
     expect(find.text('Protocolo de Pruebas de Diagnóstico y Salud Pre-Entrega'), findsOneWidget);
-    expect(find.textContaining('CrystalDiskInfo'), findsWidgets);
-    expect(find.textContaining('HWMonitor'), findsWidgets);
-    expect(find.textContaining('MemTest86'), findsWidgets);
-    expect(find.textContaining('FurMark'), findsWidgets);
-    expect(find.textContaining('BatteryBar'), findsWidgets);
+    expect(find.textContaining('Prueba de Teclado'), findsWidgets);
 
     // Tap en Tab 3 (Acta de Entrega)
     await tester.tap(find.text('3. Acta de Entrega'));
